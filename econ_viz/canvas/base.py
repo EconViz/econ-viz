@@ -1,0 +1,420 @@
+"""Canvas — the central plotting surface for economic diagrams.
+
+A :class:`Canvas` instance manages a single matplotlib figure styled in the
+convention of microeconomic textbook diagrams: first-quadrant axes with
+LaTeX-rendered labels at the axis tips, origin marker, arrow terminators,
+and no numeric tick labels.
+
+Drawing is delegated to component classes in :mod:`econ_viz.components`;
+the canvas itself is a thin orchestration layer that resolves theme
+defaults and forwards calls.
+"""
+
+from __future__ import annotations
+
+import matplotlib.pyplot as plt
+import matplot2tikz
+
+from typing import Callable
+
+from ..enums import ExportFormat
+from ..exceptions import ExportError
+from ..logging import get_logger
+from ..themes import default as _default_theme
+from ..themes.theme import Theme
+from ..components.indifference import IndifferenceCurves
+from ..components.budget import BudgetConstraint
+from ..components.equilibrium import EquilibriumPoint
+
+logger = get_logger(__name__)
+
+_MAX_DPI = 1200
+_DEFAULT_DPI = 300
+
+
+class Canvas:
+    """First-quadrant plotting surface for economic visualizations.
+
+    Parameters
+    ----------
+    x_max : float
+        Upper bound of the horizontal axis.
+    y_max : float
+        Upper bound of the vertical axis.
+    x_label : str
+        Label at the tip of the horizontal axis (rendered in LaTeX math mode).
+    y_label : str
+        Label at the tip of the vertical axis (rendered in LaTeX math mode).
+    title : str or None
+        Optional figure title.
+    dpi : int
+        Resolution for raster export. Clamped to ``[1, 1200]``. Default 300.
+    x_label_pos : str
+        Position of the x-axis label: ``"right"`` (default, at axis tip) or
+        ``"bottom"`` (centred below the axis).
+    y_label_pos : str
+        Position of the y-axis label: ``"top"`` (default, at axis tip) or
+        ``"left"`` (centred to the left of the axis).
+    theme : Theme
+        Colour and style theme. Defaults to the built-in ``default`` theme.
+    """
+
+    def __init__(
+        self,
+        x_max: float = 10.0,
+        y_max: float = 10.0,
+        x_label: str = "X",
+        y_label: str = "Y",
+        title: str | None = None,
+        dpi: int = _DEFAULT_DPI,
+        x_label_pos: str = "right",
+        y_label_pos: str = "top",
+        theme: Theme = _default_theme,
+    ):
+        self.x_max = x_max
+        self.y_max = y_max
+        self.x_label = x_label
+        self.y_label = y_label
+        self.title = title
+        self.dpi = max(1, min(dpi, _MAX_DPI))
+        self.x_label_pos = x_label_pos
+        self.y_label_pos = y_label_pos
+        self.theme = theme
+
+        self.fig, self.ax = plt.subplots(figsize=(6, 6))
+        self._apply_base_style()
+        logger.debug("Canvas created: x_max=%s, y_max=%s, dpi=%s, theme=%s",
+                     x_max, y_max, self.dpi, theme.name)
+
+    # ------------------------------------------------------------------
+    # Base styling
+    # ------------------------------------------------------------------
+
+    def _apply_base_style(self) -> None:
+        """Configure axes to match textbook economic diagram conventions."""
+        t = self.theme
+        self.ax.set_xlim(0, self.x_max)
+        self.ax.set_ylim(0, self.y_max)
+
+        # Turn off tick labels
+        self.ax.set_xticklabels([])
+        self.ax.set_yticklabels([])
+        self.ax.tick_params(length=0)
+
+        # X-axis label
+        if self.x_label_pos == "right":
+            self.ax.text(
+                self.x_max, -self.y_max * 0.03,
+                rf"${self.x_label}$", ha="center", va="top",
+                fontsize=14, color=t.label_color,
+            )
+        else:  # bottom
+            self.ax.set_xlabel(rf"${self.x_label}$", fontsize=14, color=t.label_color)
+
+        # Y-axis label
+        if self.y_label_pos == "top":
+            self.ax.text(
+                -self.x_max * 0.03, self.y_max,
+                rf"${self.y_label}$", ha="right", va="center",
+                fontsize=14, color=t.label_color,
+            )
+        else:  # left
+            self.ax.set_ylabel(rf"${self.y_label}$", fontsize=14,
+                               rotation=0, color=t.label_color)
+
+        # Origin label
+        self.ax.text(
+            -self.x_max * 0.03, -self.y_max * 0.03,
+            r"$0$", ha="right", va="top", fontsize=12, color=t.label_color,
+        )
+
+        if self.title:
+            self.ax.set_title(self.title, color=t.label_color)
+
+        # Spines
+        self.ax.spines["top"].set_visible(False)
+        self.ax.spines["right"].set_visible(False)
+        self.ax.spines["bottom"].set_color(t.axis_color)
+        self.ax.spines["left"].set_color(t.axis_color)
+
+        # Arrow terminators at axis tips
+        self.ax.plot(self.x_max, 0, ">", color=t.axis_color, markersize=7, clip_on=False)
+        self.ax.plot(0, self.y_max, "^", color=t.axis_color, markersize=7, clip_on=False)
+
+        # Transparent background
+        self.fig.patch.set_alpha(0.0)
+        self.ax.patch.set_alpha(0.0)
+
+    # ------------------------------------------------------------------
+    # Layer composition
+    # ------------------------------------------------------------------
+
+    def add_utility(
+        self,
+        func: Callable,
+        levels: int | list = 3,
+        color: str | None = None,
+        linewidth: float | None = None,
+        show_rays: bool = False,
+        show_kinks: bool = False,
+        kink_radius: float = 1.0,
+        **kwargs,
+    ) -> Canvas:
+        """Add indifference curves for a given utility function.
+
+        Colour and line-width fall back to the active theme when not
+        specified explicitly.
+
+        Parameters
+        ----------
+        func : UtilityFunction
+            A utility model conforming to the :class:`UtilityFunction` protocol.
+        levels : int or list
+            Number of contour levels (automatically spaced by percentile) or an
+            explicit list of utility values at which to draw contours.
+        color : str or None
+            Curve colour. *None* → ``theme.ic_color``.
+        linewidth : float or None
+            Stroke width. *None* → ``theme.ic_linewidth``.
+        show_rays : bool
+            If ``True``, draw dashed kink-locus rays (KINKED types only).
+        show_kinks : bool
+            If ``True`` and ``func.utility_type is KINKED``, draw circular
+            markers at kink points on each contour level.
+        kink_radius : float
+            Marker size factor for kink dots.
+        **kwargs
+            Forwarded to :meth:`matplotlib.axes.Axes.contour`.
+
+        Returns
+        -------
+        Canvas
+            *self*, to allow method chaining.
+        """
+        t = self.theme
+        ic = IndifferenceCurves(
+            func, levels,
+            color=color or t.ic_color,
+            linewidth=linewidth if linewidth is not None else t.ic_linewidth,
+            show_rays=show_rays,
+            ray_color=t.ray_color,
+            ray_linewidth=t.ray_linewidth,
+            show_kinks=show_kinks,
+            kink_color=t.kink_color,
+            kink_radius=kink_radius,
+        )
+        ic.draw(self.ax, self.x_max, self.y_max, **kwargs)
+        return self
+
+    def add_budget(
+        self,
+        px: float,
+        py: float,
+        income: float,
+        color: str | None = None,
+        linewidth: float | None = None,
+        linestyle: str = "-",
+        label: str | None = None,
+        fill: bool = False,
+        fill_alpha: float | None = None,
+    ) -> Canvas:
+        """Add a linear budget constraint px*x + py*y = income.
+
+        Colour, line-width, and fill opacity fall back to the active
+        theme when not specified explicitly.
+
+        Parameters
+        ----------
+        px, py : float
+            Prices. Must be positive.
+        income : float
+            Total budget. Must be positive.
+        color : str or None
+            Line colour. *None* → ``theme.budget_color``.
+        linewidth : float or None
+            Stroke width. *None* → ``theme.budget_linewidth``.
+        linestyle : str
+            Matplotlib line-style string.
+        label : str or None
+            Optional legend label rendered in LaTeX math mode.
+        fill : bool
+            If ``True``, shade the feasible set below the budget line.
+        fill_alpha : float or None
+            Opacity of the shading. *None* → ``theme.budget_fill_alpha``.
+
+        Returns
+        -------
+        Canvas
+            *self*, to allow method chaining.
+        """
+        t = self.theme
+        bc = BudgetConstraint(
+            px, py, income,
+            color=color or t.budget_color,
+            linewidth=linewidth if linewidth is not None else t.budget_linewidth,
+            linestyle=linestyle,
+            label=label,
+            fill=fill,
+            fill_alpha=fill_alpha if fill_alpha is not None else t.budget_fill_alpha,
+        )
+        bc.draw(self.ax)
+        return self
+
+    def add_equilibrium(
+        self,
+        eq,
+        color: str | None = None,
+        markersize: float | None = None,
+        label: str | None = "x^*",
+        drop_dashes: bool = True,
+        show_ray: bool = False,
+    ) -> Canvas:
+        """Annotate a pre-solved equilibrium on the canvas.
+
+        Call :func:`~econ_viz.optimizer.solve` first, then pass the
+        resulting :class:`~econ_viz.optimizer.Equilibrium` here.
+
+        Parameters
+        ----------
+        eq : Equilibrium
+            A solved equilibrium bundle.
+        color : str or None
+            Marker / drop-line colour. *None* → ``theme.eq_color``.
+        markersize : float or None
+            Dot size. *None* → ``theme.eq_markersize``.
+        label : str or None
+            LaTeX label placed next to the dot.
+        drop_dashes : bool
+            Draw dashed perpendicular lines from the optimum to both axes.
+        show_ray : bool
+            Draw the expansion-path ray from the origin through the optimum.
+
+        Returns
+        -------
+        Canvas
+            *self*, to allow method chaining.
+        """
+        t = self.theme
+        ep = EquilibriumPoint(
+            eq,
+            color=color or t.eq_color,
+            markersize=markersize if markersize is not None else t.eq_markersize,
+            label=label,
+            drop_dashes=drop_dashes,
+            show_ray=show_ray,
+            ray_color=t.ray_color,
+            ray_linewidth=t.ray_linewidth,
+        )
+        ep.draw(self.ax, self.x_max, self.y_max)
+        return self
+
+    def add_ray(
+        self,
+        slope: float,
+        color: str | None = None,
+        linewidth: float | None = None,
+    ) -> Canvas:
+        """Add a dashed ray emanating from the origin.
+
+        Parameters
+        ----------
+        slope : float
+            Rise-over-run slope of the ray (dy / dx).
+        color : str or None
+            *None* → ``theme.ray_color``.
+        linewidth : float or None
+            *None* → ``theme.ray_linewidth``.
+
+        Returns
+        -------
+        Canvas
+            *self*, to allow method chaining.
+        """
+        from ..components import draw_ray
+
+        t = self.theme
+        draw_ray(
+            self.ax, slope, self.x_max, self.y_max,
+            color=color or t.ray_color,
+            linewidth=linewidth if linewidth is not None else t.ray_linewidth,
+        )
+        return self
+
+    def add_point(
+        self,
+        x: float,
+        y: float,
+        label: str | None = None,
+        color: str | None = None,
+        markersize: float = 6.0,
+        offset: tuple[float, float] = (5, 5),
+    ) -> Canvas:
+        """Plot a labelled point on the canvas.
+
+        Parameters
+        ----------
+        x, y : float
+            Coordinates of the point.
+        label : str or None
+            Text label (rendered in LaTeX math mode if provided).
+        color : str or None
+            Marker and label colour. *None* → ``theme.eq_color``.
+        markersize : float
+            Size of the dot.
+        offset : tuple[float, float]
+            ``(dx, dy)`` text offset in points from the marker centre.
+
+        Returns
+        -------
+        Canvas
+            *self*, to allow method chaining.
+        """
+        c = color or self.theme.eq_color
+        self.ax.plot(x, y, "o", color=c, markersize=markersize)
+        if label:
+            self.ax.annotate(
+                rf"${label}$", (x, y),
+                textcoords="offset points", xytext=offset,
+                fontsize=12, color=c,
+            )
+        return self
+
+    # ------------------------------------------------------------------
+    # Output
+    # ------------------------------------------------------------------
+
+    def show(self) -> None:
+        """Display the figure in an interactive matplotlib window."""
+        plt.show()
+
+    def save(self, path: str, **kwargs) -> None:
+        """Export the figure to disk and release matplotlib resources.
+
+        The output format is inferred from the file extension via
+        :class:`~econ_viz.enums.ExportFormat`.
+
+        Parameters
+        ----------
+        path : str
+            Destination file path (e.g. ``"plot.png"``, ``"plot.tex"``).
+        **kwargs
+            Forwarded to the underlying save function.
+        """
+        fmt = ExportFormat.from_path(path)
+        logger.info("Exporting figure to %s (format=%s, dpi=%s)", path, fmt.value, self.dpi)
+
+        try:
+            if fmt is ExportFormat.TEX:
+                matplot2tikz.save(path, figure=self.fig, **kwargs)
+            else:
+                self.fig.savefig(
+                    path,
+                    dpi=self.dpi,
+                    transparent=True,
+                    bbox_inches="tight",
+                    **kwargs,
+                )
+        except OSError as exc:
+            raise ExportError(f"Failed to write '{path}': {exc}") from exc
+        finally:
+            plt.close(self.fig)
