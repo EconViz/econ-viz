@@ -22,7 +22,7 @@ class ExportFormat(Enum):
     SVG
         Scalable vector export via matplotlib.
     TEX
-        TikZ/PGFPlots source via *matplot2tikz*.
+        TikZ/PGFPlots source via *matplot2tikz* (``.tex`` extension).
     """
 
     PNG = "png"
