@@ -3,13 +3,13 @@
   <img src="https://raw.githubusercontent.com/EconViz/econ-viz-docs/main/docs/assets/banner.svg" alt="Econ-Viz" width="480">
 </p>
 
-# econ-viz
-
-[![PyPI version](https://img.shields.io/pypi/v/econ-viz.svg)](https://pypi.org/project/econ-viz/)
-[![Python](https://img.shields.io/pypi/pyversions/econ-viz.svg)](https://pypi.org/project/econ-viz/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Tests](https://img.shields.io/badge/tests-183%20passed-brightgreen)](https://github.com/EconViz/econ-viz/actions)
-[![Coverage](https://img.shields.io/badge/coverage-99%25-brightgreen)](https://github.com/EconViz/econ-viz/actions)
+<p align="center">
+  <a href="https://pypi.org/project/econ-viz/"><img alt="PyPI" src="https://img.shields.io/pypi/v/econ-viz?style=flat-square&color=181818&labelColor=f3f3f3"></a>
+  <a href="https://pypi.org/project/econ-viz/"><img alt="Python" src="https://img.shields.io/pypi/pyversions/econ-viz?style=flat-square&color=181818&labelColor=f3f3f3"></a>
+  <a href="https://opensource.org/licenses/MIT"><img alt="License" src="https://img.shields.io/badge/License-MIT-181818?style=flat-square&color=181818&labelColor=f3f3f3"></a>
+  <img alt="Tests" src="https://img.shields.io/badge/tests-183%20passed-181818?style=flat-square&color=181818&labelColor=f3f3f3">
+  <img alt="Coverage" src="https://img.shields.io/badge/coverage-99%25-181818?style=flat-square&color=181818&labelColor=f3f3f3">
+</p>
 
 A Python toolkit for producing publication-quality microeconomics diagrams. Define utility functions declaratively, solve for consumer equilibria, and export figures as raster images or LaTeX/TikZ source — all in a few lines of code.
 
