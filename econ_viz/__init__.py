@@ -16,6 +16,8 @@ from . import themes
 from .themes.theme import Theme
 from .optimizer import Equilibrium, solve
 from .components import IndifferenceCurves, BudgetConstraint, EquilibriumPoint
+from .parser import parse_latex
+from .models.advanced import CustomUtility, MultiGoodCD
 
 __all__ = [
     "Canvas",
@@ -34,4 +36,7 @@ __all__ = [
     "IndifferenceCurves",
     "BudgetConstraint",
     "EquilibriumPoint",
+    "parse_latex",
+    "CustomUtility",
+    "MultiGoodCD",
 ]
