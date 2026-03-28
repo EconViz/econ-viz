@@ -32,6 +32,20 @@ dev = [
     "pytest-cov (>=7.1.0,<8.0.0)"
 ]
 
+[tool.semantic_release]
+version_toml = ["pyproject.toml:project.version"]
+branch = "main"
+changelog_file = "CHANGELOG.md"
+commit_message = "chore(release): {version} [skip ci]"
+upload_to_pypi = false
+upload_to_release = false
+build_command = ""
+
+[tool.semantic_release.commit_parser_options]
+allowed_tags = ["feat", "fix", "perf", "refactor", "docs", "style", "test", "chore", "build", "ci"]
+minor_tags = ["feat"]
+patch_tags = ["fix", "perf"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "--cov=econ_viz --cov-report=term-missing --cov-report=html:htmlcov"
