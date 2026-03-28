@@ -17,11 +17,9 @@ A Python toolkit for producing publication-quality microeconomics diagrams. Defi
   <a href="https://colab.research.google.com/drive/10SVRHL3UTASF5nKroxzYcsVRC5of7YQD">
     <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open in Colab">
   </a>
-  &nbsp;
-  <a href="https://drive.google.com/file/d/10SVRHL3UTASF5nKroxzYcsVRC5of7YQD/copy">
-    <img src="https://img.shields.io/badge/Copy%20to%20Drive-4285F4?style=flat-square&logo=googledrive&logoColor=white" alt="Copy to Drive">
-  </a>
 </p>
+
+> Open the notebook in Colab, then go to **File → Save a copy in Drive** to keep your own editable version.
 
 ## Installation
 
