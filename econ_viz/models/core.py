@@ -238,6 +238,71 @@ class QuasiLinear:
 
 
 @dataclass
+class StoneGeary:
+    """Stone-Geary utility: U(x, y) = (x - bar_x)^alpha * (y - bar_y)^beta.
+
+    Utility is defined only in the supernumerary region x > bar_x, y > bar_y.
+    The consumer first secures subsistence quantities (bar_x, bar_y) and then
+    allocates the remaining *supernumerary* income like a Cobb-Douglas
+    consumer.  Marshallian demands are:
+
+        x* = bar_x + alpha * (I - px*bar_x - py*bar_y) / px
+        y* = bar_y + beta  * (I - px*bar_x - py*bar_y) / py
+
+    Parameters
+    ----------
+    alpha : float
+        Expenditure share on supernumerary *x*.  Must be positive.
+    beta : float
+        Expenditure share on supernumerary *y*.  Must be positive.
+    bar_x : float
+        Subsistence quantity of good *x*.  Must be non-negative.
+    bar_y : float
+        Subsistence quantity of good *y*.  Must be non-negative.
+    """
+
+    alpha: float = 0.5
+    beta: float = 0.5
+    bar_x: float = 1.0
+    bar_y: float = 1.0
+
+    def __post_init__(self) -> None:
+        if self.alpha <= 0 or self.beta <= 0:
+            raise InvalidParameterError("StoneGeary: alpha and beta must be positive.")
+        if self.bar_x < 0 or self.bar_y < 0:
+            raise InvalidParameterError("StoneGeary: bar_x and bar_y must be non-negative.")
+
+    @property
+    def utility_type(self) -> UtilityType:
+        return UtilityType.SMOOTH
+
+    def __call__(self, x, y):
+        dx = np.asarray(x, dtype=float) - self.bar_x
+        dy = np.asarray(y, dtype=float) - self.bar_y
+        with np.errstate(invalid="ignore"):
+            result = np.where(
+                (dx > 0) & (dy > 0),
+                dx ** self.alpha * dy ** self.beta,
+                np.nan,
+            )
+        return float(result) if result.ndim == 0 else result
+
+    def lower_bounds(self) -> tuple[float, float]:
+        """Return the minimum feasible (x, y) — the subsistence point."""
+        return (self.bar_x, self.bar_y)
+
+    def subsistence_lines(self) -> tuple[float, float]:
+        """Return (bar_x, bar_y) for drawing subsistence reference lines on the canvas."""
+        return (self.bar_x, self.bar_y)
+
+    def ray_slopes(self) -> list[float]:
+        return []
+
+    def kink_points(self, levels: list[float]) -> list[tuple[float, float]]:
+        return []
+
+
+@dataclass
 class CES:
     """Constant Elasticity of Substitution utility:
 

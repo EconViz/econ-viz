@@ -12,6 +12,7 @@ from econ_viz.models import (
     CES,
     Satiation,
     QuasiLinear,
+    StoneGeary,
 )
 
 
@@ -178,6 +179,69 @@ class TestSatiation:
         s = Satiation()
         assert s.bliss_x == 5.0
         assert s.bliss_y == 5.0
+
+
+class TestStoneGeary:
+    """Unit tests for the StoneGeary utility model."""
+
+    def test_scalar(self):
+        """With bar_x=bar_y=0 Stone-Geary reduces to Cobb-Douglas."""
+        sg = StoneGeary(alpha=0.5, beta=0.5, bar_x=0.0, bar_y=0.0)
+        assert sg(4.0, 9.0) == pytest.approx(6.0)
+
+    def test_array(self):
+        sg = StoneGeary(alpha=1.0, beta=1.0, bar_x=1.0, bar_y=1.0)
+        x = np.array([2.0, 3.0])
+        y = np.array([2.0, 4.0])
+        np.testing.assert_allclose(sg(x, y), [1.0, 6.0])
+
+    def test_utility_type(self):
+        assert StoneGeary().utility_type is UtilityType.SMOOTH
+
+    def test_ray_slopes_empty(self):
+        """Expansion path does not pass through the origin; no ray to draw."""
+        assert StoneGeary().ray_slopes() == []
+
+    def test_kink_points_empty(self):
+        assert StoneGeary().kink_points([1.0, 2.0]) == []
+
+    def test_lower_bounds(self):
+        sg = StoneGeary(bar_x=2.0, bar_y=3.0)
+        assert sg.lower_bounds() == (2.0, 3.0)
+
+    def test_subsistence_lines(self):
+        sg = StoneGeary(bar_x=2.0, bar_y=3.0)
+        assert sg.subsistence_lines() == (2.0, 3.0)
+
+    def test_outside_domain_returns_nan(self):
+        """Bundles at or below subsistence must return NaN."""
+        sg = StoneGeary(bar_x=1.0, bar_y=1.0)
+        assert np.isnan(sg(0.5, 5.0))
+        assert np.isnan(sg(5.0, 0.5))
+        assert np.isnan(sg(1.0, 5.0))   # x exactly at bar_x
+
+    def test_defaults(self):
+        sg = StoneGeary()
+        assert sg.alpha == 0.5
+        assert sg.beta == 0.5
+        assert sg.bar_x == 1.0
+        assert sg.bar_y == 1.0
+
+    def test_invalid_alpha(self):
+        with pytest.raises(InvalidParameterError):
+            StoneGeary(alpha=0.0)
+
+    def test_invalid_beta(self):
+        with pytest.raises(InvalidParameterError):
+            StoneGeary(beta=-0.5)
+
+    def test_invalid_bar_x(self):
+        with pytest.raises(InvalidParameterError):
+            StoneGeary(bar_x=-1.0)
+
+    def test_invalid_bar_y(self):
+        with pytest.raises(InvalidParameterError):
+            StoneGeary(bar_y=-0.1)
 
 
 class TestQuasiLinear:

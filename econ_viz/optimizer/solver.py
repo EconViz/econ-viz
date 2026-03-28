@@ -92,16 +92,33 @@ def solve(func, px: float, py: float, income: float) -> Equilibrium:
 # ------------------------------------------------------------------
 
 def _solve_interior(func, px: float, py: float, income: float) -> Equilibrium:
-    """Smooth preferences — constrained optimisation via SLSQP."""
+    """Smooth preferences — constrained optimisation via SLSQP.
+
+    If the model exposes a ``lower_bounds()`` method (e.g. Stone-Geary), the
+    feasible region is shifted accordingly and income is validated against the
+    subsistence expenditure.
+    """
+    x_floor, y_floor = getattr(func, "lower_bounds", lambda: (0.0, 0.0))()
+
+    subsistence_cost = px * x_floor + py * y_floor
+    if subsistence_cost >= income:
+        raise InvalidParameterError(
+            f"Income ({income}) is insufficient to cover subsistence expenditure "
+            f"({subsistence_cost:.4g} = px*bar_x + py*bar_y)."
+        )
+
     x_max = income / px
     y_max = income / py
-    x0 = np.array([x_max / 2, y_max / 2])
+    x0 = np.array([
+        x_floor + (x_max - x_floor) / 2,
+        y_floor + (y_max - y_floor) / 2,
+    ])
 
     result = minimize(
         fun=lambda v: -float(func(v[0], v[1])),
         x0=x0,
         method="SLSQP",
-        bounds=[(1e-12, x_max), (1e-12, y_max)],
+        bounds=[(x_floor + 1e-12, x_max), (y_floor + 1e-12, y_max)],
         constraints={"type": "eq", "fun": lambda v: px * v[0] + py * v[1] - income},
     )
 
