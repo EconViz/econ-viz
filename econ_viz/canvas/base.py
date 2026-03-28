@@ -179,6 +179,7 @@ class Canvas:
         show_rays: bool = False,
         show_kinks: bool = False,
         kink_radius: float = 1.0,
+        show_bliss: bool = True,
         **kwargs,
     ) -> Canvas:
         """Add indifference curves for a given utility function.
@@ -204,6 +205,10 @@ class Canvas:
             markers at kink points on each contour level.
         kink_radius : float
             Marker size factor for kink dots.
+        show_bliss : bool
+            If ``True`` (default) and *func* has ``bliss_x`` / ``bliss_y``
+            attributes (i.e. a :class:`~econ_viz.models.Satiation` model),
+            draw a star marker at the bliss point.
         **kwargs
             Forwarded to :meth:`matplotlib.axes.Axes.contour`.
 
@@ -225,6 +230,18 @@ class Canvas:
             kink_radius=kink_radius,
         )
         ic.draw(self.ax, self.x_max, self.y_max, **kwargs)
+        if show_bliss and hasattr(func, "bliss_x") and hasattr(func, "bliss_y"):
+            c = color or t.ic_color
+            self.ax.plot(
+                func.bliss_x, func.bliss_y,
+                "*", color=c, markersize=12, zorder=5,
+            )
+            self.ax.annotate(
+                r"$\mathbf{x}^*$",
+                (func.bliss_x, func.bliss_y),
+                textcoords="offset points", xytext=(6, 4),
+                fontsize=12, color=c,
+            )
         return self
 
     def add_budget(
