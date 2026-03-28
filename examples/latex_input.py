@@ -30,7 +30,7 @@ for name, latex in cases:
     lvls = levels.around(eq.utility, n=5)
 
     cvs = Canvas(x_max=20, y_max=15, x_label="x", y_label="y",
-                 title=latex)
+                 title=f"$U(x,y) = {latex.split('=')[-1].strip()}$" if "=" in latex else f"${latex}$")
     cvs.add_utility(model, levels=lvls, show_rays=True, show_kinks=True)
     cvs.add_budget(px, py, income, fill=True)
     cvs.add_equilibrium(eq, show_ray=True)

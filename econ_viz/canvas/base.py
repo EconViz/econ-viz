@@ -30,6 +30,27 @@ logger = get_logger(__name__)
 
 _MAX_DPI = 1200
 _DEFAULT_DPI = 300
+_MATH_CHARS = {"^", "_", "{", "}", "\\"}
+
+
+def _math_wrap(text: str) -> str:
+    """Wrap substrings containing LaTeX math characters in ``$...$``.
+
+    Segments already enclosed in ``$...$`` are left untouched.  Plain-text
+    segments that contain any of ``^ _ { } \\`` are automatically wrapped so
+    that matplotlib renders them via its mathtext engine.
+    """
+    import re
+    parts = re.split(r"(\$[^$]+\$)", text)
+    out = []
+    for part in parts:
+        if part.startswith("$") and part.endswith("$"):
+            out.append(part)
+        elif any(c in part for c in _MATH_CHARS):
+            out.append(f"${part}$")
+        else:
+            out.append(part)
+    return "".join(out)
 
 
 class Canvas:
@@ -129,7 +150,7 @@ class Canvas:
         )
 
         if self.title:
-            self.ax.set_title(self.title, color=t.label_color)
+            self.ax.set_title(_math_wrap(self.title), color=t.label_color)
 
         # Spines
         self.ax.spines["top"].set_visible(False)
