@@ -4,6 +4,9 @@ Workflow: solve → compute levels from solution → draw.
 The levels module ensures the equilibrium IC is always one of the drawn curves.
 """
 
+import matplotlib
+matplotlib.use("Agg")
+
 from econ_viz import Canvas, levels, solve
 from econ_viz.models import CobbDouglas, Leontief, PerfectSubstitutes, CES
 

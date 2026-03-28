@@ -1,5 +1,8 @@
 """Render the same diagram under all built-in themes."""
 
+import matplotlib
+matplotlib.use("Agg")
+
 from econ_viz import Canvas, levels, solve, themes
 from econ_viz.models import CobbDouglas
 
