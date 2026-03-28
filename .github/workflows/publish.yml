@@ -49,5 +49,19 @@ jobs:
       - name: Build
         run: poetry build
 
+      - name: Check if version already exists on PyPI
+        id: version_check
+        run: |
+          VERSION=$(poetry version -s)
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://pypi.org/pypi/econ-viz/$VERSION/json)
+          if [ "$STATUS" = "200" ]; then
+            echo "skip=true" >> $GITHUB_OUTPUT
+            echo "Version $VERSION already on PyPI, skipping publish."
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+            echo "Version $VERSION not on PyPI, will publish."
+          fi
+
       - name: Publish to PyPI
+        if: steps.version_check.outputs.skip == 'false'
         uses: pypa/gh-action-pypi-publish@release/v1
