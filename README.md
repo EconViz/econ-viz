@@ -13,6 +13,16 @@
 
 A Python toolkit for producing publication-quality microeconomics diagrams. Define utility functions declaratively, solve for consumer equilibria, and export figures as raster images or LaTeX/TikZ source — all in a few lines of code.
 
+<p align="center">
+  <a href="https://colab.research.google.com/drive/10SVRHL3UTASF5nKroxzYcsVRC5of7YQD">
+    <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open in Colab">
+  </a>
+  &nbsp;
+  <a href="https://drive.google.com/file/d/10SVRHL3UTASF5nKroxzYcsVRC5of7YQD/copy">
+    <img src="https://img.shields.io/badge/Copy%20to%20Drive-4285F4?style=flat-square&logo=googledrive&logoColor=white" alt="Copy to Drive">
+  </a>
+</p>
+
 ## Installation
 
 ```bash
@@ -256,7 +266,7 @@ cvs = Canvas(x_max=20, y_max=15, theme=themes.nord) # nord theme
 
 ```python
 cvs.save("figure.png")    # raster (DPI controlled by Canvas(dpi=300))
-cvs.save("figure.tikz")   # TikZ/PGFPlots source for LaTeX
+cvs.save("figure.tex")    # TikZ/PGFPlots source for LaTeX
 ```
 
 ## License
