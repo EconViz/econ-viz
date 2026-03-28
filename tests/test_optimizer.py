@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 from econ_viz.exceptions import InvalidParameterError, OptimizationError
-from econ_viz.models import CobbDouglas, Leontief, PerfectSubstitutes, CES, QuasiLinear
+from econ_viz.models import CobbDouglas, Leontief, PerfectSubstitutes, CES, QuasiLinear, StoneGeary
 from econ_viz.optimizer import Equilibrium, solve
 
 
@@ -262,6 +262,73 @@ class TestSolveLeontiefAnalytic:
     def test_budget_exhausted(self, a, b, px, py, income):
         eq = solve(Leontief(a=a, b=b), px=px, py=py, income=income)
         assert _on_budget(eq, px, py, income)
+
+
+class TestSolveStoneGeary:
+    """Interior solution for Stone-Geary preferences."""
+
+    def test_bundle_type(self):
+        eq = solve(StoneGeary(alpha=0.5, beta=0.5, bar_x=1.0, bar_y=1.0), 2.0, 3.0, 30.0)
+        assert eq.bundle_type == "interior"
+
+    def test_on_budget(self):
+        eq = solve(StoneGeary(alpha=0.5, beta=0.5, bar_x=1.0, bar_y=1.0), 2.0, 3.0, 30.0)
+        assert _on_budget(eq, 2.0, 3.0, 30.0)
+
+    def test_above_subsistence(self):
+        """Optimal bundle must strictly exceed the subsistence point."""
+        sg = StoneGeary(alpha=0.5, beta=0.5, bar_x=1.0, bar_y=1.0)
+        eq = solve(sg, 2.0, 3.0, 30.0)
+        assert eq.x > sg.bar_x
+        assert eq.y > sg.bar_y
+
+    def test_insufficient_income_raises(self):
+        """Income below subsistence expenditure must raise InvalidParameterError."""
+        sg = StoneGeary(alpha=0.5, beta=0.5, bar_x=5.0, bar_y=5.0)
+        with pytest.raises(InvalidParameterError, match="subsistence"):
+            solve(sg, px=2.0, py=2.0, income=10.0)  # need >20 to cover subsistence
+
+
+class TestSolveStoneGearyAnalytic:
+    """Verify SLSQP output matches closed-form Stone-Geary Marshallian demands.
+
+    Analytic Marshallian demands:
+        supernumerary income m = I - px*γ_x - py*γ_y
+        x* = γ_x + alpha * m / px
+        y* = γ_y + beta  * m / py
+    """
+
+    @pytest.mark.parametrize("alpha,beta,bx,by,px,py,income", [
+        (0.5, 0.5, 1.0, 1.0, 2.0, 3.0, 30.0),
+        (0.4, 0.6, 2.0, 1.0, 1.0, 2.0, 20.0),
+        (0.3, 0.7, 0.5, 0.5, 3.0, 1.0, 25.0),
+    ])
+    def test_marshallian_demands(self, alpha, beta, bx, by, px, py, income):
+        sg = StoneGeary(alpha=alpha, beta=beta, bar_x=bx, bar_y=by)
+        eq = solve(sg, px=px, py=py, income=income)
+        m = income - px * bx - py * by
+        x_star = bx + alpha * m / px
+        y_star = by + beta  * m / py
+        assert eq.x == pytest.approx(x_star, rel=1e-3)
+        assert eq.y == pytest.approx(y_star, rel=1e-3)
+
+    @pytest.mark.parametrize("alpha,beta,bx,by,px,py,income", [
+        (0.5, 0.5, 1.0, 1.0, 2.0, 3.0, 30.0),
+        (0.4, 0.6, 2.0, 1.0, 1.0, 2.0, 20.0),
+    ])
+    def test_budget_exhausted(self, alpha, beta, bx, by, px, py, income):
+        sg = StoneGeary(alpha=alpha, beta=beta, bar_x=bx, bar_y=by)
+        eq = solve(sg, px=px, py=py, income=income)
+        assert _on_budget(eq, px, py, income)
+
+    def test_zero_subsistence_matches_cobb_douglas(self):
+        """Stone-Geary with bar=0 must match Cobb-Douglas Marshallian demands exactly."""
+        alpha, beta, px, py, income = 0.5, 0.5, 2.0, 3.0, 30.0
+        eq_sg = solve(StoneGeary(alpha=alpha, beta=beta, bar_x=0.0, bar_y=0.0),
+                      px=px, py=py, income=income)
+        eq_cd = solve(CobbDouglas(alpha=alpha, beta=beta), px=px, py=py, income=income)
+        assert eq_sg.x == pytest.approx(eq_cd.x, rel=1e-3)
+        assert eq_sg.y == pytest.approx(eq_cd.y, rel=1e-3)
 
 
 class TestSolvePerfectSubstitutesAnalytic:

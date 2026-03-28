@@ -89,4 +89,10 @@ class IndifferenceCurves:
                             markerfacecolor=self.kink_color,
                             markeredgecolor=self.kink_color)
 
+        if hasattr(self.func, "subsistence_lines"):
+            sub_x, sub_y = self.func.subsistence_lines()
+            style = dict(color="gray", linewidth=0.8, linestyle="--", alpha=0.6)
+            ax.axvline(x=sub_x, **style)
+            ax.axhline(y=sub_y, **style)
+
         return computed
