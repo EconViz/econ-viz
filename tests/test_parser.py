@@ -3,7 +3,7 @@
 import pytest
 
 from econ_viz.exceptions import ParseError
-from econ_viz.models import CobbDouglas, Leontief, PerfectSubstitutes
+from econ_viz.models import CobbDouglas, Leontief, PerfectSubstitutes, CES
 from econ_viz.parser import parse_latex
 
 
@@ -100,6 +100,51 @@ class TestParsePerfectSubstitutes:
     def test_evaluates_correctly(self):
         m = parse_latex(r"3x + 2y")
         assert m(1.0, 1.0) == pytest.approx(5.0)
+
+
+class TestParseCES:
+    """Verify that CES LaTeX patterns are recognised and parsed correctly."""
+
+    def test_basic_decimal_outer(self):
+        """Acceptance-criteria example from issue #3."""
+        m = parse_latex(r"(0.5 x^{-0.5} + 0.5 y^{-0.5})^{-2}")
+        assert isinstance(m, CES)
+        assert m.alpha == pytest.approx(0.5)
+        assert m.beta == pytest.approx(0.5)
+        assert m.rho == pytest.approx(-0.5)
+
+    def test_fraction_outer(self):
+        """Outer exponent expressed as the fraction 1/rho."""
+        m = parse_latex(r"(0.4 x^{0.5} + 0.6 y^{0.5})^{1/0.5}")
+        assert isinstance(m, CES)
+        assert m.alpha == pytest.approx(0.4)
+        assert m.beta == pytest.approx(0.6)
+        assert m.rho == pytest.approx(0.5)
+
+    def test_positive_rho(self):
+        m = parse_latex(r"(0.3 x^{0.5} + 0.7 y^{0.5})^{2}")
+        assert isinstance(m, CES)
+        assert m.rho == pytest.approx(0.5)
+
+    def test_without_braces(self):
+        m = parse_latex(r"(0.5 x^0.5 + 0.5 y^0.5)^2")
+        assert isinstance(m, CES)
+        assert m.rho == pytest.approx(0.5)
+
+    def test_with_preamble(self):
+        m = parse_latex(r"U(x,y) = (0.5 x^{-0.5} + 0.5 y^{-0.5})^{-2}")
+        assert isinstance(m, CES)
+        assert m.rho == pytest.approx(-0.5)
+
+    def test_mismatched_inner_exponents_raises(self):
+        """Inner exponents for x and y must be equal — mismatch must raise ParseError."""
+        with pytest.raises(ParseError):
+            parse_latex(r"(0.5 x^{0.5} + 0.5 y^{0.3})^{2}")
+
+    def test_evaluates_correctly(self):
+        """CES(0.5, 0.5, 0.5) at (1,1) must equal 1."""
+        m = parse_latex(r"(0.5 x^{0.5} + 0.5 y^{0.5})^{2}")
+        assert m(1.0, 1.0) == pytest.approx(1.0)
 
 
 class TestParseErrors:
