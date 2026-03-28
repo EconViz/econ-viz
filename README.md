@@ -7,7 +7,7 @@
 [![Tests](https://img.shields.io/badge/tests-183%20passed-brightgreen)](https://github.com/EconViz/econ-viz/actions)
 [![Coverage](https://img.shields.io/badge/coverage-99%25-brightgreen)](https://github.com/EconViz/econ-viz/actions)
 
-A Python toolkit for producing publication-quality microeconomic diagrams. Define utility functions declaratively, solve for consumer equilibria, and export figures as raster images or LaTeX/TikZ source — all in a few lines of code.
+A Python toolkit for producing publication-quality microeconomics diagrams. Define utility functions declaratively, solve for consumer equilibria, and export figures as raster images or LaTeX/TikZ source — all in a few lines of code.
 
 ## Installation
 
