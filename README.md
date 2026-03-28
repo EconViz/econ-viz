@@ -36,7 +36,7 @@ cvs.add_equilibrium(eq, show_ray=True)
 cvs.save("cobb_douglas.png")
 ```
 
-![Cobb-Douglas indifference map with budget line and equilibrium point](https://raw.githubusercontent.com/EconViz/econ-viz/docs/cobb_douglas_eq.png)
+![Cobb-Douglas indifference map with budget line and equilibrium point](https://raw.githubusercontent.com/EconViz/econ-viz/45540774ef9c76db769701cf95fa7d3f8d5ae1d2/cobb_douglas_eq.png)
 
 ## Utility Models
 
@@ -48,7 +48,7 @@ from econ_viz.models import CobbDouglas
 model = CobbDouglas(alpha=0.3, beta=0.7)
 ```
 
-![Cobb-Douglas indifference curves](https://raw.githubusercontent.com/EconViz/econ-viz/docs/cobb_douglas.png)
+![Cobb-Douglas indifference curves](https://raw.githubusercontent.com/EconViz/econ-viz/45540774ef9c76db769701cf95fa7d3f8d5ae1d2/cobb_douglas.png)
 
 ### Leontief (Perfect Complements)
 
@@ -58,7 +58,7 @@ from econ_viz.models import Leontief
 model = Leontief(a=1.0, b=1.0)   # U = min(ax, by)
 ```
 
-![Leontief indifference curves](https://raw.githubusercontent.com/EconViz/econ-viz/docs/leontief_eq.png)
+![Leontief indifference curves](https://raw.githubusercontent.com/EconViz/econ-viz/45540774ef9c76db769701cf95fa7d3f8d5ae1d2/leontief_eq.png)
 
 ### Perfect Substitutes
 
@@ -68,7 +68,7 @@ from econ_viz.models import PerfectSubstitutes
 model = PerfectSubstitutes(a=1.0, b=2.0)   # U = ax + by
 ```
 
-![Perfect substitutes indifference curves](https://raw.githubusercontent.com/EconViz/econ-viz/docs/perfect_substitutes_eq.png)
+![Perfect substitutes indifference curves](https://raw.githubusercontent.com/EconViz/econ-viz/45540774ef9c76db769701cf95fa7d3f8d5ae1d2/perfect_substitutes_eq.png)
 
 ### CES
 
@@ -78,7 +78,7 @@ from econ_viz.models import CES
 model = CES(rho=-0.5, alpha=0.5)   # elasticity of substitution = 1/(1+rho)
 ```
 
-![CES indifference curves](https://raw.githubusercontent.com/EconViz/econ-viz/docs/ces_eq.png)
+![CES indifference curves](https://raw.githubusercontent.com/EconViz/econ-viz/45540774ef9c76db769701cf95fa7d3f8d5ae1d2/ces_eq.png)
 
 ### Satiation (Bliss Point)
 
@@ -88,7 +88,7 @@ from econ_viz.models import Satiation
 model = Satiation(bliss_x=6.0, bliss_y=4.0, a=1.0, b=1.0)
 ```
 
-![Satiation indifference curves](https://raw.githubusercontent.com/EconViz/econ-viz/docs/satiation.png)
+![Satiation indifference curves](https://raw.githubusercontent.com/EconViz/econ-viz/45540774ef9c76db769701cf95fa7d3f8d5ae1d2/satiation.png)
 
 ### Quasi-Linear
 
@@ -99,7 +99,7 @@ from econ_viz.models import QuasiLinear
 model = QuasiLinear(v_func=np.log, linear_in="y")   # U = log(x) + y
 ```
 
-![Quasi-linear indifference curves](https://raw.githubusercontent.com/EconViz/econ-viz/docs/quasi_linear.png)
+![Quasi-linear indifference curves](https://raw.githubusercontent.com/EconViz/econ-viz/45540774ef9c76db769701cf95fa7d3f8d5ae1d2/quasi_linear.png)
 
 ## LaTeX Input
 
@@ -115,7 +115,7 @@ ps  = parse_latex(r"2x + 3y")
 
 The parser accepts common preambles such as `U(x,y) =`, `U =`, and bare expressions. Unrecognised patterns raise `ParseError`.
 
-![Parsed Cobb-Douglas from LaTeX](https://raw.githubusercontent.com/EconViz/econ-viz/docs/latex_cobb_douglas_u.png)
+![Parsed Cobb-Douglas from LaTeX](https://raw.githubusercontent.com/EconViz/econ-viz/45540774ef9c76db769701cf95fa7d3f8d5ae1d2/latex_cobb_douglas_u.png)
 
 ## Advanced Models
 
@@ -130,7 +130,7 @@ from econ_viz.models import CustomUtility
 model = CustomUtility(func=lambda x, y: np.log(x) + np.log(y), name="log+log")
 ```
 
-![Custom utility indifference map](https://raw.githubusercontent.com/EconViz/econ-viz/docs/advanced_custom.png)
+![Custom utility indifference map](https://raw.githubusercontent.com/EconViz/econ-viz/45540774ef9c76db769701cf95fa7d3f8d5ae1d2/advanced_custom.png)
 
 ### Multi-Good Cobb-Douglas
 
@@ -156,7 +156,7 @@ cvs.add_equilibrium(eq)
 cvs.save("multigood.png")
 ```
 
-![Multi-good Cobb-Douglas frozen slice](https://raw.githubusercontent.com/EconViz/econ-viz/docs/advanced_multigd.png)
+![Multi-good Cobb-Douglas frozen slice](https://raw.githubusercontent.com/EconViz/econ-viz/45540774ef9c76db769701cf95fa7d3f8d5ae1d2/advanced_multigd.png)
 
 ## Solving for Equilibrium
 
@@ -181,7 +181,7 @@ cvs = Canvas(x_max=20, y_max=15, theme=themes.nord) # nord theme
 
 | Default | Nord |
 |---------|------|
-| ![Default theme](https://raw.githubusercontent.com/EconViz/econ-viz/docs/theme_default.png) | ![Nord theme](https://raw.githubusercontent.com/EconViz/econ-viz/docs/theme_nord.png) |
+| ![Default theme](https://raw.githubusercontent.com/EconViz/econ-viz/45540774ef9c76db769701cf95fa7d3f8d5ae1d2/theme_default.png) | ![Nord theme](https://raw.githubusercontent.com/EconViz/econ-viz/45540774ef9c76db769701cf95fa7d3f8d5ae1d2/theme_nord.png) |
 
 ## Export
 
