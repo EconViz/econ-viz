@@ -38,3 +38,4 @@ Thumbs.db
 *.svg
 examples/output/*
 !examples/output/.gitkeep
+notebook/
