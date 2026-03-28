@@ -9,7 +9,8 @@ and exposes ``utility_type``, ``ray_slopes``, and ``kink_points`` for
 rendering support.
 """
 
-from .core import CobbDouglas, Leontief, PerfectSubstitutes, CES
+from .core import CobbDouglas, Leontief, PerfectSubstitutes, CES, Satiation, QuasiLinear
+from .advanced import CustomUtility, MultiGoodCD
 from .protocol import UtilityFunction
 
 __all__ = [
@@ -17,5 +18,9 @@ __all__ = [
     "Leontief",
     "PerfectSubstitutes",
     "CES",
+    "Satiation",
+    "QuasiLinear",
+    "CustomUtility",
+    "MultiGoodCD",
     "UtilityFunction",
 ]

@@ -14,7 +14,8 @@ protocol:
 """
 
 import numpy as np
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from typing import Callable
 
 from ..enums import UtilityType
 from ..exceptions import InvalidParameterError
@@ -115,6 +116,122 @@ class PerfectSubstitutes:
     def ray_slopes(self) -> list[float]:
         """Return the MRS-derived slope a/b."""
         return [self.a / self.b]
+
+    def kink_points(self, levels: list[float]) -> list[tuple[float, float]]:
+        return []
+
+
+@dataclass
+class Satiation:
+    """Satiation (bliss-point) utility: U(x, y) = -a(x - x*)^2 - b(y - y*)^2.
+
+    Utility rises as the bundle approaches the bliss point (x*, y*) and falls
+    away from it in all directions.  Indifference curves are closed ellipses
+    centred on the bliss point.
+
+    Parameters
+    ----------
+    bliss_x : float
+        x-coordinate of the bliss point x*.
+    bliss_y : float
+        y-coordinate of the bliss point y*.
+    a : float
+        Curvature (penalty weight) along the x-axis.  Must be positive.
+    b : float
+        Curvature (penalty weight) along the y-axis.  Must be positive.
+    """
+
+    bliss_x: float = 5.0
+    bliss_y: float = 5.0
+    a: float = 1.0
+    b: float = 1.0
+
+    def __post_init__(self) -> None:
+        if self.a <= 0 or self.b <= 0:
+            raise InvalidParameterError("Satiation parameters a and b must be positive.")
+
+    @property
+    def utility_type(self) -> UtilityType:
+        return UtilityType.SMOOTH
+
+    def __call__(self, x, y):
+        return -self.a * (x - self.bliss_x) ** 2 - self.b * (y - self.bliss_y) ** 2
+
+    def ray_slopes(self) -> list[float]:
+        """Return the slope of the ray from origin through the bliss point."""
+        if self.bliss_x == 0:
+            return []
+        return [self.bliss_y / self.bliss_x]
+
+    def kink_points(self, levels: list[float]) -> list[tuple[float, float]]:
+        return []
+
+
+def _validate_v_func(v_func: Callable, name: str = "v_func") -> None:
+    """Check f'(z) > 0 and f''(z) < 0 on z ∈ [0.1, 10] via central differences."""
+    h = 1e-5
+    z = np.linspace(0.1, 10.0, 100)
+
+    with np.errstate(divide="ignore", invalid="ignore"):
+        f_minus = np.asarray(v_func(z - h), dtype=float)
+        f_center = np.asarray(v_func(z), dtype=float)
+        f_plus = np.asarray(v_func(z + h), dtype=float)
+
+    fprime = (f_plus - f_minus) / (2 * h)
+    fdouble = (f_plus - 2 * f_center + f_minus) / (h ** 2)
+
+    if np.any(fprime <= -1e-8):
+        raise ValueError(
+            f"{name}: 違反邊際效用大於零的單調性假設 (f'(z) ≤ 0 detected)."
+        )
+    if np.any(fdouble >= 1e-8):
+        raise ValueError(
+            f"{name}: 違反邊際效用遞減假設 (f''(z) ≥ 0 detected)."
+        )
+
+
+@dataclass
+class QuasiLinear:
+    """Quasi-linear utility: U(x, y) = f(x) + y  or  U(x, y) = x + f(y).
+
+    One good enters linearly; the other enters through a strictly concave,
+    strictly increasing transformation f.  This specification produces
+    indifference curves with the same shape at every income level (no income
+    effect on the non-linear good).
+
+    Parameters
+    ----------
+    v_func : Callable
+        Strictly increasing, strictly concave scalar function f(z).
+        Validated numerically on z ∈ [0.1, 10] via central differences.
+        Defaults to ``numpy.log``.
+    linear_in : {'x', 'y'}
+        Which good enters *linearly*.  Defaults to ``'y'``, giving
+        U(x, y) = f(x) + y.
+    """
+
+    v_func: Callable = field(default=np.log)
+    linear_in: str = "y"
+
+    def __post_init__(self) -> None:
+        if self.linear_in not in ("x", "y"):
+            raise InvalidParameterError("linear_in must be 'x' or 'y'.")
+        _validate_v_func(self.v_func, name="v_func")
+
+    @property
+    def utility_type(self) -> UtilityType:
+        return UtilityType.SMOOTH
+
+    def __call__(self, x, y):
+        if self.linear_in == "y":
+            # U = f(x) + y
+            return self.v_func(x) + y
+        else:
+            # U = x + f(y)
+            return x + self.v_func(y)
+
+    def ray_slopes(self) -> list[float]:
+        return []
 
     def kink_points(self, levels: list[float]) -> list[tuple[float, float]]:
         return []

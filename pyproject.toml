@@ -16,3 +16,21 @@ dependencies = ["numpy (>=2.4.3,<3.0.0)", "matplotlib (>=3.10.8,<4.0.0)", "matpl
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[dependency-groups]
+dev = [
+    "pytest (>=9.0.2,<10.0.0)",
+    "pytest-cov (>=7.1.0,<8.0.0)"
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--cov=econ_viz --cov-report=term-missing --cov-report=html:htmlcov"
+
+[tool.coverage.run]
+source = ["econ_viz"]
+omit = ["econ_viz/logging.py"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
