@@ -8,6 +8,9 @@ Workflow
 3. Show intentional error: freeze leaving ≠ 2 active variables.
 """
 
+import matplotlib
+matplotlib.use("Agg")
+
 import numpy as np
 
 from econ_viz import Canvas, levels, solve

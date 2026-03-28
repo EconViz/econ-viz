@@ -6,6 +6,9 @@ PerfectSubstitutes), which is then used in the standard solve → draw
 workflow.
 """
 
+import matplotlib
+matplotlib.use("Agg")
+
 from econ_viz import Canvas, levels, solve, parse_latex
 
 OUTPUT_DIR = "examples/output"
