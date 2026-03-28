@@ -7,7 +7,7 @@
   <a href="https://pypi.org/project/econ-viz/"><img alt="PyPI" src="https://img.shields.io/pypi/v/econ-viz?style=flat-square&color=181818&labelColor=f3f3f3"></a>
   <a href="https://pypi.org/project/econ-viz/"><img alt="Python" src="https://img.shields.io/pypi/pyversions/econ-viz?style=flat-square&color=181818&labelColor=f3f3f3"></a>
   <a href="https://opensource.org/licenses/MIT"><img alt="License" src="https://img.shields.io/badge/License-MIT-181818?style=flat-square&color=181818&labelColor=f3f3f3"></a>
-  <img alt="Tests" src="https://img.shields.io/badge/tests-183%20passed-181818?style=flat-square&color=181818&labelColor=f3f3f3">
+  <img alt="Tests" src="https://img.shields.io/badge/tests-235%20passed-181818?style=flat-square&color=181818&labelColor=f3f3f3">
   <img alt="Coverage" src="https://img.shields.io/badge/coverage-99%25-181818?style=flat-square&color=181818&labelColor=f3f3f3">
 </p>
 
@@ -177,6 +177,16 @@ model = QuasiLinear(v_func=np.log, linear_in="y")   # U = log(x) + y
 ```
 
 ![Quasi-linear indifference curves](https://raw.githubusercontent.com/EconViz/econ-viz/a8423043789ee7dba19b2d71fa6cc5071601181a/quasi_linear.png)
+
+### Stone-Geary
+
+```python
+from econ_viz.models import StoneGeary
+
+model = StoneGeary(alpha=0.5, beta=0.5, bar_x=2.0, bar_y=2.0)
+```
+
+![Stone-Geary indifference map with subsistence lines](https://raw.githubusercontent.com/EconViz/econ-viz-docs/main/docs/assets/models/stone_geary.png)
 
 ## LaTeX Input
 
