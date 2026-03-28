@@ -33,7 +33,8 @@ print("Initialising Satiation(bliss_x=8, bliss_y=6) ... ", end="")
 satiation = Satiation(bliss_x=8, bliss_y=6, a=1.0, b=1.5)
 print("OK")
 
-cvs = Canvas(x_max=20, y_max=15, x_label="x", y_label="y", title="Satiation")
+cvs = Canvas(x_max=20, y_max=15, x_label="x", y_label="y",
+             title=r"Satiation: $U = -a(x-x^*)^2 - b(y-y^*)^2$")
 cvs.add_utility(satiation, levels=5, show_rays=True)
 cvs.save(f"{OUTPUT_DIR}/satiation.png")
 
@@ -44,7 +45,8 @@ print("Initialising QuasiLinear(v_func=np.log) ... ", end="")
 ql = QuasiLinear(v_func=np.log, linear_in="y")
 print("OK")
 
-cvs = Canvas(x_max=20, y_max=15, x_label="x", y_label="y", title="QuasiLinear (log)")
+cvs = Canvas(x_max=20, y_max=15, x_label="x", y_label="y",
+             title=r"Quasi-Linear: $U = \ln(x) + y$")
 cvs.add_utility(ql, levels=5)
 cvs.save(f"{OUTPUT_DIR}/quasi_linear.png")
 

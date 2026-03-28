@@ -27,7 +27,7 @@ lvls = levels.around(eq.utility, n=5)
 print(f"  equilibrium : x={eq.x:.3f}, y={eq.y:.3f}, U={eq.utility:.4f}")
 
 cvs = Canvas(x_max=20, y_max=15, x_label="x", y_label="y",
-             title="CustomUtility: log(x) + log(y)")
+             title=r"Custom Utility: $\ln(x) + \ln(y)$")
 cvs.add_utility(model, levels=lvls)
 cvs.add_budget(px, py, income, fill=True)
 cvs.add_equilibrium(eq, show_ray=True)
