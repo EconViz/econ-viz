@@ -38,6 +38,71 @@ cvs.save("cobb_douglas.png")
 
 ![Cobb-Douglas indifference map with budget line and equilibrium point](https://raw.githubusercontent.com/EconViz/econ-viz/45540774ef9c76db769701cf95fa7d3f8d5ae1d2/cobb_douglas_eq.png)
 
+## CLI
+
+`econ-viz` ships with a command-line interface for generating diagrams without writing Python.
+
+### Commands
+
+| Command | Description |
+|---------|-------------|
+| `econ-viz help [<command>]` | Show help for the CLI or a specific command |
+| `econ-viz models` | List all supported utility models |
+| `econ-viz plot ...` | Generate and export a diagram |
+
+### Examples
+
+```bash
+# Cobb-Douglas with equilibrium and budget line
+econ-viz plot --model cobb-douglas --alpha 0.5 --beta 0.5 \
+              --px 2 --py 3 --income 30 \
+              --output cobb_douglas.png
+
+# Parse a LaTeX expression directly
+econ-viz plot --latex "x^{0.4} y^{0.6}" \
+              --px 2 --py 3 --income 30 \
+              --output cd_latex.png
+
+# Leontief with Nord theme and expansion-path ray
+econ-viz plot --model leontief --a 1 --b 2 \
+              --px 2 --py 3 --income 30 \
+              --theme nord --show-ray \
+              --output leontief.png
+
+# CES — indifference curves only, no budget or equilibrium
+econ-viz plot --model ces --rho -0.5 \
+              --x-max 20 --y-max 15 --n-curves 6 \
+              --no-budget --no-equilibrium \
+              --output ces.png
+
+# Omit --output to open an interactive window
+econ-viz plot --model cobb-douglas --px 2 --py 3 --income 30
+```
+
+### `plot` options
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--model`, `-m` | — | Model name (see `econ-viz models`) |
+| `--latex`, `-l` | — | LaTeX expression (Cobb-Douglas / Leontief / Perfect Substitutes) |
+| `--px`, `--py`, `--income` | — | Prices and budget |
+| `--alpha`, `--beta` | 0.5 | Cobb-Douglas / CES share parameters |
+| `--a`, `--b` | 1.0 | Leontief / Perfect Substitutes / Satiation coefficients |
+| `--rho` | 0.5 | CES substitution parameter |
+| `--bliss-x`, `--bliss-y` | 5.0 | Satiation bliss point |
+| `--x-max`, `--y-max` | 10 | Canvas axis limits |
+| `--x-label`, `--y-label` | `x`, `y` | Axis labels |
+| `--title` | — | Figure title |
+| `--theme` | `default` | Colour theme: `default`, `nord` |
+| `--n-curves` | 5 | Number of indifference curves |
+| `--dpi` | 300 | Raster output resolution |
+| `--fill` | off | Shade feasible set below the budget line |
+| `--show-ray` | off | Draw expansion-path ray through the optimum |
+| `--no-budget` | off | Omit the budget line |
+| `--no-equilibrium` | off | Omit the equilibrium point |
+| `--no-curves` | off | Omit indifference curves |
+| `--output`, `-o` | — | Output file; omit to open an interactive window |
+
 ## Utility Models
 
 ### Cobb-Douglas
