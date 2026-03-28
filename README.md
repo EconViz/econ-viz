@@ -1,4 +1,8 @@
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/EconViz/econ-viz-docs/main/docs/assets/banner.svg" alt="Econ-Viz" width="480">
+</p>
+
 # econ-viz
 
 [![PyPI version](https://img.shields.io/pypi/v/econ-viz.svg)](https://pypi.org/project/econ-viz/)
