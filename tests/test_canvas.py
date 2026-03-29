@@ -277,3 +277,55 @@ class TestComponents:
     def test_draw_ray_steep_clips_to_y_max(self):
         """A slope steep enough to exceed y_max must be clipped correctly."""
         draw_ray(self.ax, slope=10.0, x_max=10, y_max=10, color="black", linewidth=0.8)
+
+
+class TestLegendAndICLabels:
+    """Tests for Canvas legend support and right-side IC labels (#11)."""
+
+    def setup_method(self):
+        self.cvs = Canvas(x_max=10, y_max=10)
+
+    def test_add_utility_with_label_registers_handle(self):
+        self.cvs.add_utility(CobbDouglas(), levels=2, label="$U_1$")
+        assert len(self.cvs._legend_handles) == 1
+        assert self.cvs._legend_handles[0].get_label() == "$U_1$"
+
+    def test_add_utility_without_label_no_handle(self):
+        self.cvs.add_utility(CobbDouglas(), levels=2)
+        assert len(self.cvs._legend_handles) == 0
+
+    def test_multiple_labels_accumulate(self):
+        self.cvs.add_utility(CobbDouglas(), levels=2, label="$U_A$")
+        self.cvs.add_utility(CobbDouglas(alpha=0.3, beta=0.7), levels=2, label="$U_B$")
+        assert len(self.cvs._legend_handles) == 2
+
+    def test_show_legend_returns_canvas(self):
+        self.cvs.add_utility(CobbDouglas(), levels=2, label="$U_1$")
+        result = self.cvs.show_legend()
+        assert result is self.cvs
+
+    def test_show_legend_creates_legend_object(self):
+        self.cvs.add_utility(CobbDouglas(), levels=2, label="$U_1$")
+        self.cvs.show_legend()
+        assert self.cvs.ax.get_legend() is not None
+
+    def test_show_legend_no_labels_no_legend(self):
+        self.cvs.add_utility(CobbDouglas(), levels=2)
+        self.cvs.show_legend()
+        assert self.cvs.ax.get_legend() is None
+
+    def test_show_ic_labels_does_not_raise(self):
+        """IC labels must render without error."""
+        self.cvs.add_utility(CobbDouglas(), levels=3, show_ic_labels=True)
+
+    def test_show_ic_labels_custom_fmt(self):
+        self.cvs.add_utility(CobbDouglas(), levels=2, show_ic_labels=True,
+                              ic_label_fmt="{:.3f}")
+
+    def test_chaining_with_legend(self):
+        result = (
+            self.cvs
+            .add_utility(CobbDouglas(), levels=2, label="$U_1$")
+            .show_legend()
+        )
+        assert result is self.cvs

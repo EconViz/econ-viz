@@ -13,6 +13,7 @@ from econ_viz.models import (
     Satiation,
     QuasiLinear,
     StoneGeary,
+    Translog,
 )
 
 
@@ -278,15 +279,76 @@ class TestQuasiLinear:
 
     def test_convex_v_func_raises(self):
         """z**2 has f'' > 0 — must be rejected as non-concave."""
-        with pytest.raises(ValueError, match="遞減"):
+        with pytest.raises(ValueError, match="diminishing marginal utility violated"):
             QuasiLinear(v_func=lambda z: z ** 2)
 
     def test_decreasing_v_func_raises(self):
         """A decreasing function violates the monotonicity assumption."""
-        with pytest.raises(ValueError, match="單調性"):
+        with pytest.raises(ValueError, match="monotonicity violated"):
             QuasiLinear(v_func=lambda z: -z)
 
     def test_custom_concave_func(self):
         """sqrt is valid: f' > 0 and f'' < 0 everywhere."""
         ql = QuasiLinear(v_func=np.sqrt)
         assert ql(4.0, 1.0) == pytest.approx(3.0)
+
+
+class TestTranslog:
+    """Unit tests for the Translog utility model."""
+
+    def test_reduces_to_cobb_douglas(self):
+        """With all beta=0 and alpha_0=0, Translog = x^alpha_x * y^alpha_y."""
+        tl = Translog(alpha_x=0.4, alpha_y=0.6)
+        cd = CobbDouglas(alpha=0.4, beta=0.6)
+        assert tl(3.0, 5.0) == pytest.approx(cd(3.0, 5.0), rel=1e-6)
+
+    def test_scalar_positive(self):
+        tl = Translog(alpha_x=0.5, alpha_y=0.5)
+        assert tl(2.0, 3.0) > 0
+
+    def test_array_input(self):
+        tl = Translog(alpha_x=0.5, alpha_y=0.5)
+        x = np.array([1.0, 2.0, 3.0])
+        y = np.array([1.0, 2.0, 3.0])
+        result = tl(x, y)
+        assert result.shape == (3,)
+        assert np.all(result > 0)
+
+    def test_alpha_0_scales_utility(self):
+        """alpha_0 > 0 multiplies utility by exp(alpha_0)."""
+        tl0 = Translog(alpha_x=0.5, alpha_y=0.5, alpha_0=0.0)
+        tl1 = Translog(alpha_x=0.5, alpha_y=0.5, alpha_0=1.0)
+        assert tl1(2.0, 3.0) == pytest.approx(tl0(2.0, 3.0) * np.e, rel=1e-6)
+
+    def test_beta_xx_increases_curvature(self):
+        """Positive beta_xx increases utility when ln(x) > 0 (x > 1)."""
+        tl_flat = Translog(alpha_x=0.5, alpha_y=0.5, beta_xx=0.0)
+        tl_curved = Translog(alpha_x=0.5, alpha_y=0.5, beta_xx=0.2)
+        # At x=3 > 1: ln(3)>0, so positive beta_xx increases utility
+        assert tl_curved(3.0, 2.0) > tl_flat(3.0, 2.0)
+
+    def test_utility_type_smooth(self):
+        assert Translog().utility_type is UtilityType.SMOOTH
+
+    def test_ray_slopes_empty(self):
+        assert Translog().ray_slopes() == []
+
+    def test_kink_points_empty(self):
+        assert Translog().kink_points([1.0, 2.0]) == []
+
+    def test_invalid_alpha_x(self):
+        with pytest.raises(InvalidParameterError):
+            Translog(alpha_x=0.0, alpha_y=0.5)
+
+    def test_invalid_alpha_y(self):
+        with pytest.raises(InvalidParameterError):
+            Translog(alpha_x=0.5, alpha_y=-0.1)
+
+    def test_defaults(self):
+        tl = Translog()
+        assert tl.alpha_x == 0.5
+        assert tl.alpha_y == 0.5
+        assert tl.beta_xx == 0.0
+        assert tl.beta_yy == 0.0
+        assert tl.beta_xy == 0.0
+        assert tl.alpha_0 == 0.0

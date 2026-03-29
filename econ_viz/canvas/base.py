@@ -109,6 +109,7 @@ class Canvas:
         self.theme = theme
 
         self.fig, self.ax = plt.subplots(figsize=(6, 6))
+        self._legend_handles: list = []
         self._apply_base_style()
         logger.debug("Canvas created: x_max=%s, y_max=%s, dpi=%s, theme=%s",
                      x_max, y_max, self.dpi, theme.name)
@@ -186,6 +187,9 @@ class Canvas:
         show_kinks: bool = False,
         kink_radius: float = 1.0,
         show_bliss: bool = True,
+        label: str | None = None,
+        show_ic_labels: bool = False,
+        ic_label_fmt: str = "{:.2g}",
         **kwargs,
     ) -> Canvas:
         """Add indifference curves for a given utility function.
@@ -215,6 +219,14 @@ class Canvas:
             If ``True`` (default) and *func* has ``bliss_x`` / ``bliss_y``
             attributes (i.e. a :class:`~econ_viz.models.Satiation` model),
             draw a star marker at the bliss point.
+        label : str or None
+            Legend label for this indifference curve family.  Appears in the
+            legend when :meth:`show_legend` is called.
+        show_ic_labels : bool
+            If ``True``, place a small text label at the right end of each
+            indifference curve showing its utility level.
+        ic_label_fmt : str
+            Python format string for the level value (default ``"{:.2g}"``).
         **kwargs
             Forwarded to :meth:`matplotlib.axes.Axes.contour`.
 
@@ -234,8 +246,13 @@ class Canvas:
             show_kinks=show_kinks,
             kink_color=t.kink_color,
             kink_radius=kink_radius,
+            label=label,
+            show_ic_labels=show_ic_labels,
+            ic_label_fmt=ic_label_fmt,
         )
         ic.draw(self.ax, self.x_max, self.y_max, **kwargs)
+        if ic._proxy is not None:
+            self._legend_handles.append(ic._proxy)
         if show_bliss and hasattr(func, "bliss_x") and hasattr(func, "bliss_y"):
             c = color or t.ic_color
             self.ax.plot(
@@ -421,6 +438,33 @@ class Canvas:
                 textcoords="offset points", xytext=offset,
                 fontsize=12, color=c,
             )
+        return self
+
+    def show_legend(self, **kwargs) -> Canvas:
+        """Render a legend for all labelled layers.
+
+        Collects proxy artists registered by :meth:`add_utility`,
+        :meth:`add_budget` (when a *label* is supplied), and any future
+        labelled layers, then delegates to :meth:`matplotlib.axes.Axes.legend`.
+
+        Parameters
+        ----------
+        **kwargs
+            Forwarded to :meth:`matplotlib.axes.Axes.legend`.  Common options:
+            ``loc``, ``frameon``, ``fontsize``.
+
+        Returns
+        -------
+        Canvas
+            *self*, to allow method chaining.
+        """
+        budget_handles, budget_labels = self.ax.get_legend_handles_labels()
+        all_handles = self._legend_handles + budget_handles
+        if all_handles:
+            all_labels = [h.get_label() for h in self._legend_handles] + budget_labels
+            kwargs.setdefault("frameon", False)
+            kwargs.setdefault("fontsize", 11)
+            self.ax.legend(handles=all_handles, labels=all_labels, **kwargs)
         return self
 
     # ------------------------------------------------------------------
