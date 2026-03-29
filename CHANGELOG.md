@@ -2,6 +2,17 @@
 
 <!-- version list -->
 
+## v1.0.2 (2026-03-29)
+
+### Bug Fixes
+
+- Prevent double-wrap of math axis labels (closes #2)
+  ([`7ee20a2`](https://github.com/EconViz/econ-viz/commit/7ee20a2b79e64f399d65c161a9776259a7dde092))
+
+- Remove numpy upper bound to prevent Colab environment conflicts
+  ([`b2e977f`](https://github.com/EconViz/econ-viz/commit/b2e977fbc58423ff4e63fd9846d404d236fb2347))
+
+
 ## v1.0.1 (2026-03-29)
 
 ### Bug Fixes
