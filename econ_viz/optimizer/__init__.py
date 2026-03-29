@@ -8,5 +8,6 @@ that the :class:`~econ_viz.canvas.base.Canvas` can render directly.
 """
 
 from .solver import Equilibrium, solve
+from .statics import ComparativeStatics, comparative_statics
 
-__all__ = ["Equilibrium", "solve"]
+__all__ = ["Equilibrium", "solve", "ComparativeStatics", "comparative_statics"]
