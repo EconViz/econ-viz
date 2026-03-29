@@ -33,6 +33,12 @@ _DEFAULT_DPI = 300
 _MATH_CHARS = {"^", "_", "{", "}", "\\"}
 
 
+def _label_math(text: str) -> str:
+    if text.startswith("$") and text.endswith("$") and len(text) >= 2:
+        return text
+    return rf"${text}$"
+
+
 def _math_wrap(text: str) -> str:
     """Wrap substrings containing LaTeX math characters in ``$...$``.
 
@@ -126,21 +132,21 @@ class Canvas:
         if self.x_label_pos == "right":
             self.ax.text(
                 self.x_max, -self.y_max * 0.03,
-                rf"${self.x_label}$", ha="center", va="top",
+                _label_math(self.x_label), ha="center", va="top",
                 fontsize=14, color=t.label_color,
             )
         else:  # bottom
-            self.ax.set_xlabel(rf"${self.x_label}$", fontsize=14, color=t.label_color)
+            self.ax.set_xlabel(_label_math(self.x_label), fontsize=14, color=t.label_color)
 
         # Y-axis label
         if self.y_label_pos == "top":
             self.ax.text(
                 -self.x_max * 0.03, self.y_max,
-                rf"${self.y_label}$", ha="right", va="center",
+                _label_math(self.y_label), ha="right", va="center",
                 fontsize=14, color=t.label_color,
             )
         else:  # left
-            self.ax.set_ylabel(rf"${self.y_label}$", fontsize=14,
+            self.ax.set_ylabel(_label_math(self.y_label), fontsize=14,
                                rotation=0, color=t.label_color)
 
         # Origin label
