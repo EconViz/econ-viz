@@ -11,7 +11,7 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
-dependencies = ["numpy (>=1.24.0,<2.0.0)", "matplotlib (>=3.6.0,<4.0.0)", "matplot2tikz (>=0.5.4,<0.6.0)", "scipy (>=1.13.0,<2.0.0)", "sympy (>=1.12.0,<2.0.0)"]
+dependencies = ["numpy (>=1.24.0)", "matplotlib (>=3.6.0,<4.0.0)", "matplot2tikz (>=0.5.4,<0.6.0)", "scipy (>=1.13.0,<2.0.0)", "sympy (>=1.12.0,<2.0.0)"]
 
 [project.scripts]
 econ-viz = "econ_viz.cli:main"
