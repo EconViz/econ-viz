@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
   test:
@@ -30,6 +33,7 @@ jobs:
     name: Release & publish
     runs-on: ubuntu-latest
     needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     environment: pypi
     permissions:
       id-token: write   # PyPI Trusted Publisher
