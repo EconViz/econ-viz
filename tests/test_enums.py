@@ -18,15 +18,16 @@ class TestExportFormat:
     def test_from_path_svg(self):
         assert ExportFormat.from_path("chart.svg") is ExportFormat.SVG
 
-    def test_from_path_tex(self):
-        assert ExportFormat.from_path("diagram.tex") is ExportFormat.TEX
-
     def test_from_path_uppercase(self):
         assert ExportFormat.from_path("fig.PNG") is ExportFormat.PNG
 
     def test_from_path_unknown_raises(self):
         with pytest.raises(ExportError, match="Unsupported"):
             ExportFormat.from_path("figure.bmp")
+
+    def test_from_path_tex_raises(self):
+        with pytest.raises(ExportError, match="Unsupported"):
+            ExportFormat.from_path("diagram.tex")
 
     def test_from_path_no_extension_raises(self):
         with pytest.raises(ExportError):

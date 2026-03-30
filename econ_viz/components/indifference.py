@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import numpy as np
+
 from ..enums import UtilityType
 from ..logging import get_logger
 
@@ -43,6 +45,9 @@ class IndifferenceCurves:
         show_kinks: bool = False,
         kink_color: str = "black",
         kink_radius: float = 1.0,
+        label: str | None = None,
+        show_ic_labels: bool = False,
+        ic_label_fmt: str = "{:.2g}",
     ):
         self.func = func
         self.levels = levels
@@ -54,6 +59,9 @@ class IndifferenceCurves:
         self.show_kinks = show_kinks
         self.kink_color = kink_color
         self.kink_radius = kink_radius
+        self.label = label
+        self.show_ic_labels = show_ic_labels
+        self.ic_label_fmt = ic_label_fmt
 
     def draw(self, ax, x_max: float, y_max: float, **kwargs) -> list[float]:
         """Draw curves onto *ax* and return the computed contour levels."""
@@ -70,10 +78,39 @@ class IndifferenceCurves:
 
         logger.debug("Drawing contours at levels: %s", computed)
 
-        ax.contour(
+        cs = ax.contour(
             X, Y, Z, levels=computed,
             colors=self.color, linewidths=self.linewidth, **kwargs,
         )
+
+        if self.label is not None:
+            import matplotlib.lines as mlines
+            self._proxy = mlines.Line2D(
+                [], [], color=self.color, linewidth=self.linewidth, label=self.label
+            )
+        else:
+            self._proxy = None
+
+        if self.show_ic_labels:
+            for level, segs in zip(computed, cs.allsegs):
+                best_x, best_y = -1.0, None
+                for seg in segs:
+                    if len(seg) == 0:
+                        continue
+                    mask = (seg[:, 0] < x_max * 0.97) & (seg[:, 1] < y_max * 0.97)
+                    seg = seg[mask]
+                    if len(seg) == 0:
+                        continue
+                    idx = np.argmax(seg[:, 0])
+                    if seg[idx, 0] > best_x:
+                        best_x, best_y = seg[idx, 0], seg[idx, 1]
+                if best_y is not None:
+                    ax.text(
+                        best_x + x_max * 0.01, best_y,
+                        self.ic_label_fmt.format(level),
+                        color=self.color, fontsize=9, va="center",
+                        clip_on=True,
+                    )
 
         if self.show_rays and hasattr(self.func, "utility_type"):
             if self.func.utility_type is UtilityType.KINKED:

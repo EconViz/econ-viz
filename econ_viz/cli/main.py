@@ -95,7 +95,7 @@ def _register_plot(sub) -> argparse.ArgumentParser:
     p.add_argument("--no-curves",      dest="no_curves",      action="store_true", help="Omit indifference curves.")
 
     p.add_argument("--output", "-o", metavar="FILE",
-                   help="Output file (.png, .pdf, .svg, .tex). Omit to display interactively.")
+                   help="Output file (.png, .pdf, .svg). Omit to display interactively.")
 
     return p
 

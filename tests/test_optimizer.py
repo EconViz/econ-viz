@@ -5,7 +5,7 @@ import pytest
 
 from econ_viz.exceptions import InvalidParameterError, OptimizationError
 from econ_viz.models import CobbDouglas, Leontief, PerfectSubstitutes, CES, QuasiLinear, StoneGeary
-from econ_viz.optimizer import Equilibrium, solve
+from econ_viz.optimizer import Equilibrium, solve, ComparativeStatics, comparative_statics
 
 
 def _on_budget(eq: Equilibrium, px, py, income, rtol=1e-4):
@@ -347,3 +347,162 @@ class TestSolvePerfectSubstitutesAnalytic:
         else:
             assert eq.x == pytest.approx(0.0, abs=1e-9)
             assert eq.y == pytest.approx(income / py, rel=1e-4)
+
+
+class TestComparativeStaticsCobbDouglas:
+    """Verify numerical derivatives against Cobb-Douglas closed-form expressions.
+
+    Analytic Marshallian demands for CD(α, β) with α+β normalised:
+        x* = α/(α+β) · I/pₓ
+        y* = β/(α+β) · I/pᵧ
+
+    Partial derivatives:
+        ∂x*/∂pₓ = -α/(α+β) · I/pₓ²    ∂x*/∂pᵧ = 0       ∂x*/∂I = α/(α+β)/pₓ
+        ∂y*/∂pₓ = 0                    ∂y*/∂pᵧ = -β/(α+β)·I/pᵧ²  ∂y*/∂I = β/(α+β)/pᵧ
+    """
+
+    def setup_method(self):
+        self.alpha, self.beta = 0.4, 0.6
+        self.model = CobbDouglas(alpha=self.alpha, beta=self.beta)
+        self.px, self.py, self.income = 2.0, 3.0, 60.0
+        self.cs = comparative_statics(self.model, self.px, self.py, self.income)
+        s = self.alpha + self.beta
+        self._dx_dpx = -(self.alpha / s) * self.income / self.px ** 2
+        self._dx_dpy = 0.0
+        self._dx_dI  = (self.alpha / s) / self.px
+        self._dy_dpx = 0.0
+        self._dy_dpy = -(self.beta  / s) * self.income / self.py ** 2
+        self._dy_dI  = (self.beta  / s) / self.py
+
+    def test_dx_dpx(self):
+        assert self.cs.dx_dpx == pytest.approx(self._dx_dpx, rel=2e-2)
+
+    def test_dx_dpy(self):
+        assert self.cs.dx_dpy == pytest.approx(self._dx_dpy, abs=1e-3)
+
+    def test_dx_dI(self):
+        assert self.cs.dx_dI == pytest.approx(self._dx_dI, rel=2e-2)
+
+    def test_dy_dpx(self):
+        assert self.cs.dy_dpx == pytest.approx(self._dy_dpx, abs=1e-3)
+
+    def test_dy_dpy(self):
+        assert self.cs.dy_dpy == pytest.approx(self._dy_dpy, rel=2e-2)
+
+    def test_dy_dI(self):
+        assert self.cs.dy_dI == pytest.approx(self._dy_dI, rel=2e-2)
+
+    def test_returns_comparative_statics_instance(self):
+        assert isinstance(self.cs, ComparativeStatics)
+
+    def test_frozen(self):
+        with pytest.raises(Exception):
+            self.cs.dx_dpx = 0.0
+
+
+class TestComparativeStaticsPerfectSubstitutes:
+    """Corner-solution comparative statics for perfect substitutes.
+
+    With a=3, b=1, pₓ=1, pᵧ=3 the consumer spends everything on x:
+        x* = I/pₓ  →  ∂x*/∂pₓ = -I/pₓ², ∂x*/∂pᵧ = 0, ∂x*/∂I = 1/pₓ
+        y* = 0      →  all y-derivatives ≈ 0
+    """
+
+    def setup_method(self):
+        self.model = PerfectSubstitutes(a=3.0, b=1.0)
+        self.px, self.py, self.income = 1.0, 3.0, 9.0
+        self.cs = comparative_statics(self.model, self.px, self.py, self.income)
+
+    def test_dx_dpx_negative(self):
+        expected = -self.income / self.px ** 2
+        assert self.cs.dx_dpx == pytest.approx(expected, rel=1e-3)
+
+    def test_dx_dI_positive(self):
+        expected = 1.0 / self.px
+        assert self.cs.dx_dI == pytest.approx(expected, rel=1e-3)
+
+    def test_dy_dI_near_zero(self):
+        assert abs(self.cs.dy_dI) < 1e-4
+
+
+class TestComparativeStaticsLeontief:
+    """Leontief comparative statics via the analytic kink-solution path.
+
+    Marshallian demands:  x* = I/(pₓ + a/b·pᵧ),  y* = a/b·x*
+
+    With a=b=1: x* = I/(pₓ+pᵧ), y* = I/(pₓ+pᵧ)
+        ∂x*/∂pₓ = -I/(pₓ+pᵧ)²
+        ∂x*/∂I  =  1/(pₓ+pᵧ)
+    """
+
+    def setup_method(self):
+        self.model = Leontief(a=1.0, b=1.0)
+        self.px, self.py, self.income = 2.0, 3.0, 30.0
+        self.cs = comparative_statics(self.model, self.px, self.py, self.income)
+        denom = self.px + self.py
+        self._dx_dpx = -self.income / denom ** 2
+        self._dx_dI  =  1.0 / denom
+
+    def test_dx_dpx(self):
+        assert self.cs.dx_dpx == pytest.approx(self._dx_dpx, rel=2e-2)
+
+    def test_dx_dI(self):
+        assert self.cs.dx_dI == pytest.approx(self._dx_dI, rel=2e-2)
+
+
+class TestComparativeStaticsInvalidParams:
+    """Parameter validation in comparative_statics()."""
+
+    def test_zero_px(self):
+        with pytest.raises(InvalidParameterError):
+            comparative_statics(CobbDouglas(), px=0.0, py=1.0, income=10.0)
+
+    def test_negative_py(self):
+        with pytest.raises(InvalidParameterError):
+            comparative_statics(CobbDouglas(), px=1.0, py=-1.0, income=10.0)
+
+    def test_zero_income(self):
+        with pytest.raises(InvalidParameterError):
+            comparative_statics(CobbDouglas(), px=1.0, py=1.0, income=0.0)
+
+
+class TestComparativeStaticsSignWarnings:
+    """UserWarning is emitted for economically anomalous signs."""
+
+    def test_giffen_good_warns(self):
+        """A model with upward-sloping demand must trigger a UserWarning."""
+        class GiffenX:
+            """Toy model where x* rises with pₓ (pathological)."""
+            from econ_viz.enums import UtilityType as _UT
+            utility_type = _UT.SMOOTH
+
+            def __call__(self, x, y):
+                # x demand = pₓ*I so derivative is positive — purely for testing
+                return float(x * y)
+
+            def ray_slopes(self):
+                return []
+
+            def kink_points(self, levels):
+                return []
+
+            def lower_bounds(self):
+                return (0.0, 0.0)
+
+        # Patch solve to return a Giffen-like pattern
+        import econ_viz.optimizer.statics as statics_mod
+        original_solve = statics_mod.solve
+
+        call_count = [0]
+
+        def fake_solve(func, px, py, income):
+            call_count[0] += 1
+            # Make x* increase with pₓ by returning x = pₓ * 2
+            return Equilibrium(x=px * 2, y=1.0, utility=1.0, bundle_type="interior")
+
+        statics_mod.solve = fake_solve
+        try:
+            with pytest.warns(UserWarning, match="Giffen"):
+                comparative_statics(GiffenX(), px=2.0, py=1.0, income=10.0)
+        finally:
+            statics_mod.solve = original_solve

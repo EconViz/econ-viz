@@ -11,6 +11,17 @@ protocol:
 * **ray_slopes()** — slopes for economically meaningful rays from the origin.
 * **kink_points(levels)** — coordinates of non-differentiable kink points on
   specified contour levels (non-empty only for ``KINKED`` preferences).
+
+Class order
+-----------
+1. CobbDouglas      — workhorse smooth preferences
+2. CES              — generalises Cobb-Douglas via substitution parameter
+3. PerfectSubstitutes — linear (rho=1 limit of CES)
+4. Leontief         — kinked (rho=-inf limit of CES)
+5. Translog         — flexible second-order log approximation
+6. QuasiLinear      — one linear good, no income effect
+7. StoneGeary       — subsistence extension of Cobb-Douglas
+8. Satiation        — bliss-point / non-monotone preferences
 """
 
 import numpy as np
@@ -55,37 +66,59 @@ class CobbDouglas:
 
 
 @dataclass
-class Leontief:
-    """Leontief (perfect complements) utility: U(x, y) = min(ax, by).
+class CES:
+    """Constant Elasticity of Substitution utility:
 
-    Indifference curves exhibit right-angle kinks along the ray y = (a/b)x.
-    At utility level U, the kink occurs at (U/a, U/b).
+    U(x, y) = (alpha * x^rho + beta * y^rho)^{1/rho}
+
+    The elasticity of substitution is sigma = 1/(1 - rho). Special cases:
+
+    * rho -> 0  : Cobb-Douglas
+    * rho -> -inf : Leontief
+    * rho = 1    : perfect substitutes
+
+    The equal-price expansion path has slope (alpha/beta)^{1/(1-rho)}.
 
     Parameters
     ----------
-    a : float
-        Coefficient on good *x*.
-    b : float
-        Coefficient on good *y*.
+    alpha : float
+        Share parameter for good *x*.
+    beta : float
+        Share parameter for good *y*.
+    rho : float
+        Substitution parameter. Must not equal 1 (use
+        :class:`PerfectSubstitutes` instead).
     """
 
-    a: float = 1.0
-    b: float = 1.0
+    alpha: float = 0.5
+    beta: float = 0.5
+    rho: float = 0.5
 
     @property
     def utility_type(self) -> UtilityType:
-        return UtilityType.KINKED
+        return UtilityType.SMOOTH
 
     def __call__(self, x, y):
-        return np.minimum(self.a * x, self.b * y)
+        return (self.alpha * x ** self.rho + self.beta * y ** self.rho) ** (1 / self.rho)
 
     def ray_slopes(self) -> list[float]:
-        """Return the kink-locus slope a/b."""
-        return [self.a / self.b]
+        """Return the expansion-path slope (alpha/beta)^{1/(1-rho)}.
+
+        Falls back to beta/alpha (Cobb-Douglas limit) when rho is near zero,
+        and raises ValueError when rho equals 1.
+        """
+        if abs(self.rho - 1.0) < 1e-9:
+            raise InvalidParameterError(
+                "CES with rho=1 is equivalent to perfect substitutes; "
+                "use PerfectSubstitutes instead."
+            )
+        if abs(self.rho) < 1e-9:
+            # Cobb-Douglas limit: slope = beta / alpha
+            return [self.beta / self.alpha]
+        return [(self.alpha / self.beta) ** (1 / (1 - self.rho))]
 
     def kink_points(self, levels: list[float]) -> list[tuple[float, float]]:
-        """Return kink vertices (U/a, U/b) for each contour level."""
-        return [(u / self.a, u / self.b) for u in levels]
+        return []
 
 
 @dataclass
@@ -122,53 +155,111 @@ class PerfectSubstitutes:
 
 
 @dataclass
-class Satiation:
-    """Satiation (bliss-point) utility: U(x, y) = -a(x - x*)^2 - b(y - y*)^2.
+class Leontief:
+    """Leontief (perfect complements) utility: U(x, y) = min(ax, by).
 
-    Utility rises as the bundle approaches the bliss point (x*, y*) and falls
-    away from it in all directions.  Indifference curves are closed ellipses
-    centred on the bliss point.
+    Indifference curves exhibit right-angle kinks along the ray y = (a/b)x.
+    At utility level U, the kink occurs at (U/a, U/b).
 
     Parameters
     ----------
-    bliss_x : float
-        x-coordinate of the bliss point x*.
-    bliss_y : float
-        y-coordinate of the bliss point y*.
     a : float
-        Curvature (penalty weight) along the x-axis.  Must be positive.
+        Coefficient on good *x*.
     b : float
-        Curvature (penalty weight) along the y-axis.  Must be positive.
+        Coefficient on good *y*.
     """
 
-    bliss_x: float = 5.0
-    bliss_y: float = 5.0
     a: float = 1.0
     b: float = 1.0
 
+    @property
+    def utility_type(self) -> UtilityType:
+        return UtilityType.KINKED
+
+    def __call__(self, x, y):
+        return np.minimum(self.a * x, self.b * y)
+
+    def ray_slopes(self) -> list[float]:
+        """Return the kink-locus slope a/b."""
+        return [self.a / self.b]
+
+    def kink_points(self, levels: list[float]) -> list[tuple[float, float]]:
+        """Return kink vertices (U/a, U/b) for each contour level."""
+        return [(u / self.a, u / self.b) for u in levels]
+
+
+@dataclass
+class Translog:
+    """Transcendental logarithmic utility function.
+
+    The *translog* specification is a flexible second-order approximation to
+    any smooth utility function in log-space:
+
+    .. math::
+
+        \\ln U(x, y) = \\alpha_0
+                     + \\alpha_x \\ln x + \\alpha_y \\ln y
+                     + \\tfrac{1}{2} \\beta_{xx} (\\ln x)^2
+                     + \\tfrac{1}{2} \\beta_{yy} (\\ln y)^2
+                     + \\beta_{xy} \\ln x \\cdot \\ln y
+
+    Setting ``beta_xx = beta_yy = beta_xy = 0`` recovers Cobb-Douglas.
+
+    Parameters
+    ----------
+    alpha_x : float
+        First-order coefficient on :math:`\\ln x`.
+    alpha_y : float
+        First-order coefficient on :math:`\\ln y`.
+    beta_xx : float
+        Second-order own-effect on :math:`\\ln x`.  Default 0.
+    beta_yy : float
+        Second-order own-effect on :math:`\\ln y`.  Default 0.
+    beta_xy : float
+        Cross-effect :math:`\\ln x \\cdot \\ln y`.  Default 0.
+    alpha_0 : float
+        Intercept in log-utility.  Scales the overall utility level.
+    """
+
+    alpha_x: float = 0.5
+    alpha_y: float = 0.5
+    beta_xx: float = 0.0
+    beta_yy: float = 0.0
+    beta_xy: float = 0.0
+    alpha_0: float = 0.0
+
     def __post_init__(self) -> None:
-        if self.a <= 0 or self.b <= 0:
-            raise InvalidParameterError("Satiation parameters a and b must be positive.")
+        if self.alpha_x <= 0 or self.alpha_y <= 0:
+            raise InvalidParameterError(
+                "Translog: alpha_x and alpha_y must be positive."
+            )
 
     @property
     def utility_type(self) -> UtilityType:
         return UtilityType.SMOOTH
 
     def __call__(self, x, y):
-        return -self.a * (x - self.bliss_x) ** 2 - self.b * (y - self.bliss_y) ** 2
+        lx = np.log(x)
+        ly = np.log(y)
+        ln_u = (
+            self.alpha_0
+            + self.alpha_x * lx
+            + self.alpha_y * ly
+            + 0.5 * self.beta_xx * lx ** 2
+            + 0.5 * self.beta_yy * ly ** 2
+            + self.beta_xy * lx * ly
+        )
+        return np.exp(ln_u)
 
     def ray_slopes(self) -> list[float]:
-        """Return the slope of the ray from origin through the bliss point."""
-        if self.bliss_x == 0:
-            return []
-        return [self.bliss_y / self.bliss_x]
+        return []
 
     def kink_points(self, levels: list[float]) -> list[tuple[float, float]]:
         return []
 
 
 def _validate_v_func(v_func: Callable, name: str = "v_func") -> None:
-    """Check f'(z) > 0 and f''(z) < 0 on z ∈ [0.1, 10] via central differences."""
+    """Check f'(z) > 0 and f''(z) < 0 on z in [0.1, 10] via central differences."""
     h = 1e-5
     z = np.linspace(0.1, 10.0, 100)
 
@@ -182,11 +273,11 @@ def _validate_v_func(v_func: Callable, name: str = "v_func") -> None:
 
     if np.any(fprime <= -1e-8):
         raise ValueError(
-            f"{name}: 違反邊際效用大於零的單調性假設 (f'(z) ≤ 0 detected)."
+            f"{name}: monotonicity violated -- f'(z) <= 0 detected."
         )
     if np.any(fdouble >= 1e-8):
         raise ValueError(
-            f"{name}: 違反邊際效用遞減假設 (f''(z) ≥ 0 detected)."
+            f"{name}: diminishing marginal utility violated -- f''(z) >= 0 detected."
         )
 
 
@@ -203,7 +294,7 @@ class QuasiLinear:
     ----------
     v_func : Callable
         Strictly increasing, strictly concave scalar function f(z).
-        Validated numerically on z ∈ [0.1, 10] via central differences.
+        Validated numerically on z in [0.1, 10] via central differences.
         Defaults to ``numpy.log``.
     linear_in : {'x', 'y'}
         Which good enters *linearly*.  Defaults to ``'y'``, giving
@@ -288,7 +379,7 @@ class StoneGeary:
         return float(result) if result.ndim == 0 else result
 
     def lower_bounds(self) -> tuple[float, float]:
-        """Return the minimum feasible (x, y) — the subsistence point."""
+        """Return the minimum feasible (x, y) -- the subsistence point."""
         return (self.bar_x, self.bar_y)
 
     def subsistence_lines(self) -> tuple[float, float]:
@@ -303,56 +394,46 @@ class StoneGeary:
 
 
 @dataclass
-class CES:
-    """Constant Elasticity of Substitution utility:
+class Satiation:
+    """Satiation (bliss-point) utility: U(x, y) = -a(x - x*)^2 - b(y - y*)^2.
 
-    U(x, y) = (alpha * x^rho + beta * y^rho)^{1/rho}
-
-    The elasticity of substitution is sigma = 1/(1 - rho). Special cases:
-
-    * rho -> 0  : Cobb-Douglas
-    * rho -> -inf : Leontief
-    * rho = 1    : perfect substitutes
-
-    The equal-price expansion path has slope (alpha/beta)^{1/(1-rho)}.
+    Utility rises as the bundle approaches the bliss point (x*, y*) and falls
+    away from it in all directions.  Indifference curves are closed ellipses
+    centred on the bliss point.
 
     Parameters
     ----------
-    alpha : float
-        Share parameter for good *x*.
-    beta : float
-        Share parameter for good *y*.
-    rho : float
-        Substitution parameter. Must not equal 1 (use
-        :class:`PerfectSubstitutes` instead).
+    bliss_x : float
+        x-coordinate of the bliss point x*.
+    bliss_y : float
+        y-coordinate of the bliss point y*.
+    a : float
+        Curvature (penalty weight) along the x-axis.  Must be positive.
+    b : float
+        Curvature (penalty weight) along the y-axis.  Must be positive.
     """
 
-    alpha: float = 0.5
-    beta: float = 0.5
-    rho: float = 0.5
+    bliss_x: float = 5.0
+    bliss_y: float = 5.0
+    a: float = 1.0
+    b: float = 1.0
+
+    def __post_init__(self) -> None:
+        if self.a <= 0 or self.b <= 0:
+            raise InvalidParameterError("Satiation parameters a and b must be positive.")
 
     @property
     def utility_type(self) -> UtilityType:
         return UtilityType.SMOOTH
 
     def __call__(self, x, y):
-        return (self.alpha * x ** self.rho + self.beta * y ** self.rho) ** (1 / self.rho)
+        return -self.a * (x - self.bliss_x) ** 2 - self.b * (y - self.bliss_y) ** 2
 
     def ray_slopes(self) -> list[float]:
-        """Return the expansion-path slope (alpha/beta)^{1/(1-rho)}.
-
-        Falls back to beta/alpha (Cobb-Douglas limit) when rho is near zero,
-        and raises ValueError when rho equals 1.
-        """
-        if abs(self.rho - 1.0) < 1e-9:
-            raise InvalidParameterError(
-                "CES with rho=1 is equivalent to perfect substitutes; "
-                "use PerfectSubstitutes instead."
-            )
-        if abs(self.rho) < 1e-9:
-            # Cobb-Douglas limit: slope = beta / alpha
-            return [self.beta / self.alpha]
-        return [(self.alpha / self.beta) ** (1 / (1 - self.rho))]
+        """Return the slope of the ray from origin through the bliss point."""
+        if self.bliss_x == 0:
+            return []
+        return [self.bliss_y / self.bliss_x]
 
     def kink_points(self, levels: list[float]) -> list[tuple[float, float]]:
         return []
