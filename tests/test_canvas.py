@@ -183,6 +183,10 @@ class TestCanvasSave:
         with pytest.raises(ExportError):
             Canvas().save(str(tmp_path / "fig.bmp"))
 
+    def test_save_tex_raises(self, tmp_path):
+        with pytest.raises(ExportError):
+            Canvas().save(str(tmp_path / "fig.tex"))
+
     def test_save_bad_path_raises(self):
         with pytest.raises(ExportError):
             Canvas().save("/nonexistent_dir/out.png")

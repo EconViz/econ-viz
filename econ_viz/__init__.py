@@ -4,7 +4,7 @@ econ_viz — A toolkit for producing publication-quality economic diagrams.
 This package provides a declarative interface for constructing standard
 microeconomic visualizations (indifference curves, budget constraints, etc.)
 on a configurable canvas. Figures can be exported as raster images or as
-TikZ/PGFPlots source for direct inclusion in LaTeX documents.
+vector graphics for publication and web workflows.
 """
 
 from .canvas.base import Canvas

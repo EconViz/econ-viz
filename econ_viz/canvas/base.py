@@ -13,7 +13,6 @@ defaults and forwards calls.
 from __future__ import annotations
 
 import matplotlib.pyplot as plt
-import matplot2tikz
 
 from typing import Callable
 
@@ -440,7 +439,7 @@ class Canvas:
         Parameters
         ----------
         path : str
-            Destination file path (e.g. ``"plot.png"``, ``"plot.tex"``).
+            Destination file path (e.g. ``"plot.png"``, ``"plot.svg"``).
         **kwargs
             Forwarded to the underlying save function.
         """
@@ -448,16 +447,13 @@ class Canvas:
         logger.info("Exporting figure to %s (format=%s, dpi=%s)", path, fmt.value, self.dpi)
 
         try:
-            if fmt is ExportFormat.TEX:
-                matplot2tikz.save(path, figure=self.fig, **kwargs)
-            else:
-                self.fig.savefig(
-                    path,
-                    dpi=self.dpi,
-                    transparent=True,
-                    bbox_inches="tight",
-                    **kwargs,
-                )
+            self.fig.savefig(
+                path,
+                dpi=self.dpi,
+                transparent=True,
+                bbox_inches="tight",
+                **kwargs,
+            )
         except OSError as exc:
             raise ExportError(f"Failed to write '{path}': {exc}") from exc
         finally:
