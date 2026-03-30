@@ -11,7 +11,7 @@
   <img alt="Coverage" src="https://img.shields.io/badge/coverage-99%25-181818?style=flat-square&color=181818&labelColor=f3f3f3">
 </p>
 
-A Python toolkit for producing publication-quality microeconomics diagrams. Define utility functions declaratively, solve for consumer equilibria, and export figures as raster images or LaTeX/TikZ source — all in a few lines of code.
+A Python toolkit for producing publication-quality microeconomics diagrams. Define utility functions declaratively, solve for consumer equilibria, and export figures as PNG, PDF, or SVG — all in a few lines of code.
 
 <p align="center">
   <a href="https://colab.research.google.com/drive/10SVRHL3UTASF5nKroxzYcsVRC5of7YQD">
@@ -274,7 +274,8 @@ cvs = Canvas(x_max=20, y_max=15, theme=themes.nord) # nord theme
 
 ```python
 cvs.save("figure.png")    # raster (DPI controlled by Canvas(dpi=300))
-cvs.save("figure.tex")    # TikZ/PGFPlots source for LaTeX
+cvs.save("figure.pdf")    # vector export for publication workflows
+cvs.save("figure.svg")    # scalable vector export
 ```
 
 ## License

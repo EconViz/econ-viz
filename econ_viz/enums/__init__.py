@@ -9,5 +9,6 @@ validate export formats at save time.
 
 from .utility import UtilityType
 from .extension import ExportFormat
+from .returns import ReturnsToScale
 
-__all__ = ["UtilityType", "ExportFormat"]
+__all__ = ["UtilityType", "ExportFormat", "ReturnsToScale"]
