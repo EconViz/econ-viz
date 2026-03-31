@@ -21,7 +21,7 @@ from scipy.optimize import minimize
 
 from ..enums import UtilityType
 from ..exceptions import OptimizationError, InvalidParameterError
-from ..logging import get_logger
+from ..utils.logging import get_logger
 
 logger = get_logger(__name__)
 
@@ -127,8 +127,12 @@ def _solve_interior(func, px: float, py: float, income: float) -> Equilibrium:
 
     xr, yr = float(result.x[0]), float(result.x[1])
     u = float(func(xr, yr))
-    logger.debug("Interior solution: x=%.6f, y=%.6f, U=%.6f", xr, yr, u)
-    return Equilibrium(x=xr, y=yr, utility=u, bundle_type="interior")
+    tol = 1e-7
+    at_x_floor = abs(xr - x_floor) <= tol
+    at_y_floor = abs(yr - y_floor) <= tol
+    bundle_type = "boundary" if at_x_floor or at_y_floor else "interior"
+    logger.debug("%s solution: x=%.6f, y=%.6f, U=%.6f", bundle_type.title(), xr, yr, u)
+    return Equilibrium(x=xr, y=yr, utility=u, bundle_type=bundle_type)
 
 
 def _solve_kinked(func, px: float, py: float, income: float) -> Equilibrium:

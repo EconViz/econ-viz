@@ -7,6 +7,7 @@ helper that handles numerical evaluation of contour data.
 """
 
 from .base import Canvas
+from .figure import Figure
 from .layers import Layer
 
-__all__ = ["Canvas", "Layer"]
+__all__ = ["Canvas", "Figure", "Layer"]

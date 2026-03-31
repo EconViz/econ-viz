@@ -6,7 +6,7 @@ matplotlib.use("Agg")
 from econ_viz import Canvas, levels, solve, themes
 from econ_viz.models import CobbDouglas
 
-OUTPUT_DIR = "examples/output"
+OUTPUT_DIR = "examples/output/themes"
 
 model = CobbDouglas(0.5, 0.5)
 px, py, income = 2.0, 3.0, 30.0

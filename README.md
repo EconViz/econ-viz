@@ -48,6 +48,27 @@ cvs.add_equilibrium(eq, show_ray=True)
 cvs.save("cobb_douglas.png")
 ```
 
+Closed-form Marshallian demand in LaTeX text:
+
+```python
+from econ_viz import solution_tex
+from econ_viz.models import CobbDouglas
+
+tex = solution_tex(CobbDouglas(alpha=0.4, beta=0.6))
+# x^* = \frac{0.4}{0.4+0.6} \frac{I}{p_x}, \quad
+# y^* = \frac{0.6}{0.4+0.6} \frac{I}{p_y}
+```
+
+Slutsky matrix:
+
+```python
+from econ_viz import slutsky_matrix
+from econ_viz.models import CobbDouglas
+
+S = slutsky_matrix(CobbDouglas(alpha=0.4, beta=0.6), px=2.0, py=3.0, income=60.0)
+# S.s_xx, S.s_xy, S.s_yx, S.s_yy
+```
+
 ![Cobb-Douglas indifference map with budget line and equilibrium point](https://raw.githubusercontent.com/EconViz/econ-viz/a8423043789ee7dba19b2d71fa6cc5071601181a/cobb_douglas_eq.png)
 
 ## CLI
@@ -61,6 +82,7 @@ cvs.save("cobb_douglas.png")
 | `econ-viz help [<command>]` | Show help for the CLI or a specific command |
 | `econ-viz models` | List all supported utility models |
 | `econ-viz plot ...` | Generate and export a diagram |
+| `econ-viz solve-tex ...` | Print a closed-form Marshallian demand in TeX text |
 
 ### Examples
 
@@ -89,6 +111,12 @@ econ-viz plot --model ces --rho -0.5 \
 
 # Omit --output to open an interactive window
 econ-viz plot --model cobb-douglas --px 2 --py 3 --income 30
+
+# Print a closed-form demand as plain TeX text
+econ-viz solve-tex --model cobb-douglas --alpha 0.4 --beta 0.6
+
+# Print the symbolic-parameter form instead
+econ-viz solve-tex --model cobb-douglas --symbolic-params
 ```
 
 ### `plot` options

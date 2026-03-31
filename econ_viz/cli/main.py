@@ -7,6 +7,7 @@ import argparse
 from .help import cmd_help
 from .models import cmd_models
 from .plot import cmd_plot
+from .solve_tex import cmd_solve_tex
 
 
 def build_parser() -> tuple[argparse.ArgumentParser, dict[str, argparse.ArgumentParser]]:
@@ -31,6 +32,7 @@ def build_parser() -> tuple[argparse.ArgumentParser, dict[str, argparse.Argument
 
     subparsers["models"] = sub.add_parser("models", help="List available utility models.")
     subparsers["plot"]   = _register_plot(sub)
+    subparsers["solve-tex"] = _register_solve_tex(sub)
     subparsers["help"]   = _register_help(sub)
 
     return parser, subparsers
@@ -43,15 +45,12 @@ def _register_help(sub) -> argparse.ArgumentParser:
         "topic",
         nargs="?",
         metavar="<command>",
-        help="Command to get help on: models, plot.",
+        help="Command to get help on: models, plot, solve-tex.",
     )
     return p
 
 
-def _register_plot(sub) -> argparse.ArgumentParser:
-    """Add the ``plot`` sub-command to *sub* and return its parser."""
-    p = sub.add_parser("plot", help="Generate a diagram and save or display it.")
-
+def _add_model_args(p: argparse.ArgumentParser) -> None:
     mgrp = p.add_mutually_exclusive_group()
     mgrp.add_argument(
         "--model", "-m",
@@ -71,6 +70,12 @@ def _register_plot(sub) -> argparse.ArgumentParser:
     p.add_argument("--rho",     type=float, metavar="R", help="Rho parameter (CES).")
     p.add_argument("--bliss-x", dest="bliss_x", type=float, metavar="X", help="Bliss point x (Satiation).")
     p.add_argument("--bliss-y", dest="bliss_y", type=float, metavar="Y", help="Bliss point y (Satiation).")
+
+
+def _register_plot(sub) -> argparse.ArgumentParser:
+    """Add the ``plot`` sub-command to *sub* and return its parser."""
+    p = sub.add_parser("plot", help="Generate a diagram and save or display it.")
+    _add_model_args(p)
 
     p.add_argument("--px",     type=float, metavar="P", help="Price of good x.")
     p.add_argument("--py",     type=float, metavar="P", help="Price of good y.")
@@ -100,6 +105,21 @@ def _register_plot(sub) -> argparse.ArgumentParser:
     return p
 
 
+def _register_solve_tex(sub) -> argparse.ArgumentParser:
+    """Add the ``solve-tex`` sub-command to *sub* and return its parser."""
+    p = sub.add_parser("solve-tex", help="Print a closed-form Marshallian demand as TeX text.")
+    _add_model_args(p)
+    p.add_argument("--px-symbol", default=r"p_x", help=r"Symbol for the price of x (default: p_x).")
+    p.add_argument("--py-symbol", default=r"p_y", help=r"Symbol for the price of y (default: p_y).")
+    p.add_argument("--income-symbol", default="I", help="Symbol for income (default: I).")
+    p.add_argument(
+        "--symbolic-params",
+        action="store_true",
+        help=r"Use symbolic model parameters such as \alpha, \beta, a, b, \bar{x}, \bar{y}.",
+    )
+    return p
+
+
 def main() -> None:
     """Parse CLI arguments and dispatch to the appropriate sub-command."""
     parser, subparsers = build_parser()
@@ -111,3 +131,5 @@ def main() -> None:
         cmd_models(args)
     elif args.command == "plot":
         cmd_plot(args)
+    elif args.command == "solve-tex":
+        cmd_solve_tex(args)

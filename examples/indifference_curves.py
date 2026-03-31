@@ -12,7 +12,7 @@ import numpy as np
 from econ_viz.canvas.base import Canvas
 from econ_viz.models import CobbDouglas, Leontief, PerfectSubstitutes, CES, Satiation, QuasiLinear
 
-OUTPUT_DIR = "examples/output"
+OUTPUT_DIR = "examples/output/models"
 
 # ------------------------------------------------------------------
 # Standard models
