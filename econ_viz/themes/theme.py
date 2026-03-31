@@ -23,6 +23,10 @@ class Theme:
         Default colour for indifference curves.
     ic_linewidth : float
         Default stroke width for indifference curves.
+    path_color : str
+        Default colour for PCC / ICC path lines.
+    path_linewidth : float
+        Default stroke width for PCC / ICC path lines.
     budget_color : str
         Default colour for budget constraint lines.
     budget_linewidth : float
@@ -50,6 +54,10 @@ class Theme:
     # Indifference curves
     ic_color: str = "black"
     ic_linewidth: float = 2.0
+
+    # PCC / ICC paths
+    path_color: str = "#2A9D8F"
+    path_linewidth: float = 2.0
 
     # Budget constraint
     budget_color: str = "blue"

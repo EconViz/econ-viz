@@ -66,6 +66,21 @@ class ConsumptionPath:
         """Return the swept optimal quantities for one good."""
         return self.x_values if axis == "x" else self.y_values
 
+    @property
+    def default_show_points(self) -> bool:
+        """Whether equilibrium dots should be shown by default when plotting."""
+        return False
+
+    @property
+    def default_show_budgets(self) -> bool:
+        """Whether swept budget constraints should be shown by default when plotting."""
+        return False
+
+    @property
+    def default_smooth_curve(self) -> bool:
+        """Whether the plotted path should default to a smooth curve."""
+        return True
+
 
 def _linspace(range_: tuple[float, float], n: int) -> tuple[float, ...]:
     return tuple(float(v) for v in np.linspace(*range_, n))
