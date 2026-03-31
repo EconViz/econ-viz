@@ -9,6 +9,7 @@ nord = Theme(
     axis_color="#2E3440",
     label_color="#2E3440",
     ic_color="#88C0D0",
+    path_color="#A3BE8C",
     budget_color="#5E81AC",
     budget_fill_alpha=0.10,
     eq_color="#BF616A",

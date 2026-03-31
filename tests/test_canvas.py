@@ -8,6 +8,7 @@ import numpy as np
 import pytest
 
 from econ_viz import Canvas
+from econ_viz.consumer.paths import PricePath, LinearBudget
 from econ_viz.canvas.layers import Layer
 from econ_viz.components import IndifferenceCurves, BudgetConstraint, EquilibriumPoint, draw_ray
 from econ_viz.exceptions import ExportError, InvalidParameterError
@@ -159,6 +160,21 @@ class TestCanvasAddRayAndPoint:
 
     def test_add_point_no_label(self):
         Canvas(x_max=10, y_max=10).add_point(2.0, 3.0)
+
+
+class TestCanvasAddPath:
+    """Canvas.add_path() styling and geometry."""
+
+    def test_default_path_color_differs_from_utility_curves(self):
+        budget = LinearBudget(px=2.0, py=2.0, income=40.0)
+        path = PricePath(CobbDouglas(), budget=budget, price="px", price_range=(1.0, 4.0), n=4)
+        cvs = Canvas(x_max=25, y_max=25)
+
+        cvs.add_utility(CobbDouglas(), levels=3)
+        cvs.add_path(path)
+
+        assert cvs.ax.lines[-1].get_color() == cvs.theme.path_color
+        assert cvs.theme.path_color != cvs.theme.ic_color
 
 
 class TestCanvasSave:

@@ -94,6 +94,30 @@ class TestConsumptionPaths:
         for px, eq in zip(path.px_values, path.equilibria):
             assert eq.x == pytest.approx(20.0 / px, rel=1e-3)
 
+    def test_price_path_defaults_to_single_smooth_curve_without_markers(self):
+        budget = LinearBudget(px=2.0, py=2.0, income=40.0)
+        path = PricePath(CobbDouglas(alpha=0.5, beta=0.5), budget=budget, price="px", price_range=(1.0, 4.0), n=4)
+        canvas = Canvas(x_max=25, y_max=25)
+        before = len(canvas.ax.lines)
+        canvas.add_path(path)
+        assert len(canvas.ax.lines) == before + 1
+        assert len(canvas.ax.lines[-1].get_xdata()) > len(path.equilibria)
+        curve_xs = canvas.ax.lines[-1].get_xdata()
+        assert curve_xs.min() < min(path.x_values)
+        assert curve_xs.max() > max(path.x_values)
+
+    def test_income_path_defaults_to_single_smooth_curve_without_markers(self):
+        budget = LinearBudget(px=2.0, py=2.0, income=40.0)
+        path = IncomePath(CobbDouglas(alpha=0.5, beta=0.5), budget=budget, income_range=(10.0, 40.0), n=4)
+        canvas = Canvas(x_max=25, y_max=25)
+        before = len(canvas.ax.lines)
+        canvas.add_path(path)
+        assert len(canvas.ax.lines) == before + 1
+        assert len(canvas.ax.lines[-1].get_xdata()) > len(path.equilibria)
+        curve_xs = canvas.ax.lines[-1].get_xdata()
+        assert curve_xs.min() < min(path.x_values)
+        assert curve_xs.max() > max(path.x_values)
+
 
 class TestDemandDiagram:
     @pytest.mark.parametrize("model,budget,price,price_range", [
@@ -222,3 +246,29 @@ class TestDemandDiagram:
         fig.add_marshallian_panel(price_markers=[2.0, 4.0], show_legend=False)
         assert fig.utility_canvas.ax.get_legend() is None
         assert fig.demand_canvas.ax.get_legend() is None
+
+    def test_goods_canvas_uses_wider_padding(self):
+        path = PricePath(
+            CobbDouglas(alpha=0.5, beta=0.5),
+            budget=LinearBudget(px=2.0, py=2.0, income=40.0),
+            price="px",
+            price_range=(1.0, 4.0),
+            n=20,
+        )
+        fig = DemandDiagram(path)
+        assert fig.utility_canvas.x_max == pytest.approx(40.0 * 1.18)
+        assert fig.utility_canvas.y_max == pytest.approx(20.0 * 1.18)
+
+    def test_show_pcc_uses_path_color_not_ic_color(self):
+        path = PricePath(
+            CobbDouglas(alpha=0.5, beta=0.5),
+            budget=LinearBudget(px=2.0, py=2.0, income=40.0),
+            price="px",
+            price_range=(1.0, 4.0),
+            n=20,
+        )
+        fig = DemandDiagram(path)
+        fig.add_marshallian_panel(show_pcc=True)
+        pcc_line = fig.utility_canvas.ax.lines[-1]
+        assert pcc_line.get_color() == fig.utility_canvas.theme.path_color
+        assert fig.utility_canvas.theme.path_color != fig.utility_canvas.theme.ic_color

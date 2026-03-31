@@ -12,6 +12,7 @@ defaults and forwards calls.
 
 from __future__ import annotations
 
+import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
 
@@ -57,6 +58,62 @@ def _math_wrap(text: str) -> str:
         else:
             out.append(part)
     return "".join(out)
+
+
+def _smooth_xy(xs: list[float], ys: list[float], n_samples: int = 200) -> tuple[np.ndarray, np.ndarray]:
+    """Return a parametric spline through ``(xs, ys)`` or the raw data as fallback."""
+    if len(xs) < 3 or len(ys) < 3:
+        return np.asarray(xs, dtype=float), np.asarray(ys, dtype=float)
+
+    try:
+        from scipy.interpolate import make_interp_spline
+
+        points = np.column_stack((xs, ys))
+        diffs = np.diff(points, axis=0)
+        chord = np.sqrt((diffs ** 2).sum(axis=1))
+        t = np.concatenate(([0.0], np.cumsum(chord)))
+        if np.isclose(t[-1], 0.0):
+            return np.asarray(xs, dtype=float), np.asarray(ys, dtype=float)
+
+        k = min(3, len(xs) - 1)
+        t_new = np.linspace(0.0, t[-1], max(n_samples, len(xs)))
+        spline_x = make_interp_spline(t, np.asarray(xs, dtype=float), k=k)
+        spline_y = make_interp_spline(t, np.asarray(ys, dtype=float), k=k)
+        return spline_x(t_new), spline_y(t_new)
+    except Exception:  # pragma: no cover - fallback is intentionally conservative
+        return np.asarray(xs, dtype=float), np.asarray(ys, dtype=float)
+
+
+def _extend_curve_endpoints(
+    xs: np.ndarray,
+    ys: np.ndarray,
+    extension_frac: float = 0.025,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Extend a curve slightly past its first and last points along endpoint tangents."""
+    if len(xs) < 2 or len(ys) < 2 or extension_frac <= 0.0:
+        return xs, ys
+
+    start_vec = np.array([xs[1] - xs[0], ys[1] - ys[0]], dtype=float)
+    end_vec = np.array([xs[-1] - xs[-2], ys[-1] - ys[-2]], dtype=float)
+    total_scale = max(
+        float(np.max(xs) - np.min(xs)),
+        float(np.max(ys) - np.min(ys)),
+        1.0,
+    )
+
+    def _extended_point(point_x: float, point_y: float, tangent: np.ndarray, sign: float) -> tuple[float, float]:
+        norm = float(np.linalg.norm(tangent))
+        if np.isclose(norm, 0.0):
+            return point_x, point_y
+        step = tangent / norm * (total_scale * extension_frac * sign)
+        return point_x + step[0], point_y + step[1]
+
+    start_x, start_y = _extended_point(xs[0], ys[0], start_vec, -1.0)
+    end_x, end_y = _extended_point(xs[-1], ys[-1], end_vec, 1.0)
+    return (
+        np.concatenate(([start_x], xs, [end_x])),
+        np.concatenate(([start_y], ys, [end_y])),
+    )
 
 
 class Canvas:
@@ -466,18 +523,27 @@ class Canvas:
         color: str | None = None,
         linewidth: float | None = None,
         label: str | None = None,
-        show_points: bool = True,
-        show_budgets: bool = False,
+        show_points: bool | None = None,
+        show_budgets: bool | None = None,
         show_curves: bool = False,
         show_equilibria: bool = False,
         invert_axes: bool = False,
+        smooth_curve: bool | None = None,
     ) -> Canvas:
         """Draw a PCC/ICC-style path through a sequence of equilibria."""
-        c = color or self.theme.ic_color
-        lw = linewidth if linewidth is not None else self.theme.ic_linewidth
+        c = color or self.theme.path_color
+        lw = linewidth if linewidth is not None else self.theme.path_linewidth
+        show_points = path.default_show_points if show_points is None else show_points
+        show_budgets = path.default_show_budgets if show_budgets is None else show_budgets
+        smooth_curve = path.default_smooth_curve if smooth_curve is None else smooth_curve
         xs = list(path.x_values if not invert_axes else path.parameter_values)
         ys = list(path.y_values if not invert_axes else path.x_values)
-        self.ax.plot(xs, ys, color=c, linewidth=lw)
+
+        curve_xs, curve_ys = (xs, ys)
+        if smooth_curve:
+            curve_xs, curve_ys = _smooth_xy(xs, ys)
+            curve_xs, curve_ys = _extend_curve_endpoints(curve_xs, curve_ys)
+        self.ax.plot(curve_xs, curve_ys, color=c, linewidth=lw, clip_on=False)
         if label:
             self._legend_handles.append(mlines.Line2D([], [], color=c, linewidth=lw, label=label))
 

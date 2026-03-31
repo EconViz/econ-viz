@@ -11,6 +11,8 @@ from ..enums import UtilityType
 from ..optimizer import solve
 from .paths import PricePath
 
+_GOODS_SPACE_PADDING = 1.18
+
 
 class DemandDiagram(Figure):
     """Two-panel diagram linking utility maximisation to Marshallian demand."""
@@ -90,9 +92,7 @@ class DemandDiagram(Figure):
 
         self._add_demand_curve(label="Marshallian demand")
         if show_pcc:
-            self.utility_canvas.add_path(
-                self.path, label="PCC", show_points=False, color=self.utility_canvas.theme.eq_color
-            )
+            self.utility_canvas.add_path(self.path, label="PCC", show_points=False)
         if show_legend:
             self.utility_canvas.show_legend(loc="upper right")
             handles = [
@@ -141,8 +141,8 @@ class DemandDiagram(Figure):
 
         max_x = max([*x_intercepts, *eq_xs, 1.0])
         max_y = max([*y_intercepts, *eq_ys, 1.0])
-        resolved_x_max = x_max or max_x * 1.1
-        resolved_y_max = y_max or max_y * 1.1
+        resolved_x_max = x_max or max_x * _GOODS_SPACE_PADDING
+        resolved_y_max = y_max or max_y * _GOODS_SPACE_PADDING
         return resolved_x_max, resolved_y_max
 
     def _reset_goods_canvas(self, solved_points: list[tuple]) -> None:
@@ -151,8 +151,8 @@ class DemandDiagram(Figure):
         eq_xs = [eq.x for _, eq in solved_points]
         eq_ys = [eq.y for _, eq in solved_points]
 
-        self.utility_canvas.x_max = max([*x_intercepts, *eq_xs, 1.0]) * 1.1
-        self.utility_canvas.y_max = max([*y_intercepts, *eq_ys, 1.0]) * 1.1
+        self.utility_canvas.x_max = max([*x_intercepts, *eq_xs, 1.0]) * _GOODS_SPACE_PADDING
+        self.utility_canvas.y_max = max([*y_intercepts, *eq_ys, 1.0]) * _GOODS_SPACE_PADDING
         self.utility_canvas.ax.clear()
         self.utility_canvas._legend_handles.clear()
         self.utility_canvas._apply_base_style()
