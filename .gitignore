@@ -39,4 +39,6 @@ Thumbs.db
 examples/output/*
 !examples/output/.gitkeep
 notebook/
+!notebook/
+!notebook/econ-viz Playground.ipynb
 prompt/
