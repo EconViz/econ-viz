@@ -43,7 +43,6 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0   # semantic-release needs full history
-          token: ${{ secrets.RELEASE_PAT }}
 
       - uses: actions/setup-python@v5
         with:
@@ -61,7 +60,7 @@ jobs:
         id: release
         run: semantic-release version
         env:
-          GH_TOKEN: ${{ secrets.RELEASE_PAT }}
+          GH_TOKEN: ${{ github.token }}
 
       - name: Check if a new version was created
         id: check
