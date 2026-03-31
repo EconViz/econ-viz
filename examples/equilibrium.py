@@ -10,7 +10,7 @@ matplotlib.use("Agg")
 from econ_viz import Canvas, levels, solve
 from econ_viz.models import CobbDouglas, Leontief, PerfectSubstitutes, CES
 
-OUTPUT_DIR = "examples/output"
+OUTPUT_DIR = "examples/output/equilibrium"
 
 models = [
     ("cobb_douglas_eq", CobbDouglas(0.5, 0.5)),

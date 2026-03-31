@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from ..logging import get_logger
+from ..utils.logging import get_logger
 
 logger = get_logger(__name__)
 
@@ -60,12 +60,12 @@ class EquilibriumPoint:
             eq.bundle_type, eq.x, eq.y, eq.utility,
         )
 
-        ax.plot(eq.x, eq.y, "o", color=self.color, markersize=self.markersize)
+        ax.plot(eq.x, eq.y, "o", color=self.color, markersize=self.markersize, clip_on=False, zorder=6)
         if self.label:
             ax.annotate(
                 rf"${self.label}$", (eq.x, eq.y),
                 textcoords="offset points", xytext=(5, 5),
-                fontsize=12, color=self.color,
+                fontsize=12, color=self.color, zorder=7,
             )
 
         if self.drop_dashes:

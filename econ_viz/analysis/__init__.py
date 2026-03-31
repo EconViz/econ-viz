@@ -8,6 +8,7 @@ homogeneity
     homotheticity testing, and demand degree-0 verification.
 """
 
+from . import levels
 from .homogeneity import HomogeneityAnalyzer, HomogeneityResult
 
-__all__ = ["HomogeneityAnalyzer", "HomogeneityResult"]
+__all__ = ["levels", "HomogeneityAnalyzer", "HomogeneityResult"]

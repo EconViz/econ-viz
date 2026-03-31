@@ -16,7 +16,7 @@ import numpy as np
 from econ_viz import Canvas, levels, solve
 from econ_viz.models import CustomUtility, MultiGoodCD
 
-OUTPUT_DIR = "examples/output"
+OUTPUT_DIR = "examples/output/models/advanced"
 
 px, py, income = 2.0, 3.0, 30.0
 

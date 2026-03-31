@@ -27,9 +27,9 @@ from __future__ import annotations
 
 import re
 
-from .exceptions import ParseError
-from .logging import get_logger
-from .models.core import CobbDouglas, Leontief, PerfectSubstitutes, CES
+from ..exceptions import ParseError
+from ..utils.logging import get_logger
+from .core import CobbDouglas, Leontief, PerfectSubstitutes, CES
 
 logger = get_logger(__name__)
 
