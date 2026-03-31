@@ -11,6 +11,9 @@ _MODEL_ENTRIES = [
     ("perfect-substitutes", "PerfectSubstitutes  --a A --b B"),
     ("ces",                 "CES                 --rho R [--alpha A --beta B]"),
     ("satiation",           "Satiation           --bliss-x X --bliss-y Y [--a A --b B]"),
+    ("quasi-linear",        "QuasiLinear         [--v-func log|sqrt] [--linear-in x|y]"),
+    ("stone-geary",         "StoneGeary          [--alpha A --beta B --bar-x X --bar-y Y]"),
+    ("translog",            "Translog            [--alpha-0 A0 --alpha-x AX --alpha-y AY --beta-xx BXX --beta-yy BYY --beta-xy BXY]"),
 ]
 
 _LATEX_EXAMPLES = [

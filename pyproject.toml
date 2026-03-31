@@ -1,6 +1,6 @@
 [project]
 name = "econ-viz"
-version = "1.2.2"
+version = "1.2.3"
 description = "A Python toolkit for producing publication-quality microeconomics diagrams."
 readme = "README.md"
 authors = [{ name = "Anthony Sung", email = "sungpinyue@gmail.com" }]
