@@ -2,6 +2,17 @@
 
 <!-- version list -->
 
+## v1.2.2 (2026-03-31)
+
+### Bug Fixes
+
+- Smooth PCC/ICC paths by default, extend endpoints slightly, and hide path markers unless requested
+
+- Separate PCC/ICC path colours from indifference-curve colours and widen goods-space padding in demand diagrams
+
+- Add a dedicated PCC/ICC example generator and coverage for path defaults and rendering
+
+
 ## v1.2.0 (2026-03-30)
 
 ### Features
