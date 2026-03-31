@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.2.3 (2026-03-31)
+
+### Features
+
+- Extend `SlutskyMatrix` with symmetry, negative-semidefiniteness, and homogeneity checks, plus validation warnings for failed theoretical conditions
+
+- Expand CLI model coverage to include `QuasiLinear`, `StoneGeary`, and `Translog`
+
 ## v1.2.2 (2026-03-31)
 
 ### Bug Fixes
@@ -11,7 +19,6 @@
 - Separate PCC/ICC path colours from indifference-curve colours and widen goods-space padding in demand diagrams
 
 - Add a dedicated PCC/ICC example generator and coverage for path defaults and rendering
-
 
 ## v1.2.0 (2026-03-30)
 

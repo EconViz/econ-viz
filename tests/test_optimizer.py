@@ -565,16 +565,67 @@ class TestSlutskyMatrixCobbDouglas:
         assert self.sm.s_xy == pytest.approx(self.sm.s_yx, rel=2e-2, abs=1e-4)
 
     def test_as_array(self):
-        assert self.sm.as_array() == (
-            (self.sm.s_xx, self.sm.s_xy),
-            (self.sm.s_yx, self.sm.s_yy),
+        assert np.allclose(
+            self.sm.as_array(),
+            np.array(
+                [
+                    [self.sm.s_xx, self.sm.s_xy],
+                    [self.sm.s_yx, self.sm.s_yy],
+                ]
+            ),
         )
+
+    def test_is_symmetric(self):
+        assert self.sm.is_symmetric()
+
+    def test_is_negative_semidefinite(self):
+        assert self.sm.is_negative_semidefinite()
+
+    def test_satisfies_homogeneity(self):
+        assert self.sm.satisfies_homogeneity(px=self.px, py=self.py, tol=5e-2)
 
 
 class TestSlutskyMatrixInvalidParams:
     def test_zero_px(self):
         with pytest.raises(InvalidParameterError):
             slutsky_matrix(CobbDouglas(), px=0.0, py=1.0, income=10.0)
+
+
+class TestSlutskyMatrixValidationWarnings:
+    def test_validation_failures_reported(self):
+        sm = SlutskyMatrix(s_xx=1.0, s_xy=2.0, s_yx=0.0, s_yy=1.0)
+        failures = sm.validation_failures(px=2.0, py=3.0)
+        assert "symmetry" in failures
+        assert "negative semidefinite" in failures
+        assert "homogeneity" in failures
+
+    def test_failed_checks_emit_warning(self, monkeypatch):
+        import econ_viz.optimizer.slutsky as slutsky_mod
+
+        original_cs = slutsky_mod.comparative_statics
+        original_solve = slutsky_mod.solve
+
+        def fake_cs(func, px, py, income, h):
+            return ComparativeStatics(
+                dx_dpx=1.0,
+                dx_dpy=0.0,
+                dx_dI=0.0,
+                dy_dpx=0.0,
+                dy_dpy=1.0,
+                dy_dI=0.0,
+            )
+
+        def fake_solve(func, px, py, income):
+            return Equilibrium(x=1.0, y=1.0, utility=1.0, bundle_type="interior")
+
+        monkeypatch.setattr(slutsky_mod, "comparative_statics", fake_cs)
+        monkeypatch.setattr(slutsky_mod, "solve", fake_solve)
+        try:
+            with pytest.warns(UserWarning, match="Slutsky matrix theoretical checks failed"):
+                slutsky_matrix(CobbDouglas(), px=2.0, py=3.0, income=10.0)
+        finally:
+            monkeypatch.setattr(slutsky_mod, "comparative_statics", original_cs)
+            monkeypatch.setattr(slutsky_mod, "solve", original_solve)
 
 
 class TestComparativeStaticsSignWarnings:

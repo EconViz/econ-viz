@@ -70,6 +70,16 @@ def _add_model_args(p: argparse.ArgumentParser) -> None:
     p.add_argument("--rho",     type=float, metavar="R", help="Rho parameter (CES).")
     p.add_argument("--bliss-x", dest="bliss_x", type=float, metavar="X", help="Bliss point x (Satiation).")
     p.add_argument("--bliss-y", dest="bliss_y", type=float, metavar="Y", help="Bliss point y (Satiation).")
+    p.add_argument("--linear-in", dest="linear_in", choices=("x", "y"), help="Linear good for QuasiLinear.")
+    p.add_argument("--v-func", dest="v_func", choices=("log", "sqrt"), help="One-variable transform for QuasiLinear.")
+    p.add_argument("--bar-x", dest="bar_x", type=float, metavar="X", help="Subsistence quantity of x (StoneGeary).")
+    p.add_argument("--bar-y", dest="bar_y", type=float, metavar="Y", help="Subsistence quantity of y (StoneGeary).")
+    p.add_argument("--alpha-0", dest="alpha_0", type=float, metavar="A0", help="Intercept parameter (Translog).")
+    p.add_argument("--alpha-x", dest="alpha_x", type=float, metavar="AX", help="x log weight (Translog).")
+    p.add_argument("--alpha-y", dest="alpha_y", type=float, metavar="AY", help="y log weight (Translog).")
+    p.add_argument("--beta-xx", dest="beta_xx", type=float, metavar="BXX", help="x curvature term (Translog).")
+    p.add_argument("--beta-yy", dest="beta_yy", type=float, metavar="BYY", help="y curvature term (Translog).")
+    p.add_argument("--beta-xy", dest="beta_xy", type=float, metavar="BXY", help="cross term (Translog).")
 
 
 def _register_plot(sub) -> argparse.ArgumentParser:
