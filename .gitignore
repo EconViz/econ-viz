@@ -39,3 +39,4 @@ Thumbs.db
 examples/output/*
 !examples/output/.gitkeep
 notebook/
+prompt/

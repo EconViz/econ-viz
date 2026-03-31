@@ -7,7 +7,17 @@ interior solution or corner solution) and returns a structured result
 that the :class:`~econ_viz.canvas.base.Canvas` can render directly.
 """
 
+from .analytic import solution_tex
+from .comparative import ComparativeStatics, comparative_statics
 from .solver import Equilibrium, solve
-from .statics import ComparativeStatics, comparative_statics
+from .slutsky import SlutskyMatrix, slutsky_matrix
 
-__all__ = ["Equilibrium", "solve", "ComparativeStatics", "comparative_statics"]
+__all__ = [
+    "Equilibrium",
+    "solve",
+    "solution_tex",
+    "ComparativeStatics",
+    "SlutskyMatrix",
+    "comparative_statics",
+    "slutsky_matrix",
+]

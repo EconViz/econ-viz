@@ -337,8 +337,8 @@ class StoneGeary:
     allocates the remaining *supernumerary* income like a Cobb-Douglas
     consumer.  Marshallian demands are:
 
-        x* = bar_x + alpha * (I - px*bar_x - py*bar_y) / px
-        y* = bar_y + beta  * (I - px*bar_x - py*bar_y) / py
+        x* = bar_x + [alpha / (alpha + beta)] * (I - px*bar_x - py*bar_y) / px
+        y* = bar_y + [beta  / (alpha + beta)] * (I - px*bar_x - py*bar_y) / py
 
     Parameters
     ----------

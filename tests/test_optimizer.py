@@ -5,7 +5,15 @@ import pytest
 
 from econ_viz.exceptions import InvalidParameterError, OptimizationError
 from econ_viz.models import CobbDouglas, Leontief, PerfectSubstitutes, CES, QuasiLinear, StoneGeary
-from econ_viz.optimizer import Equilibrium, solve, ComparativeStatics, comparative_statics
+from econ_viz.optimizer import (
+    Equilibrium,
+    solve,
+    solution_tex,
+    ComparativeStatics,
+    SlutskyMatrix,
+    comparative_statics,
+    slutsky_matrix,
+)
 
 
 def _on_budget(eq: Equilibrium, px, py, income, rtol=1e-4):
@@ -129,6 +137,62 @@ class TestEquilibrium:
         assert eq.y == 4.0
         assert eq.utility == 5.0
         assert eq.bundle_type == "interior"
+
+
+class TestSolutionTex:
+    def test_cobb_douglas_tex_contains_expected_terms(self):
+        tex = solution_tex(CobbDouglas(alpha=0.4, beta=0.6))
+        assert r"x^*" in tex
+        assert r"\frac{0.4}{0.4+0.6}" in tex or r"\frac{0.4}{0.6+0.4}" in tex
+        assert r"\frac{I}{p_x}" in tex
+        assert r"\frac{0.6}{0.4+0.6}" in tex or r"\frac{0.6}{0.6+0.4}" in tex
+        assert r"\frac{I}{p_y}" in tex
+
+    def test_leontief_tex(self):
+        tex = solution_tex(Leontief(a=2.0, b=3.0))
+        assert tex == (
+            r"x^* = \frac{3I}{3p_x + 2p_y}, \quad "
+            r"y^* = \frac{2I}{3p_x + 2p_y}"
+        )
+
+    def test_perfect_substitutes_tex_is_piecewise(self):
+        tex = solution_tex(PerfectSubstitutes(a=2.0, b=1.0))
+        assert r"\begin{cases}" in tex
+        assert r"\left(\frac{I}{p_x}, 0\right)" in tex
+        assert r"\left(0, \frac{I}{p_y}\right)" in tex
+        assert r"p_xx + p_yy = I" in tex
+
+    def test_stone_geary_tex(self):
+        tex = solution_tex(StoneGeary(alpha=2.0, beta=3.0, bar_x=1.0, bar_y=4.0))
+        assert r"x^* = 1 +" in tex
+        assert r"\frac{2}{2+3}" in tex
+        assert r"\frac{I - p_x\,1 - p_y\,4}{p_x}" in tex
+        assert r"y^* = 4 +" in tex
+        assert r"\frac{3}{2+3}" in tex
+        assert r"\frac{I - p_x\,1 - p_y\,4}{p_y}" in tex
+
+    def test_custom_symbols(self):
+        tex = solution_tex(CobbDouglas(alpha=1.0, beta=1.0), px=r"P_x", py=r"P_y", income="M")
+        assert r"\frac{M}{P_x}" in tex
+        assert r"\frac{M}{P_y}" in tex
+
+    def test_symbolic_cobb_douglas_params(self):
+        tex = solution_tex(CobbDouglas(alpha=0.4, beta=0.6), symbolic_params=True)
+        assert r"\frac{\alpha}{\alpha+\beta}" in tex
+        assert r"\frac{\beta}{\alpha+\beta}" in tex
+        assert r"\frac{I}{p_x}" in tex
+        assert r"\frac{I}{p_y}" in tex
+
+    def test_symbolic_stone_geary_params(self):
+        tex = solution_tex(StoneGeary(alpha=2.0, beta=3.0, bar_x=1.0, bar_y=4.0), symbolic_params=True)
+        assert r"x^* = \bar{x} +" in tex
+        assert r"\frac{\alpha}{\alpha+\beta}" in tex
+        assert r"I - p_x\,\bar{x} - p_y\,\bar{y}" in tex
+        assert r"y^* = \bar{y} +" in tex
+
+    def test_unsupported_model_raises(self):
+        with pytest.raises(NotImplementedError):
+            solution_tex(CES(alpha=0.5, beta=0.5, rho=0.5))
 
 
 class TestSolveEdgeCases:
@@ -466,6 +530,53 @@ class TestComparativeStaticsInvalidParams:
             comparative_statics(CobbDouglas(), px=1.0, py=1.0, income=0.0)
 
 
+class TestSlutskyMatrixCobbDouglas:
+    """Verify Slutsky matrix entries against Cobb-Douglas closed form."""
+
+    def setup_method(self):
+        self.alpha, self.beta = 0.4, 0.6
+        self.model = CobbDouglas(alpha=self.alpha, beta=self.beta)
+        self.px, self.py, self.income = 2.0, 3.0, 60.0
+        self.sm = slutsky_matrix(self.model, self.px, self.py, self.income)
+        s = self.alpha + self.beta
+        ax = self.alpha / s
+        by = self.beta / s
+        self._s_xx = -ax * (1 - ax) * self.income / self.px ** 2
+        self._s_xy = ax * by * self.income / (self.px * self.py)
+        self._s_yx = ax * by * self.income / (self.px * self.py)
+        self._s_yy = -by * (1 - by) * self.income / self.py ** 2
+
+    def test_returns_slutsky_matrix_instance(self):
+        assert isinstance(self.sm, SlutskyMatrix)
+
+    def test_s_xx(self):
+        assert self.sm.s_xx == pytest.approx(self._s_xx, rel=2e-2)
+
+    def test_s_xy(self):
+        assert self.sm.s_xy == pytest.approx(self._s_xy, rel=2e-2)
+
+    def test_s_yx(self):
+        assert self.sm.s_yx == pytest.approx(self._s_yx, rel=2e-2)
+
+    def test_s_yy(self):
+        assert self.sm.s_yy == pytest.approx(self._s_yy, rel=2e-2)
+
+    def test_symmetry(self):
+        assert self.sm.s_xy == pytest.approx(self.sm.s_yx, rel=2e-2, abs=1e-4)
+
+    def test_as_array(self):
+        assert self.sm.as_array() == (
+            (self.sm.s_xx, self.sm.s_xy),
+            (self.sm.s_yx, self.sm.s_yy),
+        )
+
+
+class TestSlutskyMatrixInvalidParams:
+    def test_zero_px(self):
+        with pytest.raises(InvalidParameterError):
+            slutsky_matrix(CobbDouglas(), px=0.0, py=1.0, income=10.0)
+
+
 class TestComparativeStaticsSignWarnings:
     """UserWarning is emitted for economically anomalous signs."""
 
@@ -490,8 +601,8 @@ class TestComparativeStaticsSignWarnings:
                 return (0.0, 0.0)
 
         # Patch solve to return a Giffen-like pattern
-        import econ_viz.optimizer.statics as statics_mod
-        original_solve = statics_mod.solve
+        import econ_viz.optimizer.comparative as comparative_mod
+        original_solve = comparative_mod.solve
 
         call_count = [0]
 
@@ -500,9 +611,9 @@ class TestComparativeStaticsSignWarnings:
             # Make x* increase with pₓ by returning x = pₓ * 2
             return Equilibrium(x=px * 2, y=1.0, utility=1.0, bundle_type="interior")
 
-        statics_mod.solve = fake_solve
+        comparative_mod.solve = fake_solve
         try:
             with pytest.warns(UserWarning, match="Giffen"):
                 comparative_statics(GiffenX(), px=2.0, py=1.0, income=10.0)
         finally:
-            statics_mod.solve = original_solve
+            comparative_mod.solve = original_solve

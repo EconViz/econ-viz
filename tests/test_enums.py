@@ -2,7 +2,7 @@
 
 import pytest
 
-from econ_viz.enums import ExportFormat, UtilityType
+from econ_viz.enums import ExportFormat, Layout, UtilityType
 from econ_viz.exceptions import ExportError
 
 
@@ -45,3 +45,10 @@ class TestUtilityType:
     def test_distinct(self):
         assert UtilityType.SMOOTH is not UtilityType.KINKED
         assert UtilityType.KINKED is not UtilityType.LINEAR
+
+
+class TestLayout:
+    def test_members_exist(self):
+        assert Layout.SINGLE
+        assert Layout.STACKED
+        assert Layout.SIDE_BY_SIDE

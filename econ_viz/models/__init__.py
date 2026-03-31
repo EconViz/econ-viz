@@ -11,6 +11,7 @@ rendering support.
 
 from .core import CobbDouglas, Leontief, PerfectSubstitutes, CES, Satiation, QuasiLinear, StoneGeary, Translog
 from .advanced import CustomUtility, MultiGoodCD
+from .parser import parse_latex
 from .protocol import UtilityFunction
 
 __all__ = [
@@ -25,4 +26,5 @@ __all__ = [
     "StoneGeary",
     "Translog",
     "UtilityFunction",
+    "parse_latex",
 ]

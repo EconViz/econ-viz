@@ -13,12 +13,13 @@ defaults and forwards calls.
 from __future__ import annotations
 
 import matplotlib.pyplot as plt
+import matplotlib.lines as mlines
 
 from typing import Callable
 
 from ..enums import ExportFormat
 from ..exceptions import ExportError
-from ..logging import get_logger
+from ..utils.logging import get_logger
 from ..themes import default as _default_theme
 from ..themes.theme import Theme
 from ..components.indifference import IndifferenceCurves
@@ -96,6 +97,8 @@ class Canvas:
         x_label_pos: str = "right",
         y_label_pos: str = "top",
         theme: Theme = _default_theme,
+        fig=None,
+        ax=None,
     ):
         self.x_max = x_max
         self.y_max = y_max
@@ -107,7 +110,11 @@ class Canvas:
         self.y_label_pos = y_label_pos
         self.theme = theme
 
-        self.fig, self.ax = plt.subplots(figsize=(6, 6))
+        self._owns_figure = fig is None or ax is None
+        if fig is None or ax is None:
+            self.fig, self.ax = plt.subplots(figsize=(6, 6))
+        else:
+            self.fig, self.ax = fig, ax
         self._legend_handles: list = []
         self._apply_base_style()
         logger.debug("Canvas created: x_max=%s, y_max=%s, dpi=%s, theme=%s",
@@ -171,6 +178,20 @@ class Canvas:
         # Transparent background
         self.fig.patch.set_alpha(0.0)
         self.ax.patch.set_alpha(0.0)
+
+    def set_axis_visibility(self, *, show_x_label: bool = True, show_y_label: bool = True) -> Canvas:
+        """Toggle canvas axis-tip labels and origin marker for shared layouts."""
+        if not show_x_label:
+            for text in list(self.ax.texts):
+                x, y = text.get_position()
+                if abs(y + self.y_max * 0.03) < max(self.y_max, 1.0) * 1e-9:
+                    text.set_visible(False)
+        if not show_y_label:
+            for text in list(self.ax.texts):
+                x, y = text.get_position()
+                if abs(x + self.x_max * 0.03) < max(self.x_max, 1.0) * 1e-9:
+                    text.set_visible(False)
+        return self
 
     # ------------------------------------------------------------------
     # Layer composition
@@ -430,13 +451,53 @@ class Canvas:
             *self*, to allow method chaining.
         """
         c = color or self.theme.eq_color
-        self.ax.plot(x, y, "o", color=c, markersize=markersize)
+        self.ax.plot(x, y, "o", color=c, markersize=markersize, clip_on=False, zorder=6)
         if label:
             self.ax.annotate(
                 rf"${label}$", (x, y),
                 textcoords="offset points", xytext=offset,
-                fontsize=12, color=c,
+                fontsize=12, color=c, zorder=7,
             )
+        return self
+
+    def add_path(
+        self,
+        path,
+        color: str | None = None,
+        linewidth: float | None = None,
+        label: str | None = None,
+        show_points: bool = True,
+        show_budgets: bool = False,
+        show_curves: bool = False,
+        show_equilibria: bool = False,
+        invert_axes: bool = False,
+    ) -> Canvas:
+        """Draw a PCC/ICC-style path through a sequence of equilibria."""
+        c = color or self.theme.ic_color
+        lw = linewidth if linewidth is not None else self.theme.ic_linewidth
+        xs = list(path.x_values if not invert_axes else path.parameter_values)
+        ys = list(path.y_values if not invert_axes else path.x_values)
+        self.ax.plot(xs, ys, color=c, linewidth=lw)
+        if label:
+            self._legend_handles.append(mlines.Line2D([], [], color=c, linewidth=lw, label=label))
+
+        for idx, eq in enumerate(path.equilibria):
+            if show_curves and hasattr(path, "func"):
+                self.add_utility(path.func, levels=[eq.utility], color=c, linewidth=max(lw * 0.75, 0.8))
+            if show_budgets:
+                self.add_budget(
+                    path.px_values[idx],
+                    path.py_values[idx],
+                    path.income_values[idx],
+                    color=c,
+                    linewidth=max(lw * 0.6, 0.8),
+                    linestyle=":",
+                )
+            if show_equilibria:
+                self.add_equilibrium(eq, color=c, label=None, drop_dashes=False)
+            elif show_points:
+                px, py = (eq.x, eq.y) if not invert_axes else (path.parameter_values[idx], eq.x)
+                self.ax.plot(px, py, "o", color=c, markersize=max(self.theme.eq_markersize - 1, 3))
         return self
 
     def show_legend(self, **kwargs) -> Canvas:
@@ -472,7 +533,7 @@ class Canvas:
 
     def show(self) -> None:
         """Display the figure in an interactive matplotlib window."""
-        plt.show()
+        self.fig.show()
 
     def save(self, path: str, **kwargs) -> None:
         """Export the figure to disk and release matplotlib resources.
@@ -501,4 +562,5 @@ class Canvas:
         except OSError as exc:
             raise ExportError(f"Failed to write '{path}': {exc}") from exc
         finally:
-            plt.close(self.fig)
+            if self._owns_figure:
+                plt.close(self.fig)

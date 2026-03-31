@@ -11,7 +11,7 @@ matplotlib.use("Agg")
 
 from econ_viz import Canvas, levels, solve, parse_latex
 
-OUTPUT_DIR = "examples/output"
+OUTPUT_DIR = "examples/output/latex"
 
 # (output_name, latex_string)
 cases = [

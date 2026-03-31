@@ -5,7 +5,7 @@ from __future__ import annotations
 import numpy as np
 
 from ..enums import UtilityType
-from ..logging import get_logger
+from ..utils.logging import get_logger
 
 logger = get_logger(__name__)
 
@@ -69,7 +69,8 @@ class IndifferenceCurves:
         from ..levels import percentile
         from . import draw_ray
 
-        X, Y, Z = Layer.compute_contour(self.func, (0.1, x_max), (0.1, y_max))
+        res = int(kwargs.pop("res", 400))
+        X, Y, Z = Layer.compute_contour(self.func, (0.1, x_max), (0.1, y_max), res=res)
 
         if isinstance(self.levels, int):
             computed = percentile(Z, n=self.levels)

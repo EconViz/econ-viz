@@ -2,6 +2,16 @@
 
 <!-- version list -->
 
+## v1.2.0 (2026-03-30)
+
+### Features
+
+- Add multi-panel `Figure` layouts and `Layout` enum (closes #7)
+
+- Add linked `DemandDiagram` for Marshallian demand teaching figures (closes #31)
+
+- Add `PricePath` / `IncomePath` helpers and `Canvas.add_path()` for PCC/ICC plots (closes #5)
+
 ## v1.1.0 (2026-03-30)
 
 ### Features
