@@ -18,14 +18,12 @@ import matplotlib.lines as mlines
 
 from typing import Callable
 
-from ..enums import ExportFormat
-from ..exceptions import ExportError
 from ..utils.logging import get_logger
 from ..themes import default as _default_theme
 from ..themes.theme import Theme
-from ..components.indifference import IndifferenceCurves
-from ..components.budget import BudgetConstraint
-from ..components.equilibrium import EquilibriumPoint
+from ..canvas.primitives import annotate_math, plot_point
+from ..canvas.renderers import render_budget, render_equilibrium, render_path, render_utility
+from ..io import save_figure
 
 logger = get_logger(__name__)
 
@@ -313,8 +311,10 @@ class Canvas:
             *self*, to allow method chaining.
         """
         t = self.theme
-        ic = IndifferenceCurves(
-            func, levels,
+        ic = render_utility(
+            self.ax,
+            func=func,
+            levels=levels,
             color=color or t.ic_color,
             linewidth=linewidth if linewidth is not None else t.ic_linewidth,
             show_rays=show_rays,
@@ -326,22 +326,13 @@ class Canvas:
             label=label,
             show_ic_labels=show_ic_labels,
             ic_label_fmt=ic_label_fmt,
+            show_bliss=show_bliss,
+            x_max=self.x_max,
+            y_max=self.y_max,
+            **kwargs,
         )
-        ic.draw(self.ax, self.x_max, self.y_max, **kwargs)
         if ic._proxy is not None:
             self._legend_handles.append(ic._proxy)
-        if show_bliss and hasattr(func, "bliss_x") and hasattr(func, "bliss_y"):
-            c = color or t.ic_color
-            self.ax.plot(
-                func.bliss_x, func.bliss_y,
-                "*", color=c, markersize=12, zorder=5,
-            )
-            self.ax.annotate(
-                r"$\mathbf{x}^*$",
-                (func.bliss_x, func.bliss_y),
-                textcoords="offset points", xytext=(6, 4),
-                fontsize=12, color=c,
-            )
         return self
 
     def add_budget(
@@ -386,8 +377,11 @@ class Canvas:
             *self*, to allow method chaining.
         """
         t = self.theme
-        bc = BudgetConstraint(
-            px, py, income,
+        render_budget(
+            self.ax,
+            px=px,
+            py=py,
+            income=income,
             color=color or t.budget_color,
             linewidth=linewidth if linewidth is not None else t.budget_linewidth,
             linestyle=linestyle,
@@ -395,7 +389,6 @@ class Canvas:
             fill=fill,
             fill_alpha=fill_alpha if fill_alpha is not None else t.budget_fill_alpha,
         )
-        bc.draw(self.ax)
         return self
 
     def add_equilibrium(
@@ -433,8 +426,9 @@ class Canvas:
             *self*, to allow method chaining.
         """
         t = self.theme
-        ep = EquilibriumPoint(
-            eq,
+        render_equilibrium(
+            self.ax,
+            eq=eq,
             color=color or t.eq_color,
             markersize=markersize if markersize is not None else t.eq_markersize,
             label=label,
@@ -442,8 +436,9 @@ class Canvas:
             show_ray=show_ray,
             ray_color=t.ray_color,
             ray_linewidth=t.ray_linewidth,
+            x_max=self.x_max,
+            y_max=self.y_max,
         )
-        ep.draw(self.ax, self.x_max, self.y_max)
         return self
 
     def add_ray(
@@ -508,12 +503,27 @@ class Canvas:
             *self*, to allow method chaining.
         """
         c = color or self.theme.eq_color
-        self.ax.plot(x, y, "o", color=c, markersize=markersize, clip_on=False, zorder=6)
+        plot_point(
+            self.ax,
+            x=x,
+            y=y,
+            color=c,
+            markersize=markersize,
+            marker="o",
+            linestyle="None",
+            zorder=6,
+            clip_on=False,
+        )
         if label:
-            self.ax.annotate(
-                rf"${label}$", (x, y),
-                textcoords="offset points", xytext=offset,
-                fontsize=12, color=c, zorder=7,
+            annotate_math(
+                self.ax,
+                x=x,
+                y=y,
+                text=label,
+                color=c,
+                offset=offset,
+                fontsize=12,
+                zorder=7,
             )
         return self
 
@@ -536,34 +546,21 @@ class Canvas:
         show_points = path.default_show_points if show_points is None else show_points
         show_budgets = path.default_show_budgets if show_budgets is None else show_budgets
         smooth_curve = path.default_smooth_curve if smooth_curve is None else smooth_curve
-        xs = list(path.x_values if not invert_axes else path.parameter_values)
-        ys = list(path.y_values if not invert_axes else path.x_values)
-
-        curve_xs, curve_ys = (xs, ys)
-        if smooth_curve:
-            curve_xs, curve_ys = _smooth_xy(xs, ys)
-            curve_xs, curve_ys = _extend_curve_endpoints(curve_xs, curve_ys)
-        self.ax.plot(curve_xs, curve_ys, color=c, linewidth=lw, clip_on=False)
-        if label:
-            self._legend_handles.append(mlines.Line2D([], [], color=c, linewidth=lw, label=label))
-
-        for idx, eq in enumerate(path.equilibria):
-            if show_curves and hasattr(path, "func"):
-                self.add_utility(path.func, levels=[eq.utility], color=c, linewidth=max(lw * 0.75, 0.8))
-            if show_budgets:
-                self.add_budget(
-                    path.px_values[idx],
-                    path.py_values[idx],
-                    path.income_values[idx],
-                    color=c,
-                    linewidth=max(lw * 0.6, 0.8),
-                    linestyle=":",
-                )
-            if show_equilibria:
-                self.add_equilibrium(eq, color=c, label=None, drop_dashes=False)
-            elif show_points:
-                px, py = (eq.x, eq.y) if not invert_axes else (path.parameter_values[idx], eq.x)
-                self.ax.plot(px, py, "o", color=c, markersize=max(self.theme.eq_markersize - 1, 3))
+        render_path(
+            canvas=self,
+            path=path,
+            color=c,
+            linewidth=lw,
+            label=label,
+            show_points=show_points,
+            show_budgets=show_budgets,
+            show_curves=show_curves,
+            show_equilibria=show_equilibria,
+            invert_axes=invert_axes,
+            smooth_curve=smooth_curve,
+            smooth_fn=_smooth_xy,
+            extend_fn=_extend_curve_endpoints,
+        )
         return self
 
     def show_legend(self, **kwargs) -> Canvas:
@@ -614,19 +611,11 @@ class Canvas:
         **kwargs
             Forwarded to the underlying save function.
         """
-        fmt = ExportFormat.from_path(path)
-        logger.info("Exporting figure to %s (format=%s, dpi=%s)", path, fmt.value, self.dpi)
-
-        try:
-            self.fig.savefig(
-                path,
-                dpi=self.dpi,
-                transparent=True,
-                bbox_inches="tight",
-                **kwargs,
-            )
-        except OSError as exc:
-            raise ExportError(f"Failed to write '{path}': {exc}") from exc
-        finally:
-            if self._owns_figure:
-                plt.close(self.fig)
+        logger.info("Exporting figure to %s (dpi=%s)", path, self.dpi)
+        save_figure(
+            self.fig,
+            path=path,
+            dpi=self.dpi,
+            close=self._owns_figure,
+            **kwargs,
+        )

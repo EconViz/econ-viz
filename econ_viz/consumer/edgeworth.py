@@ -6,10 +6,28 @@ from dataclasses import dataclass
 import matplotlib.pyplot as plt
 import numpy as np
 
-from ..analysis.levels import percentile
-from ..exceptions import ExportError
+from ..contours import around_anchor_levels, percentile_levels
+from ..io import save_figure
 from ..themes import default as _default_theme
 from ..themes.theme import Theme
+from .edgeworth_compute import (
+    contract_curve_mrs,
+    contract_curve_pareto,
+    focus_levels,
+    line_box_intersections,
+    mrs,
+    unique_points,
+    walrasian_equilibrium_point,
+)
+from .edgeworth_plotter import (
+    plot_contract_curve,
+    plot_core,
+    plot_endowment,
+    plot_equilibrium_marker,
+    plot_indifference_pair,
+    plot_price_line,
+)
+from .edgeworth_state import EdgeworthState
 
 _MAX_DPI = 1200
 _DEFAULT_DPI = 300
@@ -63,15 +81,58 @@ class EdgeworthBox:
         self.utility_a_color = utility_a_color or theme.ic_color
         self.utility_b_color = utility_b_color or theme.path_color
 
-        self.endowment: tuple[float, float] | None = None
-        self.contract_curve_points: np.ndarray = np.empty((0, 2), dtype=float)
-        self.core_points: np.ndarray = np.empty((0, 2), dtype=float)
-        self.walrasian_equilibrium: tuple[float, float] | None = None
-        self.equilibrium_focus_levels_a: list[float] = []
-        self.equilibrium_focus_levels_b: list[float] = []
+        self._state = EdgeworthState()
 
         self.fig, self.ax = plt.subplots(figsize=(7, 6))
         self._apply_base_style()
+
+    @property
+    def endowment(self) -> tuple[float, float] | None:
+        return self._state.endowment
+
+    @endowment.setter
+    def endowment(self, value: tuple[float, float] | None) -> None:
+        self._state.endowment = value
+
+    @property
+    def contract_curve_points(self) -> np.ndarray:
+        return self._state.contract_curve_points
+
+    @contract_curve_points.setter
+    def contract_curve_points(self, value: np.ndarray) -> None:
+        self._state.contract_curve_points = value
+
+    @property
+    def core_points(self) -> np.ndarray:
+        return self._state.core_points
+
+    @core_points.setter
+    def core_points(self, value: np.ndarray) -> None:
+        self._state.core_points = value
+
+    @property
+    def walrasian_equilibrium(self) -> tuple[float, float] | None:
+        return self._state.walrasian_equilibrium
+
+    @walrasian_equilibrium.setter
+    def walrasian_equilibrium(self, value: tuple[float, float] | None) -> None:
+        self._state.walrasian_equilibrium = value
+
+    @property
+    def equilibrium_focus_levels_a(self) -> list[float]:
+        return self._state.equilibrium_focus_levels_a
+
+    @equilibrium_focus_levels_a.setter
+    def equilibrium_focus_levels_a(self, value: list[float]) -> None:
+        self._state.equilibrium_focus_levels_a = value
+
+    @property
+    def equilibrium_focus_levels_b(self) -> list[float]:
+        return self._state.equilibrium_focus_levels_b
+
+    @equilibrium_focus_levels_b.setter
+    def equilibrium_focus_levels_b(self, value: list[float]) -> None:
+        self._state.equilibrium_focus_levels_b = value
 
     def set_utility_colors(self, *, color_a: str, color_b: str) -> "EdgeworthBox":
         """Update default colors for utility A/B curves."""
@@ -127,20 +188,10 @@ class EdgeworthBox:
         return float(self.utility_b(self.total_x - x, self.total_y - y))
 
     def _mrs(self, func, x: float, y: float, h: float = 1e-4) -> float:
-        x0 = min(max(float(x), _EPS), self.total_x - _EPS)
-        y0 = min(max(float(y), _EPS), self.total_y - _EPS)
-        ux = (float(func(x0 + h, y0)) - float(func(x0 - h, y0))) / (2.0 * h)
-        uy = (float(func(x0, y0 + h)) - float(func(x0, y0 - h))) / (2.0 * h)
-        if not np.isfinite(ux) or not np.isfinite(uy) or abs(uy) < 1e-9:
-            return np.nan
-        return ux / uy
+        return mrs(func, x, y, x_max=self.total_x, y_max=self.total_y, eps=_EPS, h=h)
 
     def _unique_points(self, points: list[tuple[float, float]], digits: int = 4) -> np.ndarray:
-        if not points:
-            return np.empty((0, 2), dtype=float)
-        rounded = {(round(float(x), digits), round(float(y), digits)) for x, y in points}
-        arr = np.array(sorted(rounded, key=lambda p: p[0]), dtype=float)
-        return arr
+        return unique_points(points, digits=digits)
 
     def add_indifference_curves(
         self,
@@ -161,11 +212,20 @@ class EdgeworthBox:
         X, Y = self._grid(res=res)
         U_a = self.utility_a(X, Y)
         U_b = self.utility_b(self.total_x - X, self.total_y - Y)
-        lv_a = percentile(U_a, n=levels_a) if isinstance(levels_a, int) else list(levels_a)
-        lv_b = percentile(U_b, n=levels_b) if isinstance(levels_b, int) else list(levels_b)
-
-        self.ax.contour(X, Y, U_a, levels=lv_a, colors=ca, linewidths=lw)
-        self.ax.contour(X, Y, U_b, levels=lv_b, colors=cb, linewidths=lw, linestyles="--")
+        lv_a = percentile_levels(U_a, n=levels_a) if isinstance(levels_a, int) else list(levels_a)
+        lv_b = percentile_levels(U_b, n=levels_b) if isinstance(levels_b, int) else list(levels_b)
+        plot_indifference_pair(
+            self.ax,
+            X=X,
+            Y=Y,
+            U_a=U_a,
+            U_b=U_b,
+            levels_a=lv_a,
+            levels_b=lv_b,
+            color_a=ca,
+            color_b=cb,
+            linewidth=lw,
+        )
         return self
 
     def add_endowment(
@@ -182,21 +242,15 @@ class EdgeworthBox:
 
         self.endowment = (float(x_endowment), float(y_endowment))
         c = color or self.theme.eq_color
-        self.ax.plot(
-            x_endowment,
-            y_endowment,
-            "o",
+        plot_endowment(
+            self.ax,
+            x=x_endowment,
+            y=y_endowment,
+            total_x=self.total_x,
+            total_y=self.total_y,
             color=c,
             markersize=max(self.theme.eq_markersize, 6),
-            zorder=20,
-        )
-        self.ax.text(
-            x_endowment + self.total_x * 0.015,
-            y_endowment + self.total_y * 0.015,
-            rf"${label}$",
-            color=c,
-            fontsize=11,
-            zorder=21,
+            label=label,
         )
         return self
 
@@ -223,19 +277,22 @@ class EdgeworthBox:
         X, Y = self._grid(res=res)
         U_a = self.utility_a(X, Y)
         U_b = self.utility_b(self.total_x - X, self.total_y - Y)
-        self.ax.contour(X, Y, U_a, levels=[u_a_e], colors=ca, linewidths=lw)
-        self.ax.contour(X, Y, U_b, levels=[u_b_e], colors=cb, linewidths=lw, linestyles="--")
+        plot_indifference_pair(
+            self.ax,
+            X=X,
+            Y=Y,
+            U_a=U_a,
+            U_b=U_b,
+            levels_a=[u_a_e],
+            levels_b=[u_b_e],
+            color_a=ca,
+            color_b=cb,
+            linewidth=lw,
+        )
         return self
 
     def _levels_around(self, anchor: float, n: int, spread: float) -> list[float]:
-        if n <= 1:
-            return [float(anchor)]
-        width = max(abs(float(anchor)), 1.0) * max(spread, 1e-6)
-        lo = float(anchor) - width
-        hi = float(anchor) + width
-        if np.isclose(lo, hi):
-            hi = lo + 1e-6
-        return np.linspace(lo, hi, n).tolist()
+        return around_anchor_levels(anchor=float(anchor), n=n, spread=spread)
 
     def _focus_levels(
         self,
@@ -247,40 +304,14 @@ class EdgeworthBox:
         spread: float,
         extra: float | None = None,
     ) -> list[float]:
-        anchor_f = float(anchor)
-        u_min_f = float(u_min)
-        u_max_f = float(u_max)
-        if not np.isfinite(anchor_f) or not np.isfinite(u_min_f) or not np.isfinite(u_max_f):
-            return [float(anchor)]
-        if u_max_f <= u_min_f:
-            return [float(anchor_f)]
-
-        pad = max(abs(anchor_f), 1.0) * 1e-6
-        lo_bound = u_min_f + pad
-        hi_bound = u_max_f - pad
-        if hi_bound <= lo_bound:
-            return [float(np.clip(anchor_f, u_min_f, u_max_f))]
-
-        width = max(abs(anchor_f), 1.0) * max(spread, 1e-6)
-        lo = max(lo_bound, anchor_f - width)
-        hi = min(hi_bound, anchor_f + width)
-        if hi - lo <= 1e-12:
-            full = hi_bound - lo_bound
-            if full <= 1e-12:
-                return [float(np.clip(anchor_f, u_min_f, u_max_f))]
-            interval = min(max(2.0 * width, full * 0.2), full)
-            lo = min(max(anchor_f - 0.5 * interval, lo_bound), hi_bound - interval)
-            hi = lo + interval
-
-        levels = np.linspace(lo, hi, n).tolist()
-        if extra is not None and np.isfinite(extra):
-            levels.append(float(np.clip(extra, lo_bound, hi_bound)))
-
-        unique_levels: list[float] = []
-        for lv in sorted(float(v) for v in levels if np.isfinite(v)):
-            if not unique_levels or not np.isclose(unique_levels[-1], lv, rtol=1e-6, atol=1e-9):
-                unique_levels.append(lv)
-        return unique_levels
+        return focus_levels(
+            anchor=anchor,
+            u_min=u_min,
+            u_max=u_max,
+            n=n,
+            spread=spread,
+            extra=extra,
+        )
 
     def add_indifference_curves_from_equilibrium(
         self,
@@ -344,66 +375,25 @@ class EdgeworthBox:
         )
 
     def _contract_curve_mrs(self, *, n: int, tolerance: float) -> np.ndarray:
-        x_grid = np.linspace(_EPS, self.total_x - _EPS, n)
-        y_grid = np.linspace(_EPS, self.total_y - _EPS, max(3 * n, 180))
-        points: list[tuple[float, float]] = []
-
-        for x in x_grid:
-            best_y: float | None = None
-            best_score = np.inf
-            for y in y_grid:
-                mrs_a = self._mrs(self.utility_a, x, y)
-                mrs_b = self._mrs(self.utility_b, self.total_x - x, self.total_y - y)
-                if not np.isfinite(mrs_a) or not np.isfinite(mrs_b) or mrs_a <= 0 or mrs_b <= 0:
-                    continue
-                score = abs(np.log(mrs_a) - np.log(mrs_b))
-                if score < best_score:
-                    best_score = score
-                    best_y = float(y)
-            if best_y is not None and best_score <= tolerance:
-                points.append((float(x), best_y))
-        return self._unique_points(points)
+        return contract_curve_mrs(
+            utility_a=self.utility_a,
+            utility_b=self.utility_b,
+            total_x=self.total_x,
+            total_y=self.total_y,
+            n=n,
+            tolerance=tolerance,
+            eps=_EPS,
+        )
 
     def _contract_curve_pareto(self, *, n: int) -> np.ndarray:
-        try:
-            from scipy.optimize import minimize
-        except Exception:
-            return np.empty((0, 2), dtype=float)
-
-        lambdas = np.linspace(0.01, 0.99, n)
-        points: list[tuple[float, float]] = []
-        prev = np.array([self.total_x * 0.5, self.total_y * 0.5], dtype=float)
-
-        bounds = [(_EPS, self.total_x - _EPS), (_EPS, self.total_y - _EPS)]
-
-        for lam in lambdas:
-            starts = [
-                prev,
-                np.array([self.total_x * 0.25, self.total_y * 0.25]),
-                np.array([self.total_x * 0.75, self.total_y * 0.75]),
-            ]
-            best = None
-            best_obj = np.inf
-
-            def obj(v: np.ndarray) -> float:
-                x, y = float(v[0]), float(v[1])
-                ua = self._eval_ua(x, y)
-                ub = self._eval_ub(x, y)
-                if not np.isfinite(ua) or not np.isfinite(ub):
-                    return 1e9
-                return -(lam * ua + (1.0 - lam) * ub)
-
-            for x0 in starts:
-                res = minimize(obj, x0=x0, method="SLSQP", bounds=bounds)
-                if res.success and float(res.fun) < best_obj:
-                    best_obj = float(res.fun)
-                    best = res.x
-
-            if best is not None:
-                prev = np.asarray(best, dtype=float)
-                points.append((float(best[0]), float(best[1])))
-
-        return self._unique_points(points)
+        return contract_curve_pareto(
+            eval_ua=self._eval_ua,
+            eval_ub=self._eval_ub,
+            total_x=self.total_x,
+            total_y=self.total_y,
+            n=n,
+            eps=_EPS,
+        )
 
     def add_contract_curve(
         self,
@@ -428,15 +418,14 @@ class EdgeworthBox:
         self.contract_curve_points = points
         c = color or self.theme.budget_color
         lw = linewidth if linewidth is not None else 1.2
-        if len(points) > 0:
-            self.ax.plot(
-                points[:, 0],
-                points[:, 1],
-                color=c,
-                linewidth=lw,
-                linestyle=linestyle,
-                label="Contract curve",
-            )
+        plot_contract_curve(
+            self.ax,
+            points=points,
+            color=c,
+            linewidth=lw,
+            linestyle=linestyle,
+            label="Contract curve",
+        )
         return self
 
     def apply_equilibrium_focus(
@@ -553,30 +542,24 @@ class EdgeworthBox:
                 core.append((float(x), float(y)))
 
         self.core_points = self._unique_points(core)
-        if len(self.core_points) >= min_points:
-            self.ax.plot(self.core_points[:, 0], self.core_points[:, 1], color=color, linewidth=linewidth, label="Core")
-        elif len(self.core_points) == 1:
-            self.ax.plot(self.core_points[0, 0], self.core_points[0, 1], "o", color=color, label="Core")
+        plot_core(
+            self.ax,
+            core_points=self.core_points,
+            color=color,
+            linewidth=linewidth,
+            label="Core",
+            min_points=min_points,
+        )
         return self
 
     def _line_box_intersections(self, px: float, py: float, income: float) -> list[tuple[float, float]]:
-        pts: list[tuple[float, float]] = []
-
-        y0 = income / py
-        if 0.0 <= y0 <= self.total_y:
-            pts.append((0.0, y0))
-        yw = (income - px * self.total_x) / py
-        if 0.0 <= yw <= self.total_y:
-            pts.append((self.total_x, yw))
-        x0 = income / px
-        if 0.0 <= x0 <= self.total_x:
-            pts.append((x0, 0.0))
-        xh = (income - py * self.total_y) / px
-        if 0.0 <= xh <= self.total_x:
-            pts.append((xh, self.total_y))
-
-        unique = self._unique_points(pts, digits=8)
-        return [(float(x), float(y)) for x, y in unique]
+        return line_box_intersections(
+            px=px,
+            py=py,
+            income=income,
+            total_x=self.total_x,
+            total_y=self.total_y,
+        )
 
     def add_price_line(
         self,
@@ -596,14 +579,7 @@ class EdgeworthBox:
         ex, ey = self.endowment
         income = px * ex + py * ey
         pts = self._line_box_intersections(px, py, income)
-        if len(pts) >= 2:
-            self.ax.plot(
-                [pts[0][0], pts[-1][0]],
-                [pts[0][1], pts[-1][1]],
-                color=color,
-                linewidth=linewidth,
-                label=label,
-            )
+        plot_price_line(self.ax, points=pts, color=color, linewidth=linewidth, label=label)
         return self
 
     def add_walrasian_equilibrium(
@@ -626,65 +602,28 @@ class EdgeworthBox:
 
         ex, ey = self.endowment
         income = px * ex + py * ey
-        price_ratio = px / py
 
         candidates = self.contract_curve_points
-        if len(candidates) == 0:
-            raise ValueError("Unable to compute contract curve for equilibrium search.")
-
-        def score(p: np.ndarray) -> float:
-            x, y = float(p[0]), float(p[1])
-            budget_err = abs(px * x + py * y - income) / max(income, 1.0)
-            mrs_a = self._mrs(self.utility_a, x, y)
-            mrs_b = self._mrs(self.utility_b, self.total_x - x, self.total_y - y)
-            mrs_err = 0.0
-            if np.isfinite(mrs_a) and np.isfinite(mrs_b) and mrs_a > 0 and mrs_b > 0:
-                mrs_err = abs(np.log(mrs_a / price_ratio)) + abs(np.log(mrs_b / price_ratio))
-            return budget_err + 0.25 * mrs_err
-
-        residuals = np.array([px * p[0] + py * p[1] - income for p in candidates], dtype=float)
-
-        x_star: float
-        y_star: float
-        crossing_idx = np.where(residuals[:-1] * residuals[1:] <= 0.0)[0]
-        if len(crossing_idx) > 0:
-            i = int(crossing_idx[np.argmin(np.abs(residuals[crossing_idx]))])
-            p0 = candidates[i]
-            p1 = candidates[i + 1]
-            r0 = float(residuals[i])
-            r1 = float(residuals[i + 1])
-            if abs(r1 - r0) > 1e-12:
-                t = -r0 / (r1 - r0)
-                t = min(max(t, 0.0), 1.0)
-                p = p0 + t * (p1 - p0)
-                x_star = float(p[0])
-                y_star = float(p[1])
-            else:
-                x_star = float(p0[0])
-                y_star = float(p0[1])
-        else:
-            idx = int(np.argmin([score(p) for p in candidates]))
-            x_star = float(candidates[idx, 0])
-            y_star = float(candidates[idx, 1])
+        x_star, y_star = walrasian_equilibrium_point(
+            candidates=candidates,
+            px=px,
+            py=py,
+            income=income,
+            mrs_a_fn=lambda x, y: self._mrs(self.utility_a, x, y),
+            mrs_b_fn=lambda x, y: self._mrs(self.utility_b, self.total_x - x, self.total_y - y),
+        )
 
         self.walrasian_equilibrium = (x_star, y_star)
-
-        self.ax.plot(
-            x_star,
-            y_star,
+        plot_equilibrium_marker(
+            self.ax,
+            x=x_star,
+            y=y_star,
+            total_x=self.total_x,
+            total_y=self.total_y,
+            color=color,
             marker=marker,
-            color=color,
             markersize=markersize,
-            label=rf"${label}$",
-            zorder=22,
-        )
-        self.ax.text(
-            x_star + self.total_x * 0.012,
-            y_star + self.total_y * 0.012,
-            rf"${label}$",
-            color=color,
-            fontsize=11,
-            zorder=23,
+            label=label,
         )
         return self
 
@@ -736,18 +675,7 @@ class EdgeworthBox:
 
     def save(self, path: str, **kwargs) -> None:
         """Export the Edgeworth box figure to disk."""
-        try:
-            self.fig.savefig(
-                path,
-                dpi=self.dpi,
-                transparent=True,
-                bbox_inches="tight",
-                **kwargs,
-            )
-        except OSError as exc:
-            raise ExportError(f"Failed to write '{path}': {exc}") from exc
-        finally:
-            plt.close(self.fig)
+        save_figure(self.fig, path=path, dpi=self.dpi, close=True, **kwargs)
 
     def show(self) -> None:
         """Display the figure in an interactive matplotlib window."""

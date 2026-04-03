@@ -3,6 +3,7 @@
 from .paths import ConsumptionPath, IncomePath, LinearBudget, PricePath
 from .demand import DemandDiagram
 from .edgeworth import EdgeworthBox, EquilibriumFocusConfig
+from .edgeworth_state import EdgeworthState
 
 __all__ = [
     "ConsumptionPath",
@@ -12,4 +13,5 @@ __all__ = [
     "DemandDiagram",
     "EdgeworthBox",
     "EquilibriumFocusConfig",
+    "EdgeworthState",
 ]

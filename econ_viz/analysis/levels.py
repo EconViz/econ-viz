@@ -13,7 +13,7 @@ Typical usage with an equilibrium anchor::
 
 from __future__ import annotations
 
-import numpy as np
+from ..contours import around_anchor_levels, percentile_levels
 
 
 def around(anchor: float, n: int = 5, spread: float = 0.5) -> list[float]:
@@ -38,19 +38,7 @@ def around(anchor: float, n: int = 5, spread: float = 0.5) -> list[float]:
     list[float]
         Sorted utility levels with *anchor* at the midpoint.
     """
-    if n <= 1:
-        return [anchor]
-
-    lo = max(anchor * (1 - spread), 1e-6)
-    hi = anchor * (1 + spread)
-
-    n_below = n // 2
-    n_above = n - n_below - 1
-
-    below = np.linspace(lo, anchor, n_below + 1)[:-1].tolist()
-    above = np.linspace(anchor, hi, n_above + 1)[1:].tolist()
-
-    return below + [anchor] + above
+    return around_anchor_levels(anchor=anchor, n=n, spread=spread)
 
 
 def percentile(Z: np.ndarray, n: int = 5, lo: float = 20, hi: float = 80) -> list[float]:
@@ -73,5 +61,4 @@ def percentile(Z: np.ndarray, n: int = 5, lo: float = 20, hi: float = 80) -> lis
     list[float]
         Utility levels at the requested percentiles.
     """
-    valid = Z[np.isfinite(Z)]
-    return np.percentile(valid, np.linspace(lo, hi, n)).tolist()
+    return percentile_levels(Z=Z, n=n, lo=lo, hi=hi)

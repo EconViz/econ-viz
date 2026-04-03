@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import argparse
-import sys
 
+from .errors import CliConfigError
 from .resolve import build_model
 
 
@@ -13,8 +13,7 @@ def cmd_solve_tex(args: argparse.Namespace) -> None:
     from econ_viz import solution_tex
 
     if args.model is None and args.latex is None:
-        print("error: provide --model <name> or --latex <expr>", file=sys.stderr)
-        sys.exit(1)
+        raise CliConfigError("provide --model <name> or --latex <expr>")
 
     model = build_model(args)
     try:
@@ -26,7 +25,6 @@ def cmd_solve_tex(args: argparse.Namespace) -> None:
             symbolic_params=args.symbolic_params,
         )
     except NotImplementedError as exc:
-        print(f"error: {exc}", file=sys.stderr)
-        sys.exit(1)
+        raise CliConfigError(str(exc)) from exc
 
     print(tex)
