@@ -35,7 +35,15 @@ def plot_endowment(
     )
 
 
-def plot_price_line(ax, *, points: list[tuple[float, float]], color: str, linewidth: float, label: str) -> None:
+def plot_price_line(
+    ax,
+    *,
+    points: list[tuple[float, float]],
+    color: str,
+    linewidth: float,
+    linestyle: str,
+    label: str,
+) -> None:
     """Draw the budget/price line segment inside the Edgeworth box."""
     if len(points) < 2:
         return
@@ -44,6 +52,7 @@ def plot_price_line(ax, *, points: list[tuple[float, float]], color: str, linewi
         [points[0][1], points[-1][1]],
         color=color,
         linewidth=linewidth,
+        linestyle=linestyle,
         label=label,
     )
 
@@ -92,10 +101,28 @@ def plot_indifference_pair(
     color_a: str,
     color_b: str,
     linewidth: float,
+    linestyle_a: str = "-",
+    linestyle_b: str = "-",
 ) -> None:
     """Draw both agents' indifference contour families."""
-    ax.contour(X, Y, U_a, levels=levels_a, colors=color_a, linewidths=linewidth)
-    ax.contour(X, Y, U_b, levels=levels_b, colors=color_b, linewidths=linewidth, linestyles="--")
+    ax.contour(
+        X,
+        Y,
+        U_a,
+        levels=levels_a,
+        colors=color_a,
+        linewidths=linewidth,
+        linestyles=linestyle_a,
+    )
+    ax.contour(
+        X,
+        Y,
+        U_b,
+        levels=levels_b,
+        colors=color_b,
+        linewidths=linewidth,
+        linestyles=linestyle_b,
+    )
 
 
 def plot_contract_curve(

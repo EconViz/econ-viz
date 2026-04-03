@@ -416,7 +416,7 @@ class EdgeworthBox:
             points = self._contract_curve_pareto(n=n)
 
         self.contract_curve_points = points
-        c = color or self.theme.budget_color
+        c = color or "#000000"
         lw = linewidth if linewidth is not None else 1.2
         plot_contract_curve(
             self.ax,
@@ -566,8 +566,9 @@ class EdgeworthBox:
         px: float,
         py: float,
         *,
-        color: str = "#1F4BFF",
-        linewidth: float = 2.0,
+        color: str = "#000000",
+        linewidth: float = 1.2,
+        linestyle: str = "--",
         label: str = "Price line",
     ) -> "EdgeworthBox":
         """Draw the price line through endowment with slope -px/py."""
@@ -579,7 +580,14 @@ class EdgeworthBox:
         ex, ey = self.endowment
         income = px * ex + py * ey
         pts = self._line_box_intersections(px, py, income)
-        plot_price_line(self.ax, points=pts, color=color, linewidth=linewidth, label=label)
+        plot_price_line(
+            self.ax,
+            points=pts,
+            color=color,
+            linewidth=linewidth,
+            linestyle=linestyle,
+            label=label,
+        )
         return self
 
     def add_walrasian_equilibrium(
