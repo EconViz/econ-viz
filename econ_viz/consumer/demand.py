@@ -12,6 +12,10 @@ from ..optimizer import solve
 from .paths import PricePath
 
 _GOODS_SPACE_PADDING = 1.18
+_PRICE_SYMBOL = {
+    "px": r"p_{x}",
+    "py": r"p_{y}",
+}
 
 
 class DemandDiagram(Figure):
@@ -49,7 +53,7 @@ class DemandDiagram(Figure):
         self.demand_canvas.x_max = demand_x_max or max(self.path.quantity_values(quantity_axis)) * 1.15
         self.demand_canvas.y_max = demand_y_max or max(self.path.parameter_values) * 1.15
         self.demand_canvas.x_label = quantity_axis
-        self.demand_canvas.y_label = self.path.parameter_name
+        self.demand_canvas.y_label = _PRICE_SYMBOL[self.path.parameter_name]
         self.demand_canvas.ax.cla()
         self.demand_canvas._apply_base_style()
 
@@ -76,7 +80,8 @@ class DemandDiagram(Figure):
             budget, eq = solved
             line_style = "-" if idx == 0 else "--"
             point_label = self._marker_label(idx)
-            line_label = f"{point_label}: {self.path.parameter_name}={price:.2g}"
+            price_symbol = _PRICE_SYMBOL[self.path.parameter_name]
+            line_label = f"{point_label}: {price_symbol}={price:.2g}"
             self.utility_canvas.add_budget(
                 px=budget.px,
                 py=budget.py,
