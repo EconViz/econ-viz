@@ -9,6 +9,7 @@ import numpy as np
 import pytest
 
 from econ_viz import EdgeworthBox, EquilibriumFocusConfig
+from econ_viz.consumer.edgeworth_plotter import plot_indifference_pair
 from econ_viz.models import CobbDouglas, Leontief, PerfectSubstitutes, QuasiLinear
 
 
@@ -168,7 +169,53 @@ def test_contract_curve_default_style_is_dashed_and_thin():
     assert contract_lines
     line = contract_lines[0]
     assert line.get_linestyle() == "--"
+    assert to_hex(line.get_color()) == "#000000"
     assert line.get_linewidth() <= 1.2 + 1e-9
+
+
+def test_price_line_default_style_is_black_and_dashed():
+    box = EdgeworthBox(
+        CobbDouglas(alpha=0.5, beta=0.5),
+        CobbDouglas(alpha=0.5, beta=0.5),
+        total_x=10.0,
+        total_y=10.0,
+    )
+    box.add_endowment(4.0, 6.0).add_price_line(px=1.0, py=1.0)
+    lines = [line for line in box.ax.lines if line.get_label() == "Price line"]
+    assert lines
+    line = lines[0]
+    assert line.get_linestyle() == "--"
+    assert to_hex(line.get_color()) == "#000000"
+    assert line.get_linewidth() <= 1.2 + 1e-9
+
+
+def test_indifference_pair_defaults_to_solid_for_both_agents():
+    class _SpyAxis:
+        def __init__(self):
+            self.calls = []
+
+        def contour(self, *args, **kwargs):
+            self.calls.append(kwargs)
+
+    spy = _SpyAxis()
+    X, Y = np.meshgrid(np.linspace(0.1, 0.9, 3), np.linspace(0.1, 0.9, 3))
+    U_a = X + Y
+    U_b = (1.0 - X) + (1.0 - Y)
+    plot_indifference_pair(
+        spy,
+        X=X,
+        Y=Y,
+        U_a=U_a,
+        U_b=U_b,
+        levels_a=[0.8],
+        levels_b=[0.8],
+        color_a="#111111",
+        color_b="#00a7a0",
+        linewidth=1.0,
+    )
+    assert len(spy.calls) == 2
+    assert spy.calls[0]["linestyles"] == "-"
+    assert spy.calls[1]["linestyles"] == "-"
 
 
 def test_symmetric_cobb_douglas_contract_curve_near_diagonal():
