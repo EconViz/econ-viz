@@ -154,6 +154,24 @@ class TestDemandDiagram:
         for px, x in zip([2.0, 4.0], expected_x):
             assert x == pytest.approx(20.0 / px, rel=1e-3)
 
+    @pytest.mark.parametrize(
+        "price,expected",
+        [
+            ("px", r"p_{x}"),
+            ("py", r"p_{y}"),
+        ],
+    )
+    def test_demand_canvas_uses_math_price_symbols(self, price, expected):
+        path = PricePath(
+            CobbDouglas(alpha=0.5, beta=0.5),
+            budget=LinearBudget(px=2.0, py=2.0, income=40.0),
+            price=price,
+            price_range=(1.0, 4.0),
+            n=20,
+        )
+        fig = DemandDiagram(path)
+        assert fig.demand_canvas.y_label == expected
+
     def test_quasi_linear_demand_example_renders(self, tmp_path):
         path = PricePath(
             QuasiLinear(v_func=np.log, linear_in="y"),
