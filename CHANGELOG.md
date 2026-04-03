@@ -2,6 +2,44 @@
 
 <!-- version list -->
 
+## v1.3.1 (2026-04-03)
+
+### Features
+
+- Add modular `Edgeworth` internals with dedicated compute/state/plotter helpers (`edgeworth_compute`, `edgeworth_state`, `edgeworth_plotter`)
+
+- Add model registry (`models.registry`) and route CLI model construction through the registry
+
+### Refactors
+
+- Decouple CLI argument resolution from process exit flow:
+  - introduce `CliConfigError`
+  - centralize stderr/exit handling in `cli.main`
+
+- Introduce shared contour level policies under `contours.level_policies` and reuse them across analysis/components/consumer paths
+
+- Introduce shared figure exporter (`io.exporter`) and unify save logic across `Canvas`, `Figure`, and `EdgeworthBox`
+
+- Split Canvas rendering responsibilities with renderer modules (`canvas.renderers.*`) and low-level primitives (`canvas.primitives`)
+
+- Convert package root exports in `econ_viz.__init__` to lazy loading while preserving the public API surface
+
+### Documentation
+
+- Expand playground notebook with a complete Edgeworth Box section and export examples
+
+## v1.3.0 (2026-04-03)
+
+### Features
+
+- Add `EdgeworthBox` and `EquilibriumFocusConfig` APIs for two-consumer exchange diagrams
+
+- Add contract-curve construction (`mrs` / Pareto fallback), core rendering, Walrasian equilibrium overlay, and equilibrium-focused indifference-curve rendering
+
+- Add `examples/edgeworth_box.py` covering common utility-function combinations
+
+- Add dedicated Edgeworth test coverage in `tests/test_edgeworth.py`
+
 ## v1.2.3 (2026-03-31)
 
 ### Features
