@@ -30,7 +30,15 @@ from .optimizer import (
 from .components import IndifferenceCurves, BudgetConstraint, EquilibriumPoint
 from .models import parse_latex
 from .models.advanced import CustomUtility, MultiGoodCD
-from .consumer import ConsumptionPath, DemandDiagram, IncomePath, LinearBudget, PricePath
+from .consumer import (
+    ConsumptionPath,
+    DemandDiagram,
+    EdgeworthBox,
+    EquilibriumFocusConfig,
+    IncomePath,
+    LinearBudget,
+    PricePath,
+)
 from .utils.logging import get_logger
 
 sys.modules.setdefault(__name__ + ".figure", sys.modules[__name__ + ".canvas.figure"])
@@ -72,5 +80,7 @@ __all__ = [
     "PricePath",
     "IncomePath",
     "DemandDiagram",
+    "EdgeworthBox",
+    "EquilibriumFocusConfig",
     "get_logger",
 ]
