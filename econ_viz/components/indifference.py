@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import numpy as np
 
+from ..contours import percentile_levels
 from ..enums import UtilityType
 from ..utils.logging import get_logger
 
@@ -66,14 +67,13 @@ class IndifferenceCurves:
     def draw(self, ax, x_max: float, y_max: float, **kwargs) -> list[float]:
         """Draw curves onto *ax* and return the computed contour levels."""
         from ..canvas.layers import Layer
-        from ..levels import percentile
         from . import draw_ray
 
         res = int(kwargs.pop("res", 400))
         X, Y, Z = Layer.compute_contour(self.func, (0.1, x_max), (0.1, y_max), res=res)
 
         if isinstance(self.levels, int):
-            computed = percentile(Z, n=self.levels)
+            computed = percentile_levels(Z, n=self.levels)
         else:
             computed = list(self.levels)
 

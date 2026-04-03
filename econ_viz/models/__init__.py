@@ -13,6 +13,7 @@ from .core import CobbDouglas, Leontief, PerfectSubstitutes, CES, Satiation, Qua
 from .advanced import CustomUtility, MultiGoodCD
 from .parser import parse_latex
 from .protocol import UtilityFunction
+from .registry import build_registered_model, get_model_registry
 
 __all__ = [
     "CobbDouglas",
@@ -27,4 +28,6 @@ __all__ = [
     "Translog",
     "UtilityFunction",
     "parse_latex",
+    "get_model_registry",
+    "build_registered_model",
 ]

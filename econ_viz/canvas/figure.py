@@ -11,8 +11,8 @@ from matplotlib.figure import Figure as MplFigure
 from matplotlib.gridspec import GridSpec
 
 from .base import Canvas
-from ..enums import ExportFormat, Layout
-from ..exceptions import ExportError
+from ..enums import Layout
+from ..io import save_figure
 from ..themes import default as _default_theme
 from ..themes.theme import Theme
 
@@ -161,22 +161,14 @@ class Figure:
         ExportError
             If writing to disk fails.
         """
-        try:
-            ExportFormat.from_path(path)
-        except ExportError as exc:
-            raise ValueError(str(exc)) from None
-        try:
-            self.fig.savefig(
-                path,
-                dpi=self.canvases[0].dpi if self.canvases else 300,
-                transparent=True,
-                bbox_inches="tight",
-                **kwargs,
-            )
-        except OSError as exc:
-            raise ExportError(f"Failed to write '{path}': {exc}") from exc
-        finally:
-            plt.close(self.fig)
+        save_figure(
+            self.fig,
+            path=path,
+            dpi=self.canvases[0].dpi if self.canvases else 300,
+            close=True,
+            unsupported_as_value_error=True,
+            **kwargs,
+        )
 
     def show(self) -> None:
         """Display the multi-panel figure interactively."""

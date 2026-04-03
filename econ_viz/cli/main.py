@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import argparse
+import sys
 
+from .errors import CliConfigError
 from .help import cmd_help
 from .models import cmd_models
 from .plot import cmd_plot
@@ -135,11 +137,15 @@ def main() -> None:
     parser, subparsers = build_parser()
     args = parser.parse_args()
 
-    if args.command == "help":
-        cmd_help(args, parser, subparsers)
-    elif args.command == "models":
-        cmd_models(args)
-    elif args.command == "plot":
-        cmd_plot(args)
-    elif args.command == "solve-tex":
-        cmd_solve_tex(args)
+    try:
+        if args.command == "help":
+            cmd_help(args, parser, subparsers)
+        elif args.command == "models":
+            cmd_models(args)
+        elif args.command == "plot":
+            cmd_plot(args)
+        elif args.command == "solve-tex":
+            cmd_solve_tex(args)
+    except CliConfigError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        raise SystemExit(1) from exc

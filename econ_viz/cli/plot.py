@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import argparse
-import sys
 
+from .errors import CliConfigError
 from .resolve import build_model, resolve_theme
 
 
@@ -23,8 +23,7 @@ def cmd_plot(args: argparse.Namespace) -> None:
     from econ_viz import Canvas, levels as lvl_mod, solve
 
     if args.model is None and args.latex is None:
-        print("error: provide --model <name> or --latex <expr>", file=sys.stderr)
-        sys.exit(1)
+        raise CliConfigError("provide --model <name> or --latex <expr>")
 
     model = build_model(args)
     theme = resolve_theme(args.theme)
