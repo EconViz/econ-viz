@@ -1,6 +1,6 @@
 [project]
 name = "econ-viz"
-version = "1.3.1"
+version = "1.4.0"
 description = "A Python toolkit for producing publication-quality microeconomics diagrams."
 readme = "README.md"
 authors = [{ name = "Anthony Sung", email = "sungpinyue@gmail.com" }]
@@ -12,6 +12,11 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = ["numpy (>=1.24.0)", "matplotlib (>=3.6.0,<4.0.0)", "scipy (>=1.13.0,<2.0.0)", "sympy (>=1.12.0,<2.0.0)"]
+
+[project.optional-dependencies]
+animation   = ["Pillow (>=9.0.0)"]
+interactive = ["ipywidgets (>=8.0.0)", "IPython (>=8.0.0)"]
+all         = ["Pillow (>=9.0.0)", "ipywidgets (>=8.0.0)", "IPython (>=8.0.0)"]
 
 [project.scripts]
 econ-viz = "econ_viz.cli:main"

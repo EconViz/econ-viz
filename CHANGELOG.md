@@ -2,6 +2,24 @@
 
 <!-- version list -->
 
+## v1.4.0 (2026-04-09)
+
+### Features
+
+- Add `Animator` class (`econ_viz.animation`) for parameter-sweep GIF export via Pillow — no ffmpeg required (closes #44)
+
+- Add `WidgetViewer` class (`econ_viz.interactive`) for Jupyter notebook slider controls via ipywidgets (closes #45)
+
+- Add optional dependency extras: `pip install econ-viz[animation]`, `pip install econ-viz[interactive]`, `pip install econ-viz[all]`
+
+- Add usage examples in `examples/animation.py` (price sweep + income expansion GIFs)
+
+### Tests
+
+- Add test coverage for Animator (init validation, GIF output, Pillow guard)
+
+- Add test coverage for WidgetViewer (init validation, slider builder, dependency guards)
+
 ## v1.3.1 (2026-04-03)
 
 ### Features
