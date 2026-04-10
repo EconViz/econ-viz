@@ -28,13 +28,22 @@ def _require_pillow() -> None:
 
 
 def _figure_to_pil(fig, dpi: int):
-    """Render a matplotlib Figure to a PIL RGBA Image."""
+    """Render a matplotlib Figure to a PIL RGB Image suitable for GIF export.
+
+    Transparent Canvas backgrounds are composited onto white so that GIF
+    frames never bleed through to preceding frames.
+    """
     from PIL import Image
 
     buf = io.BytesIO()
     fig.savefig(buf, format="png", dpi=dpi, bbox_inches="tight")
     buf.seek(0)
-    return Image.open(buf).copy().convert("RGBA")
+    rgba = Image.open(buf).copy().convert("RGBA")
+    # Composite onto a solid white background; GIF only supports 1-bit
+    # transparency, so blending here avoids artefacts in animated viewers.
+    background = Image.new("RGBA", rgba.size, (255, 255, 255, 255))
+    background.paste(rgba, mask=rgba.split()[3])
+    return background.convert("RGB")
 
 
 class Animator:
@@ -149,4 +158,5 @@ class Animator:
             loop=loop,
             duration=duration_ms,
             optimize=False,
+            disposal=2,  # restore to background between frames; prevents stacking
         )

@@ -1,8 +1,16 @@
 """Animated GIF examples for econ_viz v1.4.0.
 
-Demonstrates the Animator class (factory pattern): each GIF is generated
-by sweeping one economic parameter across a range and saving the result
-with a single ``.save()`` call.  No ffmpeg required — only Pillow.
+This example intentionally separates two different teaching questions:
+
+1. How does the indifference map change when utility-function parameters move?
+2. How does the equilibrium bundle move when prices change?
+
+For four common utility functions, the script writes:
+
+- 4 parameter-sweep GIFs
+- 4 price-sweep GIFs with ``py`` held fixed
+- 4 income-sweep GIFs with the utility function held fixed
+- 2 budget-only GIFs that isolate the motion of the budget line itself
 
 Run from the project root::
 
@@ -11,125 +19,417 @@ Run from the project root::
 Output is written to ``examples/output/animation/``.
 """
 
+from __future__ import annotations
+
 import matplotlib
 matplotlib.use("Agg")
 
+from dataclasses import dataclass, field
+from typing import Callable
+
 import numpy as np
 
-from econ_viz import Canvas
-from econ_viz.models import CobbDouglas
-from econ_viz.optimizer import solve
+from econ_viz import Canvas, levels, solve
 from econ_viz.animation import Animator
+from econ_viz.canvas.layers import Layer
+from econ_viz.models import CobbDouglas, CES, Leontief, PerfectSubstitutes
 
 OUTPUT_DIR = "examples/output/animation"
+PARAMETER_DIR = f"{OUTPUT_DIR}/parameter_sweeps"
+PRICE_DIR = f"{OUTPUT_DIR}/price_sweeps"
+INCOME_DIR = f"{OUTPUT_DIR}/income_sweeps"
+
+X_MAX = 14
+Y_MAX = 12
+INCOME = 20.0
+PY_FIXED = 2.0
+PX_FOR_PARAMETER_SWEEPS = 2.0
+PRICE_MIN = 1.0
+PRICE_MAX = 6.0
+PRICE_FRAME_COUNT = 45
+DEFAULT_SPEED = 1.0
+PARAMETER_SPEED = DEFAULT_SPEED
+PRICE_SPEED = DEFAULT_SPEED
+INCOME_SPEED = DEFAULT_SPEED
+INCOME_MIN = 8.0
+INCOME_MAX = 36.0
+FIGURE_SIZE = (7.6, 6.4)
+AXES_RIGHT = 0.76
+DYNAMIC_INFO_X = 0.80
+DYNAMIC_INFO_TITLE_Y = 0.88
+DYNAMIC_INFO_BODY_Y = 0.84
 
 
-# ──────────────────────────────────────────────────────────────────────
-# GIF 1 — Price sweep (P₁ falling: budget rotates outward)
-#
-#   As P₁ decreases from 8 → 1 the budget constraint pivots around the
-#   Y-intercept (income / P₂), expanding the affordable set.
-#   The optimal bundle traces the Price-Consumption Curve (PCC).
-# ──────────────────────────────────────────────────────────────────────
+@dataclass(frozen=True)
+class UtilityAnimationSpec:
+    """Configuration for one model family in the animation gallery."""
 
-MODEL   = CobbDouglas(alpha=0.5, beta=0.5)
-P2      = 2.0
-INCOME  = 20.0
+    key: str
+    title: str
+    parameter_name: str
+    parameter_frames: np.ndarray
+    parameter_factory: Callable[[float], object]
+    parameter_label: Callable[[float], str]
+    price_model: object
+    utility_kwargs: dict = field(default_factory=dict)
 
-def draw_price_sweep(p1: float) -> Canvas:
-    """Return a Canvas showing budget + indifference curves for a given P₁."""
-    c = Canvas(
-        x_max=14,
-        y_max=12,
+
+SPECS = [
+    UtilityAnimationSpec(
+        key="cobb_douglas",
+        title="Cobb-Douglas",
+        parameter_name="alpha",
+        parameter_frames=None,
+        parameter_factory=lambda alpha: CobbDouglas(alpha=alpha, beta=1.0 - alpha),
+        parameter_label=lambda alpha: rf"$\alpha={alpha:.2f},\ \beta={1.0 - alpha:.2f}$",
+        price_model=CobbDouglas(alpha=0.5, beta=0.5),
+    ),
+    UtilityAnimationSpec(
+        key="ces",
+        title="CES",
+        parameter_name="rho",
+        parameter_frames=None,
+        parameter_factory=lambda rho: CES(alpha=0.5, beta=0.5, rho=rho),
+        parameter_label=lambda rho: rf"$\rho={rho:.2f}$",
+        price_model=CES(alpha=0.5, beta=0.5, rho=0.4),
+    ),
+    UtilityAnimationSpec(
+        key="perfect_substitutes",
+        title="Perfect Substitutes",
+        parameter_name="a",
+        parameter_frames=None,
+        parameter_factory=lambda a: PerfectSubstitutes(a=a, b=1.0),
+        parameter_label=lambda a: rf"$a={a:.2f},\ b=1.00$",
+        price_model=PerfectSubstitutes(a=1.5, b=1.0),
+        utility_kwargs={"show_rays": True},
+    ),
+    UtilityAnimationSpec(
+        key="leontief",
+        title="Leontief",
+        parameter_name="a",
+        parameter_frames=None,
+        parameter_factory=lambda a: Leontief(a=a, b=1.0),
+        parameter_label=lambda a: rf"$a={a:.2f},\ b=1.00$",
+        price_model=Leontief(a=1.5, b=1.0),
+        utility_kwargs={"show_rays": True, "show_kinks": True},
+    ),
+]
+
+
+def _parameterized_progress(n: int, speed: float = DEFAULT_SPEED) -> np.ndarray:
+    """Return monotone progress values in [0, 1] with configurable pacing."""
+    if speed <= 0:
+        raise ValueError("speed must be positive.")
+    progress = np.linspace(0.0, 1.0, n)
+    if speed == 1.0:
+        return progress
+    return progress ** speed
+
+
+def _parameterized_linear_frames(
+    start: float,
+    stop: float,
+    n: int,
+    speed: float = DEFAULT_SPEED,
+) -> np.ndarray:
+    """Interpolate linearly between two endpoints with configurable pacing."""
+    progress = _parameterized_progress(n=n, speed=speed)
+    return start + (stop - start) * progress
+
+
+def _build_parameter_frames(spec_key: str) -> np.ndarray:
+    """Build parameter frames for one utility family."""
+    if spec_key == "cobb_douglas":
+        return _parameterized_linear_frames(0.2, 0.8, PRICE_FRAME_COUNT, speed=PARAMETER_SPEED)
+    if spec_key == "ces":
+        left = _parameterized_linear_frames(-1.2, -0.1, 23, speed=PARAMETER_SPEED)
+        right = _parameterized_linear_frames(0.1, 0.8, 22, speed=PARAMETER_SPEED)
+        return np.concatenate([left, right])
+    if spec_key in {"perfect_substitutes", "leontief"}:
+        return _parameterized_linear_frames(0.6, 2.4, PRICE_FRAME_COUNT, speed=PARAMETER_SPEED)
+    raise ValueError(f"Unknown spec key: {spec_key}")
+
+
+for idx, spec in enumerate(SPECS):
+    SPECS[idx] = UtilityAnimationSpec(
+        key=spec.key,
+        title=spec.title,
+        parameter_name=spec.parameter_name,
+        parameter_frames=_build_parameter_frames(spec.key),
+        parameter_factory=spec.parameter_factory,
+        parameter_label=spec.parameter_label,
+        price_model=spec.price_model,
+        utility_kwargs=spec.utility_kwargs,
+    )
+
+
+def _add_frame_metadata(canvas: Canvas, *lines: str) -> Canvas:
+    """Attach a compact multi-line metadata block in a right-side panel."""
+    canvas.fig.text(
+        DYNAMIC_INFO_X,
+        DYNAMIC_INFO_TITLE_Y,
+        "Dynamic Info",
+        ha="left",
+        va="top",
+        fontsize=11.5,
+        fontweight="semibold",
+        color=canvas.theme.label_color,
+        zorder=9,
+    )
+    canvas.fig.text(
+        DYNAMIC_INFO_X,
+        DYNAMIC_INFO_BODY_Y,
+        "\n".join(lines),
+        ha="left",
+        va="top",
+        fontsize=10.5,
+        color=canvas.theme.label_color,
+        zorder=9,
+    )
+    return canvas
+
+
+def _fixed_levels_for_model(model, n: int = 5, res: int = 400) -> list[float]:
+    """Compute one reusable IC family for a fixed utility function.
+
+    Price and income sweeps should hold the utility function fixed, so they
+    should also hold the background indifference-map levels fixed.
+    """
+    _, _, z = Layer.compute_contour(model, (0.1, X_MAX), (0.1, Y_MAX), res=res)
+    return levels.percentile(z, n=n, lo=20, hi=80)
+
+
+def _uniform_budget_speed_price_frames(
+    px_min: float = PRICE_MIN,
+    px_max: float = PRICE_MAX,
+    income: float = INCOME,
+    n: int = PRICE_FRAME_COUNT,
+    speed: float = PRICE_SPEED,
+) -> np.ndarray:
+    """Sample prices so the x-intercept moves at a roughly constant speed.
+
+    Linear spacing in price makes the budget line appear slow at first and
+    much faster near low prices because the x-intercept equals ``income / px``.
+    Here we sample uniformly in x-intercept space, then map back to price.
+    """
+    x_intercept_min = income / px_max
+    x_intercept_max = income / px_min
+    x_intercepts = _parameterized_linear_frames(
+        x_intercept_min,
+        x_intercept_max,
+        n=n,
+        speed=speed,
+    )
+    return income / x_intercepts
+
+
+def _budget_only_canvas(title: str, px: float, py: float, income: float) -> Canvas:
+    """Render an animation-ready budget-only frame with a right metadata gutter."""
+    canvas = _make_animation_canvas(title=title)
+    canvas.add_budget(px=px, py=py, income=income, fill=True)
+    return canvas
+
+
+def _make_animation_canvas(title: str) -> Canvas:
+    """Create a slightly wider canvas with reserved space for frame metadata."""
+    canvas = Canvas(
+        x_max=X_MAX,
+        y_max=Y_MAX,
         x_label="X_1",
         y_label="X_2",
-        title=rf"Price sweep — $P_1 = {p1:.2f}$",
+        title=title,
         dpi=120,
     )
-    c.add_utility(MODEL, levels=6)
-    c.add_budget(px=p1, py=P2, income=INCOME, fill=True)
-
-    eq = solve(MODEL, px=p1, py=P2, income=INCOME)
-    c.add_equilibrium(eq, drop_dashes=True)
-
-    return c
+    canvas.fig.set_size_inches(*FIGURE_SIZE)
+    canvas.fig.subplots_adjust(left=0.10, right=AXES_RIGHT, top=0.90, bottom=0.10)
+    return canvas
 
 
-price_frames = np.linspace(8.0, 1.0, 50)   # P₁ falls: budget pivots out
+def build_parameter_drawer(spec: UtilityAnimationSpec) -> Callable[[float], Canvas]:
+    """Return a frame factory for one utility-parameter sweep."""
 
-print("Rendering GIF 1/2 — price sweep …")
-Animator(draw_price_sweep, frames=price_frames).save(
-    f"{OUTPUT_DIR}/price_sweep.gif",
-    fps=12,
-    dpi=120,
-)
-print(f"  → saved to {OUTPUT_DIR}/price_sweep.gif")
+    def _draw(param_value: float) -> Canvas:
+        model = spec.parameter_factory(float(param_value))
+        eq = solve(model, px=PX_FOR_PARAMETER_SWEEPS, py=PY_FIXED, income=INCOME)
+        canvas = _make_animation_canvas(title=f"{spec.title} parameter sweep")
+        canvas.add_utility(model, levels=levels.around(eq.utility, n=5), **spec.utility_kwargs)
+        canvas.add_budget(px=PX_FOR_PARAMETER_SWEEPS, py=PY_FIXED, income=INCOME, fill=True)
+        canvas.add_equilibrium(eq, drop_dashes=True, show_ray=True)
+        return _add_frame_metadata(
+            canvas,
+            spec.parameter_label(float(param_value)),
+            rf"$(x^*, y^*) = ({eq.x:.2f}, {eq.y:.2f})$",
+        )
+
+    return _draw
 
 
-# ──────────────────────────────────────────────────────────────────────
-# GIF 2 — Income sweep (Engel expansion path)
-#
-#   As income rises from 5 → 40 the budget constraint shifts outward
-#   in parallel.  For a Cobb-Douglas utility the optimal bundle moves
-#   along a straight ray through the origin (income-consumption curve).
-# ──────────────────────────────────────────────────────────────────────
+def build_price_drawer(spec: UtilityAnimationSpec) -> Callable[[float], Canvas]:
+    """Return a frame factory for one price sweep with py fixed."""
+    model = spec.price_model
+    fixed_levels = _fixed_levels_for_model(model)
 
-P1_FIXED = 3.0
-P2_FIXED = 2.0
+    def _draw(px: float) -> Canvas:
+        eq = solve(model, px=float(px), py=PY_FIXED, income=INCOME)
+        canvas = _make_animation_canvas(title=f"{spec.title} price sweep")
+        canvas.add_utility(model, levels=fixed_levels, **spec.utility_kwargs)
+        canvas.add_budget(px=float(px), py=PY_FIXED, income=INCOME, fill=True)
+        canvas.add_equilibrium(eq, drop_dashes=True, show_ray=True)
+        return _add_frame_metadata(
+            canvas,
+            rf"$p_x={px:.2f}$",
+            rf"$p_y={PY_FIXED:.2f}$",
+            rf"$(x^*, y^*) = ({eq.x:.2f}, {eq.y:.2f})$",
+        )
 
-def draw_income_sweep(income: float) -> Canvas:
-    """Return a Canvas showing budget + equilibrium for a given income level."""
-    c = Canvas(
-        x_max=14,
-        y_max=12,
-        x_label="X_1",
-        y_label="X_2",
-        title=rf"Income expansion — $I = {income:.1f}$",
+    return _draw
+
+
+def build_income_drawer(spec: UtilityAnimationSpec) -> Callable[[float], Canvas]:
+    """Return a frame factory for one income sweep with utility fixed."""
+    model = spec.price_model
+    fixed_levels = _fixed_levels_for_model(model)
+
+    def _draw(income: float) -> Canvas:
+        eq = solve(model, px=PX_FOR_PARAMETER_SWEEPS, py=PY_FIXED, income=float(income))
+        canvas = _make_animation_canvas(title=f"{spec.title} income sweep")
+        canvas.add_utility(model, levels=fixed_levels, **spec.utility_kwargs)
+        canvas.add_budget(px=PX_FOR_PARAMETER_SWEEPS, py=PY_FIXED, income=float(income), fill=True)
+        canvas.add_equilibrium(eq, drop_dashes=True, show_ray=True)
+        return _add_frame_metadata(
+            canvas,
+            rf"$I={income:.2f}$",
+            rf"$p_x={PX_FOR_PARAMETER_SWEEPS:.2f},\ p_y={PY_FIXED:.2f}$",
+            rf"$(x^*, y^*) = ({eq.x:.2f}, {eq.y:.2f})$",
+        )
+
+    return _draw
+
+
+def build_budget_only_price_drawer() -> Callable[[float], Canvas]:
+    """Return a frame factory for a pure budget-line price sweep."""
+
+    def _draw(px: float) -> Canvas:
+        canvas = _budget_only_canvas(
+            title="Budget-only price sweep",
+            px=float(px),
+            py=PY_FIXED,
+            income=INCOME,
+        )
+        return _add_frame_metadata(
+            canvas,
+            rf"$p_x={px:.2f}$",
+            rf"$p_y={PY_FIXED:.2f}$",
+            rf"$x\mathrm{{-int}}={INCOME / px:.2f}$",
+        )
+
+    return _draw
+
+
+def build_budget_only_income_drawer() -> Callable[[float], Canvas]:
+    """Return a frame factory for a pure budget-line income sweep."""
+
+    def _draw(income: float) -> Canvas:
+        canvas = _budget_only_canvas(
+            title="Budget-only income sweep",
+            px=PX_FOR_PARAMETER_SWEEPS,
+            py=PY_FIXED,
+            income=float(income),
+        )
+        return _add_frame_metadata(
+            canvas,
+            rf"$I={income:.2f}$",
+            rf"$p_x={PX_FOR_PARAMETER_SWEEPS:.2f},\ p_y={PY_FIXED:.2f}$",
+            rf"$x\mathrm{{-int}}={income / PX_FOR_PARAMETER_SWEEPS:.2f},\ "
+            rf"y\mathrm{{-int}}={income / PY_FIXED:.2f}$",
+        )
+
+    return _draw
+
+
+def main() -> None:
+    """Render all parameter, price, and income sweeps."""
+    price_frames = _uniform_budget_speed_price_frames(speed=PRICE_SPEED)
+    income_frames = _parameterized_linear_frames(
+        INCOME_MIN,
+        INCOME_MAX,
+        PRICE_FRAME_COUNT,
+        speed=INCOME_SPEED,
+    )
+
+    print("Rendering parameter sweeps ...")
+    for idx, spec in enumerate(SPECS, start=1):
+        out_path = f"{PARAMETER_DIR}/{spec.key}_parameter_sweep.gif"
+        print(f"  [{idx}/4] {spec.title} parameter sweep")
+        Animator(build_parameter_drawer(spec), frames=spec.parameter_frames).save(
+            out_path,
+            fps=12,
+            dpi=120,
+        )
+        print(f"      -> saved to {out_path}")
+
+    print("Rendering price sweeps (holding py fixed) ...")
+    for idx, spec in enumerate(SPECS, start=1):
+        out_path = f"{PRICE_DIR}/{spec.key}_price_sweep.gif"
+        print(f"  [{idx}/4] {spec.title} price sweep")
+        Animator(build_price_drawer(spec), frames=price_frames).save(
+            out_path,
+            fps=12,
+            dpi=120,
+        )
+        print(f"      -> saved to {out_path}")
+
+    budget_only_price_path = f"{PRICE_DIR}/budget_only_price_sweep.gif"
+    print("  [budget] Budget-only price sweep")
+    Animator(build_budget_only_price_drawer(), frames=price_frames).save(
+        budget_only_price_path,
+        fps=12,
         dpi=120,
     )
-    c.add_utility(MODEL, levels=6)
-    c.add_budget(px=P1_FIXED, py=P2_FIXED, income=income, fill=True)
+    print(f"      -> saved to {budget_only_price_path}")
 
-    eq = solve(MODEL, px=P1_FIXED, py=P2_FIXED, income=income)
-    c.add_equilibrium(eq, drop_dashes=True, show_ray=True)
+    print("Rendering income sweeps (holding utility and prices fixed) ...")
+    for idx, spec in enumerate(SPECS, start=1):
+        out_path = f"{INCOME_DIR}/{spec.key}_income_sweep.gif"
+        print(f"  [{idx}/4] {spec.title} income sweep")
+        Animator(build_income_drawer(spec), frames=income_frames).save(
+            out_path,
+            fps=12,
+            dpi=120,
+        )
+        print(f"      -> saved to {out_path}")
 
-    return c
+    budget_only_income_path = f"{INCOME_DIR}/budget_only_income_sweep.gif"
+    print("  [budget] Budget-only income sweep")
+    Animator(build_budget_only_income_drawer(), frames=income_frames).save(
+        budget_only_income_path,
+        fps=12,
+        dpi=120,
+    )
+    print(f"      -> saved to {budget_only_income_path}")
 
+    print(f"\nDone. Wrote 14 GIFs under {OUTPUT_DIR}")
 
-income_frames = np.linspace(5.0, 40.0, 50)
-
-print("Rendering GIF 2/2 — income expansion …")
-Animator(draw_income_sweep, frames=income_frames).save(
-    f"{OUTPUT_DIR}/income_expansion.gif",
-    fps=12,
-    dpi=120,
-)
-print(f"  → saved to {OUTPUT_DIR}/income_expansion.gif")
-
-print("\nDone. Both GIFs written to", OUTPUT_DIR)
-
-
-# ──────────────────────────────────────────────────────────────────────
-# Jupyter interactive usage (reference only — run inside a notebook)
-# ──────────────────────────────────────────────────────────────────────
 
 JUPYTER_EXAMPLE = """
 # ── Paste into a Jupyter notebook cell ──────────────────────────────
 from econ_viz.interactive import WidgetViewer
-from econ_viz import Canvas
+from econ_viz import Canvas, levels, solve
 from econ_viz.models import CobbDouglas
 
-MODEL = CobbDouglas(alpha=0.5, beta=0.5)
-
-def draw(p1: float, income: float) -> Canvas:
+def draw(alpha: float, px: float) -> Canvas:
+    model = CobbDouglas(alpha=alpha, beta=1.0 - alpha)
+    eq = solve(model, px=px, py=2.0, income=20.0)
     c = Canvas(x_max=14, y_max=12, x_label="X_1", y_label="X_2")
-    c.add_utility(MODEL, levels=6)
-    c.add_budget(px=p1, py=2.0, income=income, fill=True)
-    from econ_viz.optimizer import solve
-    eq = solve(MODEL, px=p1, py=2.0, income=income)
+    c.add_utility(model, levels=levels.around(eq.utility, n=5))
+    c.add_budget(px=px, py=2.0, income=20.0, fill=True)
     c.add_equilibrium(eq, drop_dashes=True, show_ray=True)
     return c
 
-WidgetViewer(draw, p1=(1.0, 8.0, 0.5), income=(5.0, 40.0, 5.0)).show()
+WidgetViewer(draw, alpha=(0.2, 0.8, 0.05), px=(1.0, 6.0, 0.25)).show()
 # ────────────────────────────────────────────────────────────────────
 """
+
+
+if __name__ == "__main__":
+    main()

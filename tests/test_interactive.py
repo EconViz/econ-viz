@@ -88,6 +88,36 @@ class TestBuildSliders:
         assert sliders["p1"].step == 2.0
 
 
+class TestValueInputs:
+    """Numeric inputs stay in sync with the generated sliders."""
+
+    @pytest.fixture()
+    def viewer(self):
+        from econ_viz.interactive import WidgetViewer
+        return WidgetViewer(lambda p1: Canvas(), p1=(2.0, 10.0, 2.0))
+
+    def test_build_value_inputs(self, viewer):
+        ipywidgets = pytest.importorskip("ipywidgets")
+        sliders = viewer._build_sliders(ipywidgets)
+        value_inputs = viewer._build_value_inputs(ipywidgets, sliders)
+
+        assert "p1" in value_inputs
+        assert value_inputs["p1"].value == sliders["p1"].value
+        assert value_inputs["p1"].step == sliders["p1"].step
+
+    def test_slider_and_input_are_linked(self, viewer):
+        ipywidgets = pytest.importorskip("ipywidgets")
+        sliders = viewer._build_sliders(ipywidgets)
+        value_inputs = viewer._build_value_inputs(ipywidgets, sliders)
+        viewer._link_value_inputs(ipywidgets, sliders, value_inputs)
+
+        sliders["p1"].value = 8.0
+        assert value_inputs["p1"].value == 8.0
+
+        value_inputs["p1"].value = 4.0
+        assert sliders["p1"].value == 4.0
+
+
 # ------------------------------------------------------------------
 # Dependency guard
 # ------------------------------------------------------------------

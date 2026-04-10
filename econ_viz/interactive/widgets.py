@@ -39,7 +39,8 @@ class WidgetViewer:
     """Render an econ_viz diagram inside a Jupyter notebook with live sliders.
 
     Pass a drawing function and a slider specification for each parameter.
-    When a slider is moved the old figure is cleared
+    Every parameter gets both a slider and a numeric input box.
+    When a control is changed the old figure is cleared
     (``clear_output(wait=True)``) and the diagram is redrawn immediately,
     so the notebook cell never accumulates a stack of repeated images.
 
@@ -80,6 +81,7 @@ class WidgetViewer:
             )
         self._draw_func = draw_func
         self._slider_specs: dict[str, SliderSpec] = slider_specs
+        self._links: list[Any] = []
 
     # ------------------------------------------------------------------
     # Public API
@@ -102,6 +104,7 @@ class WidgetViewer:
         from IPython.display import clear_output, display
 
         sliders = self._build_sliders(widgets)
+        value_inputs = self._build_value_inputs(widgets, sliders)
         out = widgets.Output()
 
         # Draw the initial frame before any slider interaction.
@@ -124,9 +127,10 @@ class WidgetViewer:
         for slider in sliders.values():
             slider.observe(_on_change, names="value")
 
-        # Lay out: sliders on top, diagram output below.
+        # Lay out: per-parameter controls on top, diagram output below.
+        self._links = self._link_value_inputs(widgets, sliders, value_inputs)
         slider_box = widgets.VBox(
-            list(sliders.values()),
+            self._build_control_rows(widgets, sliders, value_inputs),
             layout=widgets.Layout(margin="0 0 12px 0"),
         )
         display(widgets.VBox([slider_box, out]))
@@ -153,6 +157,46 @@ class WidgetViewer:
                 layout=widgets.Layout(width="400px"),
             )
         return sliders
+
+    @staticmethod
+    def _build_value_inputs(widgets, sliders: dict[str, Any]) -> dict[str, Any]:
+        """Construct a FloatText box for every slider."""
+        inputs: dict[str, Any] = {}
+        for name, slider in sliders.items():
+            inputs[name] = widgets.FloatText(
+                value=slider.value,
+                description="",
+                step=slider.step,
+                layout=widgets.Layout(width="110px"),
+            )
+        return inputs
+
+    @staticmethod
+    def _link_value_inputs(
+        widgets,
+        sliders: dict[str, Any],
+        value_inputs: dict[str, Any],
+    ) -> list[Any]:
+        """Two-way link each slider with its numeric input box."""
+        return [
+            widgets.link((sliders[name], "value"), (value_inputs[name], "value"))
+            for name in sliders
+        ]
+
+    @staticmethod
+    def _build_control_rows(
+        widgets,
+        sliders: dict[str, Any],
+        value_inputs: dict[str, Any],
+    ) -> list[Any]:
+        """Combine each slider with its numeric input box."""
+        return [
+            widgets.HBox(
+                [sliders[name], value_inputs[name]],
+                layout=widgets.Layout(align_items="center"),
+            )
+            for name in sliders
+        ]
 
     def _redraw(
         self,

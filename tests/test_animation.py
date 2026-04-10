@@ -89,6 +89,26 @@ class TestAnimatorSave:
         Animator(self._draw, frames=[1.0, 2.0]).save(str(out), fps=5, dpi=72)
         assert out.exists()
 
+    def test_gif_uses_restore_to_background_disposal(self, tmp_path):
+        from PIL import Image
+
+        from econ_viz.animation import Animator
+
+        out = tmp_path / "disposal.gif"
+        Animator(self._draw, frames=[1.0, 2.0, 3.0]).save(str(out), fps=5, dpi=72)
+
+        img = Image.open(out)
+        disposal_methods = []
+        try:
+            while True:
+                disposal_methods.append(getattr(img, "disposal_method", None))
+                img.seek(img.tell() + 1)
+        except EOFError:
+            pass
+
+        assert disposal_methods
+        assert all(method == 2 for method in disposal_methods)
+
 
 # ------------------------------------------------------------------
 # Pillow guard

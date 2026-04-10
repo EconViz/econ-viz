@@ -12,13 +12,17 @@
 
 - Add optional dependency extras: `pip install econ-viz[animation]`, `pip install econ-viz[interactive]`, `pip install econ-viz[all]`
 
-- Add usage examples in `examples/animation.py` (price sweep + income expansion GIFs)
+- Expand `examples/animation.py` with parameter, price, income, and budget-only GIF sweeps across common utility families
+
+- Improve GIF export reliability by compositing frames onto a solid background and using restore-to-background disposal
+
+- Extend notebook and widget examples so parameters can be adjusted by slider or direct numeric input in live Jupyter sessions
 
 ### Tests
 
-- Add test coverage for Animator (init validation, GIF output, Pillow guard)
+- Add test coverage for Animator (init validation, GIF output, Pillow guard, frame disposal)
 
-- Add test coverage for WidgetViewer (init validation, slider builder, dependency guards)
+- Add test coverage for WidgetViewer (init validation, slider builder, numeric inputs, dependency guards)
 
 ## v1.3.1 (2026-04-03)
 
