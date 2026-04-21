@@ -22,7 +22,13 @@ from ..utils.logging import get_logger
 from ..themes import default as _default_theme
 from ..themes.theme import Theme
 from ..canvas.primitives import annotate_math, plot_point
-from ..canvas.renderers import render_budget, render_equilibrium, render_path, render_utility
+from ..canvas.renderers import (
+    render_budget,
+    render_decomposition,
+    render_equilibrium,
+    render_path,
+    render_utility,
+)
 from ..io import save_figure
 
 logger = get_logger(__name__)
@@ -190,26 +196,30 @@ class Canvas:
         self.ax.set_yticklabels([])
         self.ax.tick_params(length=0)
 
-        # X-axis label
+        # X-axis label — sits just past the arrow tip on the right
         if self.x_label_pos == "right":
-            self.ax.text(
-                self.x_max, -self.y_max * 0.03,
-                _label_math(self.x_label), ha="center", va="top",
-                fontsize=14, color=t.label_color,
+            x_label_text = self.ax.text(
+                self.x_max * 1.04, 0,
+                _label_math(self.x_label), ha="left", va="center",
+                fontsize=14, color=t.label_color, clip_on=False,
             )
+            x_label_text._ev_axis_label = "x"
         else:  # bottom
-            self.ax.set_xlabel(_label_math(self.x_label), fontsize=14, color=t.label_color)
+            xl = self.ax.set_xlabel(_label_math(self.x_label), fontsize=14, color=t.label_color)
+            xl._ev_axis_label = "x"
 
-        # Y-axis label
+        # Y-axis label — sits just above the arrow tip on top
         if self.y_label_pos == "top":
-            self.ax.text(
-                -self.x_max * 0.03, self.y_max,
-                _label_math(self.y_label), ha="right", va="center",
-                fontsize=14, color=t.label_color,
+            y_label_text = self.ax.text(
+                0, self.y_max * 1.04,
+                _label_math(self.y_label), ha="center", va="bottom",
+                fontsize=14, color=t.label_color, clip_on=False,
             )
+            y_label_text._ev_axis_label = "y"
         else:  # left
-            self.ax.set_ylabel(_label_math(self.y_label), fontsize=14,
-                               rotation=0, color=t.label_color)
+            yl = self.ax.set_ylabel(_label_math(self.y_label), fontsize=14,
+                                    rotation=0, color=t.label_color)
+            yl._ev_axis_label = "y"
 
         # Origin label
         self.ax.text(
@@ -218,7 +228,7 @@ class Canvas:
         )
 
         if self.title:
-            self.ax.set_title(_math_wrap(self.title), color=t.label_color)
+            self.ax.set_title(_math_wrap(self.title), color=t.label_color, pad=18)
 
         # Spines
         self.ax.spines["top"].set_visible(False)
@@ -238,13 +248,11 @@ class Canvas:
         """Toggle canvas axis-tip labels and origin marker for shared layouts."""
         if not show_x_label:
             for text in list(self.ax.texts):
-                x, y = text.get_position()
-                if abs(y + self.y_max * 0.03) < max(self.y_max, 1.0) * 1e-9:
+                if getattr(text, "_ev_axis_label", None) == "x":
                     text.set_visible(False)
         if not show_y_label:
             for text in list(self.ax.texts):
-                x, y = text.get_position()
-                if abs(x + self.x_max * 0.03) < max(self.x_max, 1.0) * 1e-9:
+                if getattr(text, "_ev_axis_label", None) == "y":
                     text.set_visible(False)
         return self
 
@@ -441,6 +449,138 @@ class Canvas:
         )
         return self
 
+    def add_decomposition(
+        self,
+        decomposition,
+        *,
+        show_arrows: bool = True,
+        label_effects: bool = True,
+        show_x_projections: bool = False,
+        point_color: str | None = None,
+        point_markersize: float | None = None,
+        original_budget_color: str | None = None,
+        original_budget_linewidth: float | None = None,
+        original_budget_linestyle: str = "-",
+        compensated_budget_color: str | None = None,
+        compensated_budget_linewidth: float | None = None,
+        compensated_budget_linestyle: str | None = None,
+        final_budget_color: str | None = None,
+        final_budget_linewidth: float | None = None,
+        final_budget_linestyle: str = "-.",
+        substitution_color: str | None = None,
+        income_color: str | None = None,
+        effect_arrow_linewidth: float | None = None,
+    ) -> Canvas:
+        """Render a Hicks/Slutsky price-effect decomposition on this canvas.
+
+        Parameters
+        ----------
+        decomposition : PriceEffectDecomposition
+            Result returned by :func:`econ_viz.optimizer.decompose_price_effect`.
+        show_arrows : bool
+            If ``True`` draw substitution/income arrows.
+        label_effects : bool
+            If ``True`` annotate effect magnitudes near each arrow.
+        show_x_projections : bool
+            If ``True`` draw x-axis projection guides and brackets.
+        """
+        t = self.theme
+        render_decomposition(
+            self.ax,
+            decomposition=decomposition,
+            point_color=point_color or t.eq_color,
+            point_markersize=(
+                point_markersize if point_markersize is not None else t.eq_markersize
+            ),
+            original_budget_color=original_budget_color or t.budget_color,
+            original_budget_linewidth=(
+                original_budget_linewidth
+                if original_budget_linewidth is not None
+                else t.budget_linewidth
+            ),
+            original_budget_linestyle=original_budget_linestyle,
+            compensated_budget_color=(
+                compensated_budget_color or t.compensated_budget_color
+            ),
+            compensated_budget_linewidth=(
+                compensated_budget_linewidth
+                if compensated_budget_linewidth is not None
+                else t.compensated_budget_linewidth
+            ),
+            compensated_budget_linestyle=(
+                compensated_budget_linestyle
+                if compensated_budget_linestyle is not None
+                else t.compensated_budget_linestyle
+            ),
+            final_budget_color=final_budget_color or t.budget_color,
+            final_budget_linewidth=(
+                final_budget_linewidth
+                if final_budget_linewidth is not None
+                else t.budget_linewidth
+            ),
+            final_budget_linestyle=final_budget_linestyle,
+            show_arrows=show_arrows,
+            arrows_below_axis=show_x_projections,
+            substitution_color=substitution_color or t.sub_effect_color,
+            income_color=income_color or t.inc_effect_color,
+            effect_arrow_linewidth=(
+                effect_arrow_linewidth
+                if effect_arrow_linewidth is not None
+                else t.effect_arrow_linewidth
+            ),
+            show_x_projections=show_x_projections,
+        )
+        if label_effects:
+            sub_dx, sub_dy = decomposition.substitution_effect
+            inc_dx, inc_dy = decomposition.income_effect
+            self._legend_handles.extend([
+                mlines.Line2D(
+                    [],
+                    [],
+                    color=point_color or t.eq_color,
+                    marker="o",
+                    linestyle="None",
+                    markersize=point_markersize if point_markersize is not None else t.eq_markersize,
+                    label=rf"$A=({decomposition.A.x:.2f},{decomposition.A.y:.2f})$",
+                ),
+                mlines.Line2D(
+                    [],
+                    [],
+                    color=point_color or t.eq_color,
+                    marker="o",
+                    linestyle="None",
+                    markersize=point_markersize if point_markersize is not None else t.eq_markersize,
+                    label=rf"$B=({decomposition.B.x:.2f},{decomposition.B.y:.2f})$",
+                ),
+                mlines.Line2D(
+                    [],
+                    [],
+                    color=point_color or t.eq_color,
+                    marker="o",
+                    linestyle="None",
+                    markersize=point_markersize if point_markersize is not None else t.eq_markersize,
+                    label=rf"$C=({decomposition.C.x:.2f},{decomposition.C.y:.2f})$",
+                ),
+                mlines.Line2D(
+                    [],
+                    [],
+                    color=substitution_color or t.sub_effect_color,
+                    linestyle="--",
+                    linewidth=effect_arrow_linewidth if effect_arrow_linewidth is not None else t.effect_arrow_linewidth,
+                    label=rf"$Sub:\ \Delta x={sub_dx:+.2f},\ \Delta y={sub_dy:+.2f}$",
+                ),
+                mlines.Line2D(
+                    [],
+                    [],
+                    color=income_color or t.inc_effect_color,
+                    linestyle="--",
+                    linewidth=effect_arrow_linewidth if effect_arrow_linewidth is not None else t.effect_arrow_linewidth,
+                    label=rf"$Inc:\ \Delta x={inc_dx:+.2f},\ \Delta y={inc_dy:+.2f}$",
+                ),
+            ])
+            self.show_legend(loc="upper right")
+        return self
+
     def add_ray(
         self,
         slope: float,
@@ -607,9 +747,11 @@ class Canvas:
         Parameters
         ----------
         path : str
-            Destination file path (e.g. ``"plot.png"``, ``"plot.svg"``).
+            Destination file path (e.g. ``"plot.png"``, ``"plot.svg"``,
+            ``"plot.tex"``).
         **kwargs
-            Forwarded to the underlying save function.
+            Forwarded to the underlying save function. TikZ exports accept
+            ``tikz_scale`` and ``tikz_standalone``.
         """
         logger.info("Exporting figure to %s (dpi=%s)", path, self.dpi)
         save_figure(

@@ -19,13 +19,27 @@ def save_figure(
 ) -> None:
     """Save a matplotlib figure with consistent format validation and errors."""
     try:
-        ExportFormat.from_path(path)
+        fmt = ExportFormat.from_path(path)
     except ExportError as exc:
         if unsupported_as_value_error:
             raise ValueError(str(exc)) from None
         raise
 
+    tikz_scale = kwargs.pop("tikz_scale", None)
+    tikz_standalone = kwargs.pop("tikz_standalone", True)
+
     try:
+        if fmt is ExportFormat.TEX:
+            from .backend_tikz import save_tikz
+
+            save_tikz(
+                fig,
+                path,
+                scale=tikz_scale,
+                standalone=bool(tikz_standalone),
+            )
+            return
+
         fig.savefig(
             path,
             dpi=dpi,
@@ -40,4 +54,3 @@ def save_figure(
             import matplotlib.pyplot as plt
 
             plt.close(fig)
-

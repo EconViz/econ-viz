@@ -35,7 +35,10 @@ _ATTR_EXPORTS = {
     "solve": ("econ_viz.optimizer", "solve"),
     "solution_tex": ("econ_viz.optimizer", "solution_tex"),
     "ComparativeStatics": ("econ_viz.optimizer", "ComparativeStatics"),
+    "DecompositionMethod": ("econ_viz.optimizer", "DecompositionMethod"),
+    "PriceEffectDecomposition": ("econ_viz.optimizer", "PriceEffectDecomposition"),
     "comparative_statics": ("econ_viz.optimizer", "comparative_statics"),
+    "decompose_price_effect": ("econ_viz.optimizer", "decompose_price_effect"),
     "SlutskyMatrix": ("econ_viz.optimizer", "SlutskyMatrix"),
     "slutsky_matrix": ("econ_viz.optimizer", "slutsky_matrix"),
     "IndifferenceCurves": ("econ_viz.components", "IndifferenceCurves"),
@@ -74,7 +77,10 @@ __all__ = [
     "solve",
     "solution_tex",
     "ComparativeStatics",
+    "DecompositionMethod",
+    "PriceEffectDecomposition",
     "comparative_statics",
+    "decompose_price_effect",
     "SlutskyMatrix",
     "slutsky_matrix",
     "IndifferenceCurves",
@@ -118,4 +124,3 @@ sys.modules.setdefault(__name__ + ".figure", importlib.import_module("econ_viz.c
 sys.modules.setdefault(__name__ + ".levels", importlib.import_module("econ_viz.analysis.levels"))
 sys.modules.setdefault(__name__ + ".parser", importlib.import_module("econ_viz.models.parser"))
 sys.modules.setdefault(__name__ + ".logging", importlib.import_module("econ_viz.utils.logging"))
-

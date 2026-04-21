@@ -43,6 +43,18 @@ class Theme:
         Default stroke width for rays.
     kink_color : str
         Default colour for kink-point markers.
+    sub_effect_color : str
+        Default colour for substitution-effect arrows/labels.
+    inc_effect_color : str
+        Default colour for income-effect arrows/labels.
+    effect_arrow_linewidth : float
+        Default stroke width for decomposition arrows.
+    compensated_budget_color : str
+        Default colour for compensated budget lines.
+    compensated_budget_linewidth : float
+        Default stroke width for compensated budget lines.
+    compensated_budget_linestyle : str
+        Default line style for compensated budget lines.
     """
 
     name: str
@@ -74,3 +86,11 @@ class Theme:
 
     # Kink markers
     kink_color: str = "black"
+
+    # Price decomposition visuals
+    sub_effect_color: str = "#D55E00"
+    inc_effect_color: str = "#009E73"
+    effect_arrow_linewidth: float = 1.6
+    compensated_budget_color: str = "#5F6C7B"
+    compensated_budget_linewidth: float = 1.5
+    compensated_budget_linestyle: str = "--"
