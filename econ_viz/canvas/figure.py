@@ -152,7 +152,7 @@ class Figure:
         return len(self.canvases)
 
     def save(self, path: str, **kwargs) -> None:
-        """Save the full multi-panel figure to ``.png``, ``.svg``, or ``.pdf``.
+        """Save the full multi-panel figure to ``.png``, ``.svg``, ``.pdf``, or ``.tex``.
 
         Raises
         ------

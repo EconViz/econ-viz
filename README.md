@@ -10,7 +10,7 @@
   <img alt="Coverage" src="https://img.shields.io/badge/coverage-99%25-181818?style=flat-square&color=181818&labelColor=f3f3f3">
 </p>
 
-A Python toolkit for producing publication-quality microeconomics diagrams. Define utility functions declaratively, solve for consumer equilibria, and export figures as PNG, PDF, or SVG — all in a few lines of code.
+A Python toolkit for producing publication-quality microeconomics diagrams. Define utility functions declaratively, solve for consumer equilibria, and export figures as PNG, PDF, SVG, or pure TikZ — all in a few lines of code.
 
 ## Installation
 
@@ -37,6 +37,14 @@ cvs.add_budget(2.0, 3.0, 30.0, fill=True)
 cvs.add_equilibrium(eq, show_ray=True)
 cvs.save("cobb_douglas.png")
 ```
+
+TikZ export writes a standalone LaTeX document with only TikZ drawing commands:
+
+```python
+cvs.save("cobb_douglas.tex", tikz_scale=0.0125)
+```
+
+The default TikZ scale maps a 6 inch wide Matplotlib figure to about 7.5 cm.
 
 ![Cobb-Douglas indifference map with budget line and equilibrium point](https://raw.githubusercontent.com/EconViz/econ-viz/a8423043789ee7dba19b2d71fa6cc5071601181a/cobb_douglas_eq.png)
 

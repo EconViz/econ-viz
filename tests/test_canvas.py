@@ -13,7 +13,12 @@ from econ_viz.canvas.layers import Layer
 from econ_viz.components import IndifferenceCurves, BudgetConstraint, EquilibriumPoint, draw_ray
 from econ_viz.exceptions import ExportError, InvalidParameterError
 from econ_viz.models import CobbDouglas, Leontief, Satiation, QuasiLinear
-from econ_viz.optimizer import Equilibrium, solve
+from econ_viz.optimizer import (
+    DecompositionMethod,
+    Equilibrium,
+    decompose_price_effect,
+    solve,
+)
 from econ_viz import themes
 
 
@@ -162,6 +167,70 @@ class TestCanvasAddRayAndPoint:
         Canvas(x_max=10, y_max=10).add_point(2.0, 3.0)
 
 
+class TestCanvasAddDecomposition:
+    """Canvas.add_decomposition() integration tests."""
+
+    def setup_method(self):
+        model = CobbDouglas(alpha=0.5, beta=0.5)
+        self.decomposition = decompose_price_effect(
+            model,
+            px=(2.0, 4.0),
+            py=3.0,
+            income=60.0,
+            method=DecompositionMethod.SLUTSKY,
+        )
+
+    def test_returns_self(self):
+        cvs = Canvas(x_max=35, y_max=25)
+        assert cvs.add_decomposition(self.decomposition) is cvs
+
+    def test_points_are_annotated(self):
+        cvs = Canvas(x_max=35, y_max=25)
+        cvs.add_decomposition(self.decomposition, show_arrows=False)
+        labels = [txt.get_text() for txt in cvs.ax.texts]
+        assert "$A$" in labels
+        assert "$B$" in labels
+        assert "$C$" in labels
+
+    def test_overlapping_points_merge_labels(self):
+        model = CobbDouglas(alpha=0.5, beta=0.5)
+        same_price = decompose_price_effect(
+            model,
+            px=(2.0, 2.0),
+            py=3.0,
+            income=60.0,
+            method=DecompositionMethod.SLUTSKY,
+        )
+        cvs = Canvas(x_max=35, y_max=25)
+        cvs.add_decomposition(same_price, show_arrows=False)
+        labels = [txt.get_text() for txt in cvs.ax.texts]
+        assert "$A = B = C$" in labels
+
+    def test_with_projection_labels(self):
+        cvs = Canvas(x_max=35, y_max=25)
+        cvs.add_decomposition(
+            self.decomposition,
+            show_arrows=True,
+            label_effects=True,
+            show_x_projections=True,
+        )
+        legend = cvs.ax.get_legend()
+        assert legend is not None
+        labels = [txt.get_text() for txt in legend.get_texts()]
+        assert any("Sub:" in txt for txt in labels)
+        assert any("Inc:" in txt for txt in labels)
+
+    def test_save_with_decomposition(self, tmp_path):
+        out = tmp_path / "decomposition.png"
+        (
+            Canvas(x_max=35, y_max=25)
+            .add_utility(CobbDouglas(alpha=0.5, beta=0.5), levels=3)
+            .add_decomposition(self.decomposition, show_x_projections=True)
+            .save(str(out))
+        )
+        assert out.exists()
+
+
 class TestCanvasAddPath:
     """Canvas.add_path() styling and geometry."""
 
@@ -199,9 +268,11 @@ class TestCanvasSave:
         with pytest.raises(ExportError):
             Canvas().save(str(tmp_path / "fig.bmp"))
 
-    def test_save_tex_raises(self, tmp_path):
-        with pytest.raises(ExportError):
-            Canvas().save(str(tmp_path / "fig.tex"))
+    def test_save_tex(self, tmp_path):
+        out = tmp_path / "fig.tex"
+        Canvas().save(str(out))
+        assert out.exists()
+        assert r"\begin{tikzpicture}" in out.read_text(encoding="utf-8")
 
     def test_save_bad_path_raises(self):
         with pytest.raises(ExportError):

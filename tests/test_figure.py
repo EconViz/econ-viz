@@ -62,9 +62,11 @@ class TestFigure:
         assert fig[0].ax.get_shared_x_axes().joined(fig[0].ax, fig[1].ax)
         assert fig[0].ax.get_shared_y_axes().joined(fig[0].ax, fig[1].ax)
 
-    def test_save_unsupported_format_raises_value_error(self, tmp_path):
-        with pytest.raises(ValueError, match="Unsupported"):
-            Figure(Layout.SINGLE).save(str(tmp_path / "multi.tex"))
+    def test_save_tex(self, tmp_path):
+        out = tmp_path / "multi.tex"
+        Figure(Layout.SINGLE).save(str(out))
+        assert out.exists()
+        assert r"\begin{tikzpicture}" in out.read_text(encoding="utf-8")
 
 
 class TestConsumptionPaths:
