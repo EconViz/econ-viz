@@ -10,8 +10,11 @@ from econ_viz.optimizer import (
     solve,
     solution_tex,
     ComparativeStatics,
+    DecompositionMethod,
+    PriceEffectDecomposition,
     SlutskyMatrix,
     comparative_statics,
+    decompose_price_effect,
     slutsky_matrix,
 )
 
@@ -583,6 +586,101 @@ class TestSlutskyMatrixCobbDouglas:
 
     def test_satisfies_homogeneity(self):
         assert self.sm.satisfies_homogeneity(px=self.px, py=self.py, tol=5e-2)
+
+
+class TestPriceEffectDecompositionCobbDouglas:
+    """Verify Hicks/Slutsky decomposition against Cobb-Douglas closed forms."""
+
+    def setup_method(self):
+        self.model = CobbDouglas(alpha=0.5, beta=0.5)
+        self.px = (2.0, 4.0)
+        self.py = 3.0
+        self.income = 60.0
+
+    def test_returns_structured_result(self):
+        result = decompose_price_effect(
+            self.model,
+            px=self.px,
+            py=self.py,
+            income=self.income,
+            method=DecompositionMethod.SLUTSKY,
+        )
+        assert isinstance(result, PriceEffectDecomposition)
+        assert result.method is DecompositionMethod.SLUTSKY
+        assert isinstance(result.slutsky_matrix, SlutskyMatrix)
+
+    def test_slutsky_compensated_bundle_matches_closed_form(self):
+        result = decompose_price_effect(
+            self.model,
+            px=self.px,
+            py=self.py,
+            income=self.income,
+            method=DecompositionMethod.SLUTSKY,
+        )
+        # A = (15,10), B = (11.25,15), C = (7.5,10) for CD(0.5, 0.5)
+        assert result.A.x == pytest.approx(15.0, rel=1e-3)
+        assert result.A.y == pytest.approx(10.0, rel=1e-3)
+        assert result.B.x == pytest.approx(11.25, rel=1e-3)
+        assert result.B.y == pytest.approx(15.0, rel=1e-3)
+        assert result.C.x == pytest.approx(7.5, rel=1e-3)
+        assert result.C.y == pytest.approx(10.0, rel=1e-3)
+        assert result.compensated_income == pytest.approx(90.0, rel=1e-6)
+        assert result.vector_identity_holds()
+
+    def test_hicks_bundle_matches_closed_form(self):
+        result = decompose_price_effect(
+            self.model,
+            px=self.px,
+            py=self.py,
+            income=self.income,
+            method=DecompositionMethod.HICKS,
+        )
+        # Hicksian bundle under utility U0=sqrt(150): B=(U0*sqrt(py/px2), U0*sqrt(px2/py))
+        assert result.B.x == pytest.approx(10.6066017, rel=2e-3)
+        assert result.B.y == pytest.approx(14.1421356, rel=2e-3)
+        assert result.B.utility == pytest.approx(result.A.utility, rel=1e-3)
+        assert result.vector_identity_holds()
+
+    def test_method_string_input_is_accepted(self):
+        result = decompose_price_effect(
+            self.model,
+            px=self.px,
+            py=self.py,
+            income=self.income,
+            method="HICKS",
+        )
+        assert result.method is DecompositionMethod.HICKS
+
+    def test_invalid_px_pair_raises(self):
+        with pytest.raises(InvalidParameterError):
+            decompose_price_effect(
+                self.model,
+                px=(0.0, 4.0),
+                py=self.py,
+                income=self.income,
+            )
+
+        with pytest.raises(InvalidParameterError):
+            decompose_price_effect(  # type: ignore[arg-type]
+                self.model,
+                px=(2.0,),  # pragma: no branch
+                py=self.py,
+                income=self.income,
+            )
+
+    def test_slutsky_matrix_consistent_with_direct_call(self):
+        result = decompose_price_effect(
+            self.model,
+            px=self.px,
+            py=self.py,
+            income=self.income,
+            method=DecompositionMethod.SLUTSKY,
+        )
+        direct = slutsky_matrix(self.model, px=self.px[0], py=self.py, income=self.income)
+        assert result.slutsky_matrix.s_xx == pytest.approx(direct.s_xx, rel=1e-10)
+        assert result.slutsky_matrix.s_xy == pytest.approx(direct.s_xy, rel=1e-10)
+        assert result.slutsky_matrix.s_yx == pytest.approx(direct.s_yx, rel=1e-10)
+        assert result.slutsky_matrix.s_yy == pytest.approx(direct.s_yy, rel=1e-10)
 
 
 class TestSlutskyMatrixInvalidParams:

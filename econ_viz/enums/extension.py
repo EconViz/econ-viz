@@ -21,11 +21,14 @@ class ExportFormat(Enum):
         Vector export via matplotlib.
     SVG
         Scalable vector export via matplotlib.
+    TEX
+        Pure TikZ export via the custom renderer.
     """
 
     PNG = "png"
     PDF = "pdf"
     SVG = "svg"
+    TEX = "tex"
 
     @classmethod
     def from_path(cls, path: str) -> "ExportFormat":
