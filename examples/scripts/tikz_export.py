@@ -62,10 +62,10 @@ def _draw_budget_equilibrium(canvas: Canvas, model) -> None:
     try:
         eq = solve(model, PX, PY, INCOME)
     except Exception:
-        canvas.add_budget(PX, PY, INCOME, color="blue", fill=True)
+        canvas.add_budget(PX, PY, INCOME, fill=True)
         return
 
-    canvas.add_budget(PX, PY, INCOME, color="blue", fill=True)
+    canvas.add_budget(PX, PY, INCOME, fill=True)
     canvas.add_equilibrium(eq, show_ray=True)
 
 

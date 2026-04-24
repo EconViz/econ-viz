@@ -60,37 +60,37 @@ class Theme:
     name: str
 
     # Axes & labels
-    axis_color: str = "black"
-    label_color: str = "black"
+    axis_color: str = "#222222"
+    label_color: str = "#222222"
 
     # Indifference curves
-    ic_color: str = "black"
-    ic_linewidth: float = 2.0
+    ic_color: str = "#377EB8"
+    ic_linewidth: float = 1.8
 
     # PCC / ICC paths
-    path_color: str = "#2A9D8F"
+    path_color: str = "#4DAF4A"
     path_linewidth: float = 2.0
 
     # Budget constraint
-    budget_color: str = "blue"
+    budget_color: str = "#984EA3"
     budget_linewidth: float = 1.5
     budget_fill_alpha: float = 0.08
 
     # Equilibrium
-    eq_color: str = "red"
+    eq_color: str = "#E41A1C"
     eq_markersize: float = 6.0
 
     # Rays
-    ray_color: str = "black"
+    ray_color: str = "#999999"
     ray_linewidth: float = 0.8
 
     # Kink markers
-    kink_color: str = "black"
+    kink_color: str = "#A65628"
 
     # Price decomposition visuals
-    sub_effect_color: str = "#D55E00"
-    inc_effect_color: str = "#009E73"
+    sub_effect_color: str = "#FF7F00"
+    inc_effect_color: str = "#4DAF4A"
     effect_arrow_linewidth: float = 1.6
-    compensated_budget_color: str = "#5F6C7B"
+    compensated_budget_color: str = "#777777"
     compensated_budget_linewidth: float = 1.5
     compensated_budget_linestyle: str = "--"
