@@ -14,7 +14,7 @@ For four common utility functions, the script writes:
 
 Run from the project root::
 
-    python examples/animation.py
+    python examples/scripts/animation.py
 
 Output is written to ``examples/output/animation/``.
 """

@@ -27,6 +27,6 @@ for name, model in models:
 
     cvs = Canvas(x_max=20, y_max=15, x_label="Pizza", y_label="Cola")
     cvs.add_utility(model, levels=lvls, show_rays=True, show_kinks=True)
-    cvs.add_budget(px, py, income, color="blue", fill=True)
+    cvs.add_budget(px, py, income, fill=True)
     cvs.add_equilibrium(eq, show_ray=True)
     cvs.save(f"{OUTPUT_DIR}/{name}.png")

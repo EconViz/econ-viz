@@ -7,7 +7,7 @@ matplotlib.use("Agg")
 
 import numpy as np
 
-from econ_viz import EdgeworthBox, EquilibriumFocusConfig
+from econ_viz import EdgeworthBox, EquilibriumFocusConfig, themes
 from econ_viz.models import CES, CobbDouglas, CustomUtility, Leontief, PerfectSubstitutes, QuasiLinear, StoneGeary
 
 OUTPUT_DIR = Path("examples/output/edgeworth")
@@ -34,8 +34,8 @@ def _render_case(
         total_x=total_x,
         total_y=total_y,
         title=title,
-        utility_a_color="#111111",
-        utility_b_color="#00a7a0",
+        utility_a_color=themes.default.ic_color,
+        utility_b_color=themes.COLORBLIND_CYCLE_HEX[1],
     )
     (
         box.add_endowment(ex, ey)

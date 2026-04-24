@@ -64,6 +64,7 @@ Download it and open it in Jupyter, VS Code, or Colab. The first code cell upgra
 - Comparative tools including `comparative_statics(...)` and `slutsky_matrix(...)`
 - Multi-panel `Figure` layouts, `PricePath` / `IncomePath`, and linked `DemandDiagram`
 - CLI support for plotting and closed-form demand output
+- Color-blind-friendly default palette (`themes.COLORBLIND_CYCLE_RGB`) sourced from [thriveth/8560036](https://gist.github.com/thriveth/8560036), with related citation at [DOI:10.1080/00220485.1996.10844911](https://www.tandfonline.com/doi/abs/10.1080/00220485.1996.10844911)
 
 ## Additional Tools
 
