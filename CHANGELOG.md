@@ -2,6 +2,32 @@
 
 <!-- version list -->
 
+## v1.5.0 (2026-04-21)
+
+### Features
+
+- Add pure TikZ export backend (`econ_viz.io.backend_tikz`) and `.tex` support in `Canvas.save(...)` / `Figure.save(...)`
+
+- Add price-effect decomposition APIs:
+  - `decompose_price_effect(...)` / `PriceEffectDecomposition`
+  - `Canvas.add_decomposition(...)` for A/B/C bundles, budget lines, and substitution/income overlays
+
+- Expose decomposition interfaces at package root (`econ_viz.__init__`) for direct imports
+
+- Expand examples with dedicated scripts for decomposition, demand diagrams, PCC/ICC paths, multi-layout figures, and multi-case TikZ export
+
+### Refactors
+
+- Improve axis-label placement and visibility toggling behavior for shared-panel layouts
+
+### Tests
+
+- Add dedicated regression tests for TikZ rendering/export and decomposition flows (`tests/test_tikz_backend.py`, `tests/test_optimizer.py`, `tests/test_canvas.py`)
+
+### Bug Fixes
+
+- Make notebook Colab install flow restart-safe
+
 ## v1.4.0 (2026-04-09)
 
 ### Features
@@ -23,6 +49,16 @@
 - Add test coverage for Animator (init validation, GIF output, Pillow guard, frame disposal)
 
 - Add test coverage for WidgetViewer (init validation, slider builder, numeric inputs, dependency guards)
+
+## v1.3.2 (2026-04-03)
+
+### Bug Fixes
+
+- Enforce dashed black defaults for Edgeworth contract curves and price lines
+
+### Chores
+
+- Update publish workflow to skip uploading versions that already exist on PyPI
 
 ## v1.3.1 (2026-04-03)
 

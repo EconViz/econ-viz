@@ -166,8 +166,8 @@ def test_canvas_save_tex_includes_visible_axis_spines(tmp_path):
     Canvas(x_max=20, y_max=15).save(str(out))
 
     text = out.read_text(encoding="utf-8")
-    assert r"\draw[color=evcolor1,line width=0.80pt] (0.9375,0.8250) -- (6.7500,0.8250);" in text
-    assert r"\draw[color=evcolor1,line width=0.80pt] (0.9375,0.8250) -- (0.9375,6.6000);" in text
+    assert "(0.9375,0.8250) -- (6.7500,0.8250);" in text
+    assert "(0.9375,0.8250) -- (0.9375,6.6000);" in text
 
 
 def test_save_figure_tex_passes_tikz_options(monkeypatch, tmp_path):

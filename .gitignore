@@ -36,12 +36,8 @@ Thumbs.db
 *.tex
 *.pdf
 *.svg
-examples/output/*
+examples/output/**
 !examples/output/.gitkeep
-!examples/output/tikz/
-!examples/output/tikz/*.tex
-examples/output/tikz/*.aux
-examples/output/tikz/*.log
 notebook/
 !notebook/
 !notebook/econ-viz Playground.ipynb
