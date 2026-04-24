@@ -2,6 +2,28 @@
 
 <!-- version list -->
 
+## v1.6.0 (2026-04-24)
+
+### Features
+
+- Adopt a color-blind-friendly default palette and expose reusable `themes.COLORBLIND_CYCLE_RGB` / `themes.COLORBLIND_CYCLE_HEX`
+
+- Reduce default IC linewidth from `2.0` to `1.8` for improved visual balance
+
+### Documentation
+
+- Add explicit palette/citation references in README and backfill missing changelog entries for `v1.3.2` and `v1.5.0`
+
+### Chores
+
+- Move animation example from `examples/animation.py` to `examples/scripts/animation.py` so `examples/` root only contains `__init__.py` and `scripts/`
+
+- Stop tracking generated outputs under `examples/output/**` and remove tracked `examples/output/tikz/main.tex`
+
+### Tests
+
+- Update TikZ axis-spine regression assertion to avoid hard-coded color-index coupling
+
 ## v1.5.0 (2026-04-21)
 
 ### Features
