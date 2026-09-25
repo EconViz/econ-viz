@@ -1,4 +1,4 @@
-"""Enumerations for axis-label placement and arrowhead styling."""
+"""Enumerations for axis-label placement, arrowheads, and axis line styles."""
 
 from enum import Enum
 
@@ -19,3 +19,12 @@ class ArrowStyle(str, Enum):
     TRIANGLE = "-|>"
     FANCY = "fancy"
     WEDGE = "wedge"
+
+
+class LineStyle(str, Enum):
+    """Matplotlib line styles for the axis lines."""
+
+    SOLID = "solid"
+    DASHED = "dashed"
+    DOTTED = "dotted"
+    DASHDOT = "dashdot"

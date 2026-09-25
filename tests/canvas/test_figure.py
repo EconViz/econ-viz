@@ -317,3 +317,12 @@ class TestDemandDiagram:
         pcc_line = fig.utility_canvas.ax.lines[-1]
         assert pcc_line.get_color() == fig.utility_canvas.theme.path_color
         assert fig.utility_canvas.theme.path_color != fig.utility_canvas.theme.ic_color
+
+
+def test_figure_forwards_axis_line_styles():
+    from econ_viz import LineStyle
+
+    fig = Figure(Layout.SIDE_BY_SIDE, x_line_style="dashed", y_line_style=LineStyle.DOTTED)
+    for panel in fig.canvases:
+        assert panel.x_line_style is LineStyle.DASHED
+        assert panel.y_line_style is LineStyle.DOTTED
