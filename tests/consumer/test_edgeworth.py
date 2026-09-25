@@ -2,10 +2,6 @@
 
 import types
 
-import matplotlib
-matplotlib.use("Agg")
-
-import matplotlib.pyplot as plt
 from matplotlib.colors import to_hex
 
 import numpy as np
@@ -14,12 +10,6 @@ import pytest
 from econ_viz import EdgeworthBox, EquilibriumFocusConfig
 from econ_viz.consumer.edgeworth_plotter import plot_indifference_pair
 from econ_viz.models import CobbDouglas, Leontief, PerfectSubstitutes, QuasiLinear
-
-
-@pytest.fixture(autouse=True)
-def close_figures():
-    yield
-    plt.close("all")
 
 
 def test_invalid_totals_raise():

@@ -4,22 +4,11 @@ All rendering uses the non-interactive 'Agg' backend so tests can run
 headlessly in CI.
 """
 
-import matplotlib
-matplotlib.use("Agg")
-
-import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
 from econ_viz import Canvas
 from econ_viz.models import CobbDouglas
-
-
-@pytest.fixture(autouse=True)
-def close_figures():
-    """Close all matplotlib figures after each test."""
-    yield
-    plt.close("all")
 
 
 # ------------------------------------------------------------------

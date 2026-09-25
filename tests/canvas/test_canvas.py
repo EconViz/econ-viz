@@ -1,8 +1,5 @@
 """Tests for Canvas, components, and Layer using the Agg (non-interactive) backend."""
 
-import matplotlib
-matplotlib.use("Agg")
-
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
@@ -20,13 +17,6 @@ from econ_viz.optimizer import (
     solve,
 )
 from econ_viz import themes
-
-
-@pytest.fixture(autouse=True)
-def close_figures():
-    """Close all matplotlib figures after each test to avoid resource leaks."""
-    yield
-    plt.close("all")
 
 
 class TestCanvasInit:

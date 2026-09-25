@@ -1,21 +1,10 @@
 """Behavioral tests for consumption-path rendering branches."""
 
-import matplotlib
-
-matplotlib.use("Agg")
-
-import matplotlib.pyplot as plt
 import pytest
 
 from econ_viz import Canvas
 from econ_viz.consumer.paths import LinearBudget, PricePath
 from econ_viz.models import CobbDouglas
-
-
-@pytest.fixture(autouse=True)
-def close_figures():
-    yield
-    plt.close("all")
 
 
 @pytest.fixture()

@@ -21,6 +21,8 @@ Output is written to ``examples/output/animation/``.
 
 from __future__ import annotations
 
+import argparse
+
 import matplotlib
 matplotlib.use("Agg")
 
@@ -39,9 +41,6 @@ OUTPUT_DIR = "examples/output/animation"
 PARAMETER_DIR = f"{OUTPUT_DIR}/parameter_sweeps"
 PRICE_DIR = f"{OUTPUT_DIR}/price_sweeps"
 INCOME_DIR = f"{OUTPUT_DIR}/income_sweeps"
-
-for directory in (PARAMETER_DIR, PRICE_DIR, INCOME_DIR):
-    Path(directory).mkdir(parents=True, exist_ok=True)
 
 X_MAX = 14
 Y_MAX = 12
@@ -351,8 +350,23 @@ def build_budget_only_income_drawer() -> Callable[[float], Canvas]:
     return _draw
 
 
-def main() -> None:
-    """Render all parameter, price, and income sweeps."""
+def main(*, smoke: bool = False) -> None:
+    """Render the animation gallery or one short representative GIF."""
+    for directory in (PARAMETER_DIR, PRICE_DIR, INCOME_DIR):
+        Path(directory).mkdir(parents=True, exist_ok=True)
+
+    if smoke:
+        frames = _uniform_budget_speed_price_frames(n=3)
+        out_path = f"{PRICE_DIR}/budget_only_price_sweep.gif"
+        print("Rendering animation smoke test ...")
+        Animator(build_budget_only_price_drawer(), frames=frames).save(
+            out_path,
+            fps=2,
+            dpi=72,
+        )
+        print(f"  -> saved to {out_path}")
+        return
+
     price_frames = _uniform_budget_speed_price_frames(speed=PRICE_SPEED)
     income_frames = _parameterized_linear_frames(
         INCOME_MIN,
@@ -436,4 +450,10 @@ WidgetViewer(draw, alpha=(0.2, 0.8, 0.05), px=(1.0, 6.0, 0.25)).show()
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--smoke",
+        action="store_true",
+        help="render one three-frame GIF for a fast integration check",
+    )
+    main(smoke=parser.parse_args().smoke)

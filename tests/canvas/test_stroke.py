@@ -1,9 +1,5 @@
 """Tests for Stroke: per-line width, style, colour, and arrowheads."""
 
-import matplotlib
-matplotlib.use("Agg")
-
-import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 from matplotlib.colors import to_hex
@@ -17,12 +13,6 @@ from econ_viz.optimizer import decompose_price_effect
 MODEL = CobbDouglas(alpha=0.5, beta=0.5)
 EQ = solve(MODEL, px=2.0, py=3.0, income=30.0)
 DASHED = Stroke(width=2.5, style="dashed", color="#123456")
-
-
-@pytest.fixture(autouse=True)
-def close_figures():
-    yield
-    plt.close("all")
 
 
 def _role(ax, role):
