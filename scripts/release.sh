@@ -87,6 +87,11 @@ create_pr_body() {
 - uv sync --frozen --all-extras
 - uv run pytest
 - uv build
+
+## Before merging
+- [ ] Add a v${version} section to CHANGELOG.md
+- [ ] Add a v${version} row to the econ-viz-docs changelog in all three languages (skip documentation-only changes)
+- [ ] Update econ-viz-docs guides for new features (publish after the release is on PyPI)
 EOF_BODY
 }
 
@@ -119,7 +124,10 @@ prepare_release() {
   run gh pr create --base "$base" --head "$rel_branch" --title "chore(release): prepare ${tag}" --body "$body"
 
   echo
-  echo "[release.sh] prepare done: open PR and merge, then run:"
+  echo "[release.sh] prepare done. Before merging the PR:"
+  echo "[release.sh]   - add a v${version} section to CHANGELOG.md"
+  echo "[release.sh]   - add a v${version} row to the econ-viz-docs changelog (en, zh-TW, zh-CN)"
+  echo "[release.sh] Then merge the PR and run:"
   echo "[release.sh]   scripts/release.sh finalize ${version}"
 }
 

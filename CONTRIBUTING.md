@@ -49,6 +49,29 @@ Issues labelled [`good first issue`](https://github.com/EconViz/econ-viz/issues?
 - Follow the existing style (no linter is enforced, but keep it clean)
 - Add tests for any new behaviour
 
+## Releasing
+
+Merging to `main` never publishes a release. PyPI publishing runs only when a `v*` tag is pushed.
+
+1. Open the release PR:
+
+   ```bash
+   scripts/release.sh prepare X.Y.Z
+   ```
+
+2. On the release branch, add a `## vX.Y.Z (YYYY-MM-DD)` section to the top of `CHANGELOG.md`.
+3. In [econ-viz-docs](https://github.com/EconViz/econ-viz-docs), add a row for the release to the changelog page in all three languages, leaving out documentation-only changes:
+   - `docs/project/changelog.md`
+   - `docs/zh-TW/project/changelog.md`
+   - `docs/zh-CN/project/changelog.md`
+
+   Also update any guides that cover features added in this release. Publish these docs changes only after the release is on PyPI.
+4. Merge the release PR, then tag and publish:
+
+   ```bash
+   scripts/release.sh finalize X.Y.Z
+   ```
+
 ## License
 
 By contributing you agree that your work will be released under the [MIT License](LICENSE).
