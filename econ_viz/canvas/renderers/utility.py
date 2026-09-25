@@ -45,7 +45,7 @@ def render_utility(
     ic.draw(ax, x_max, y_max, **kwargs)
 
     if show_bliss and hasattr(func, "bliss_x") and hasattr(func, "bliss_y"):
-        ax.plot(
+        (bliss,) = ax.plot(
             func.bliss_x,
             func.bliss_y,
             "*",
@@ -53,6 +53,7 @@ def render_utility(
             markersize=12,
             zorder=5,
         )
+        bliss._ev_role = "bliss"
         ax.annotate(
             r"$\mathbf{x}^*$",
             (func.bliss_x, func.bliss_y),

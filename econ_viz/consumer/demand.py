@@ -10,6 +10,7 @@ from ..canvas.stroke import apply_strokes, styled
 from ..enums import Layout
 from ..enums import UtilityType
 from ..optimizer import solve
+from ..themes.marker import Marker
 from ..themes.stroke import Stroke
 from .paths import PricePath
 
@@ -71,12 +72,14 @@ class DemandDiagram(Figure):
         path_stroke: Stroke | None = None,
         demand_stroke: Stroke | None = None,
         guide_stroke: Stroke | None = None,
+        point_marker: Marker | None = None,
     ) -> "DemandDiagram":
         """Draw the goods-space panel and the linked Marshallian demand panel.
 
         The ``*_stroke`` arguments restyle one kind of line each: indifference
         curves, budget lines, equilibrium drop lines, and the PCC in the top
         panel; the demand curve and its guides in the bottom panel.
+        ``point_marker`` restyles the equilibrium points in both panels.
         """
         price_markers = price_markers or [self.path.parameter_values[len(self.path.parameter_values) // 2]]
         quantity_axis = self._quantity_axis()
@@ -85,7 +88,10 @@ class DemandDiagram(Figure):
         top = {"curve": curve_stroke, "budget": budget_stroke, "drop": drop_stroke, "path": path_stroke}
         bottom = {"demand": demand_stroke, "guide": guide_stroke}
         # Style before the legends are built: a legend copies line styles when created.
-        with styled(self.utility_canvas, top), styled(self.demand_canvas, bottom):
+        with (
+            styled(self.utility_canvas, top, markers={"equilibrium": point_marker}),
+            styled(self.demand_canvas, bottom, markers={"point": point_marker, "tie": point_marker}),
+        ):
             selected_levels = sorted(dict.fromkeys(eq.utility for _, eq in selected_equilibria))
             self.utility_canvas.add_utility(
                 self.func,
@@ -322,7 +328,7 @@ class DemandDiagram(Figure):
             line._ev_role = "guide"
 
     def _add_tie_marker(self, quantity: float, price: float) -> None:
-        self.demand_canvas.ax.plot(
+        (point,) = self.demand_canvas.ax.plot(
             quantity,
             price,
             marker="o",
@@ -332,3 +338,4 @@ class DemandDiagram(Figure):
             clip_on=False,
             zorder=6,
         )
+        point._ev_role = "tie"

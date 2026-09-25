@@ -127,10 +127,11 @@ class IndifferenceCurves:
         if self.show_kinks and hasattr(self.func, "utility_type"):
             if self.func.utility_type is UtilityType.KINKED:
                 for x, y in self.func.kink_points(computed):
-                    ax.plot(x, y, "o",
-                            markersize=self.kink_radius * 4,
-                            markerfacecolor=self.kink_color,
-                            markeredgecolor=self.kink_color)
+                    (kink,) = ax.plot(x, y, "o",
+                                      markersize=self.kink_radius * 4,
+                                      markerfacecolor=self.kink_color,
+                                      markeredgecolor=self.kink_color)
+                    kink._ev_role = "kink"
 
         if hasattr(self.func, "subsistence_lines"):
             sub_x, sub_y = self.func.subsistence_lines()

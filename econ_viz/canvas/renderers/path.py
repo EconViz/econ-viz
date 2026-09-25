@@ -53,5 +53,6 @@ def render_path(
             canvas.add_equilibrium(eq, color=color, label=None, drop_dashes=False)
         elif show_points:
             px, py = (eq.x, eq.y) if not invert_axes else (path.parameter_values[idx], eq.x)
-            canvas.ax.plot(px, py, "o", color=color, markersize=max(canvas.theme.eq_markersize - 1, 3))
+            (point,) = canvas.ax.plot(px, py, "o", color=color, markersize=max(canvas.theme.eq_markersize - 1, 3))
+            point._ev_role = "path_point"
 
