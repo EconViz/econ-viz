@@ -1,9 +1,5 @@
 """Tests for multi-panel figures, paths, and linked demand diagrams."""
 
-import matplotlib
-matplotlib.use("Agg")
-
-import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
@@ -19,12 +15,6 @@ from econ_viz import (
     PricePath,
 )
 from econ_viz.models import CES, CobbDouglas, Leontief, PerfectSubstitutes, QuasiLinear, StoneGeary
-
-
-@pytest.fixture(autouse=True)
-def close_figures():
-    yield
-    plt.close("all")
 
 
 class TestFigure:

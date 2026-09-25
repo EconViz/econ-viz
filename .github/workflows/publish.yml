@@ -33,15 +33,38 @@ jobs:
       - name: Run tests
         run: uv run pytest
 
+  examples:
+    name: example smoke test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: astral-sh/setup-uv@v10.2.0
+        with:
+          python-version: "3.12"
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --frozen --all-extras
+
+      - name: Run examples from a clean output directory
+        run: make examples-smoke
+
+      - name: Ensure examples do not modify tracked files
+        run: git diff --exit-code
+
   # Branch protection requires a check named "test"; it passes only if every version passes.
   test:
     name: test
-    needs: test-matrix
+    needs: [test-matrix, examples]
     if: always()
     runs-on: ubuntu-latest
     steps:
-      - name: Require all Python versions to pass
-        run: test "${{ needs.test-matrix.result }}" = "success"
+      - name: Require tests and examples to pass
+        run: |
+          test "${{ needs.test-matrix.result }}" = "success"
+          test "${{ needs.examples.result }}" = "success"
 
   release:
     name: Release & publish

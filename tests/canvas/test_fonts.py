@@ -1,21 +1,12 @@
 """Tests for per-canvas font configuration."""
 
 import matplotlib
-matplotlib.use("Agg")
-
-import matplotlib.pyplot as plt
 import pytest
 from matplotlib.text import Text
 
 from econ_viz import Canvas, Figure, Layout, levels, solve
 from econ_viz.exceptions import InvalidParameterError
 from econ_viz.models import CobbDouglas
-
-
-@pytest.fixture(autouse=True)
-def close_figures():
-    yield
-    plt.close("all")
 
 
 def _full_canvas(**kwargs) -> Canvas:
