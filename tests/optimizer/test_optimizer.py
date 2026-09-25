@@ -559,6 +559,37 @@ class TestComparativeStaticsInvalidParams:
         with pytest.raises(InvalidParameterError):
             comparative_statics(CobbDouglas(), px=1.0, py=1.0, income=0.0)
 
+    @pytest.mark.parametrize("h", [0.0, -0.1])
+    def test_non_positive_step(self, h):
+        with pytest.raises(InvalidParameterError, match="step"):
+            comparative_statics(CobbDouglas(), px=1.0, py=1.0, income=10.0, h=h)
+
+
+class TestComparativeStaticsBoundaries:
+    def test_small_price_uses_forward_difference(self):
+        cs = comparative_statics(
+            CobbDouglas(),
+            px=0.0005,
+            py=1.0,
+            income=10.0,
+        )
+        assert np.isfinite(list(cs.__dict__.values())).all()
+
+    def test_income_near_subsistence_uses_forward_difference(self):
+        model = StoneGeary(bar_x=1.0, bar_y=1.0)
+        cs = comparative_statics(model, px=1.0, py=1.0, income=2.0005)
+        assert np.isfinite(list(cs.__dict__.values())).all()
+
+    def test_price_near_subsistence_boundary_uses_backward_difference(self):
+        model = StoneGeary(bar_x=1.0, bar_y=1.0)
+        cs = comparative_statics(model, px=1.0, py=1.0, income=2.0005)
+        assert cs.dx_dpx < 0
+
+    def test_slutsky_matrix_inherits_boundary_safe_differences(self):
+        model = StoneGeary(bar_x=1.0, bar_y=1.0)
+        matrix = slutsky_matrix(model, px=1.0, py=1.0, income=2.0005)
+        assert np.isfinite(matrix.as_array()).all()
+
 
 class TestSlutskyMatrixCobbDouglas:
     """Verify Slutsky matrix entries against Cobb-Douglas closed form."""
