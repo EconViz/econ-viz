@@ -30,8 +30,8 @@ def around(anchor: float, n: int = 5, spread: float = 0.5) -> list[float]:
     n : int
         Total number of levels to produce (must be >= 1).
     spread : float
-        Half-width of the range expressed as a fraction of *anchor*.
-        Levels span ``[anchor * (1 - spread), anchor * (1 + spread)]``.
+        Half-width expressed as a fraction of ``abs(anchor)``. A unit scale
+        is used when the anchor is zero.
 
     Returns
     -------

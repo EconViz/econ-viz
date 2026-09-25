@@ -39,6 +39,17 @@ class TestAround:
         assert len(lvls) == 4
         assert 4.0 in lvls
 
+    @pytest.mark.parametrize("anchor", [0.0, -0.25, -2.0])
+    def test_non_positive_anchor_is_sorted_unique_and_finite(self, anchor):
+        lvls = levels.around(anchor=anchor, n=5)
+        assert lvls == sorted(set(lvls))
+        assert all(np.isfinite(lvls))
+        assert anchor in lvls
+
+    def test_zero_spread_rejected_for_multiple_levels(self):
+        with pytest.raises(ValueError, match="spread"):
+            levels.around(anchor=1.0, n=3, spread=0.0)
+
 
 class TestPercentile:
     """Tests for levels.percentile() — percentile-based level spacing."""
