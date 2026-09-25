@@ -11,16 +11,20 @@ on:
       - main
 
 jobs:
-  test:
-    name: test
+  test-matrix:
+    name: test (${{ matrix.python-version }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
 
     steps:
       - uses: actions/checkout@v5
 
       - uses: astral-sh/setup-uv@v10.2.0
         with:
-          python-version: "3.12"
+          python-version: ${{ matrix.python-version }}
           enable-cache: true
 
       - name: Install dependencies
@@ -28,6 +32,16 @@ jobs:
 
       - name: Run tests
         run: uv run pytest
+
+  # Branch protection requires a check named "test"; it passes only if every version passes.
+  test:
+    name: test
+    needs: test-matrix
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require all Python versions to pass
+        run: test "${{ needs.test-matrix.result }}" = "success"
 
   release:
     name: Release & publish
