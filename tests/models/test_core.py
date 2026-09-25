@@ -45,6 +45,11 @@ class TestCobbDouglas:
         assert cd.alpha == 0.5
         assert cd.beta == 0.5
 
+    @pytest.mark.parametrize("alpha,beta", [(0.0, 1.0), (1.0, 0.0), (-0.5, 1.5)])
+    def test_requires_positive_exponents(self, alpha, beta):
+        with pytest.raises(InvalidParameterError):
+            CobbDouglas(alpha=alpha, beta=beta)
+
 
 class TestLeontief:
     """Unit tests for the Leontief (perfect complements) utility model."""
@@ -75,6 +80,11 @@ class TestLeontief:
     def test_kink_points_empty_levels(self):
         assert Leontief().kink_points([]) == []
 
+    @pytest.mark.parametrize("a,b", [(0.0, 1.0), (1.0, 0.0), (-1.0, 1.0)])
+    def test_requires_positive_coefficients(self, a, b):
+        with pytest.raises(InvalidParameterError):
+            Leontief(a=a, b=b)
+
 
 class TestPerfectSubstitutes:
     """Unit tests for the PerfectSubstitutes (linear) utility model."""
@@ -98,6 +108,11 @@ class TestPerfectSubstitutes:
 
     def test_kink_points_empty(self):
         assert PerfectSubstitutes().kink_points([1.0]) == []
+
+    @pytest.mark.parametrize("a,b", [(0.0, 1.0), (1.0, 0.0), (1.0, -1.0)])
+    def test_requires_positive_coefficients(self, a, b):
+        with pytest.raises(InvalidParameterError):
+            PerfectSubstitutes(a=a, b=b)
 
 
 class TestCES:
@@ -123,10 +138,26 @@ class TestCES:
         slopes = ces.ray_slopes()
         assert slopes[0] == pytest.approx(0.6 / 0.4, rel=1e-3)
 
-    def test_ray_slopes_rho_one_raises(self):
-        ces = CES(rho=1.0)
+    def test_ray_slopes_asymmetric(self):
+        ces = CES(alpha=0.25, beta=0.75, rho=0.5)
+        assert ces.ray_slopes() == pytest.approx([(0.75 / 0.25) ** 2])
+
+    def test_rho_zero_uses_cobb_douglas_limit(self):
+        ces = CES(alpha=0.4, beta=0.6, rho=0.0)
+        assert ces(4.0, 9.0) == pytest.approx(4.0 ** 0.4 * 9.0 ** 0.6)
+        assert ces.ray_slopes() == pytest.approx([0.6 / 0.4])
+
+    def test_rho_one_rejected_at_construction(self):
         with pytest.raises(InvalidParameterError):
-            ces.ray_slopes()
+            CES(rho=1.0)
+
+    @pytest.mark.parametrize(
+        "alpha,beta,rho",
+        [(0.0, 1.0, 0.5), (1.0, 0.0, 0.5), (0.4, 0.4, 0.0), (0.5, 0.5, 1.1)],
+    )
+    def test_invalid_parameters(self, alpha, beta, rho):
+        with pytest.raises(InvalidParameterError):
+            CES(alpha=alpha, beta=beta, rho=rho)
 
     def test_kink_points_empty(self):
         assert CES().kink_points([1.0]) == []
@@ -180,6 +211,14 @@ class TestSatiation:
         s = Satiation()
         assert s.bliss_x == 5.0
         assert s.bliss_y == 5.0
+
+    def test_budget_may_be_slack(self):
+        assert Satiation().budget_may_be_slack is True
+
+    @pytest.mark.parametrize("bliss_x,bliss_y", [(-1.0, 1.0), (1.0, -1.0)])
+    def test_bliss_point_must_be_non_negative(self, bliss_x, bliss_y):
+        with pytest.raises(InvalidParameterError):
+            Satiation(bliss_x=bliss_x, bliss_y=bliss_y)
 
 
 class TestStoneGeary:

@@ -32,6 +32,14 @@ from ..enums import UtilityType
 from ..exceptions import InvalidParameterError
 
 
+def _require_positive(model: str, **parameters: float) -> None:
+    """Validate finite, strictly positive model parameters."""
+    invalid = [name for name, value in parameters.items() if not np.isfinite(value) or value <= 0]
+    if invalid:
+        names = ", ".join(invalid)
+        raise InvalidParameterError(f"{model}: {names} must be finite and positive.")
+
+
 @dataclass
 class CobbDouglas:
     """Cobb-Douglas utility: U(x, y) = x^alpha * y^beta.
@@ -49,6 +57,9 @@ class CobbDouglas:
 
     alpha: float = 0.5
     beta: float = 0.5
+
+    def __post_init__(self) -> None:
+        _require_positive("CobbDouglas", alpha=self.alpha, beta=self.beta)
 
     @property
     def utility_type(self) -> UtilityType:
@@ -77,7 +88,7 @@ class CES:
     * rho -> -inf : Leontief
     * rho = 1    : perfect substitutes
 
-    The equal-price expansion path has slope (alpha/beta)^{1/(1-rho)}.
+    The equal-price expansion path has slope (beta/alpha)^{1/(1-rho)}.
 
     Parameters
     ----------
@@ -86,36 +97,44 @@ class CES:
     beta : float
         Share parameter for good *y*.
     rho : float
-        Substitution parameter. Must not equal 1 (use
-        :class:`PerfectSubstitutes` instead).
+        Substitution parameter below 1. At ``rho=0``, ``alpha`` and ``beta``
+        must sum to 1 so the Cobb-Douglas limit is well-defined.
     """
 
     alpha: float = 0.5
     beta: float = 0.5
     rho: float = 0.5
 
+    def __post_init__(self) -> None:
+        _require_positive("CES", alpha=self.alpha, beta=self.beta)
+        if not np.isfinite(self.rho) or self.rho >= 1.0:
+            raise InvalidParameterError(
+                "CES: rho must be finite and less than 1; "
+                "use PerfectSubstitutes for rho=1."
+            )
+        if abs(self.rho) < 1e-9 and not np.isclose(self.alpha + self.beta, 1.0):
+            raise InvalidParameterError(
+                "CES: alpha and beta must sum to 1 when rho=0."
+            )
+
     @property
     def utility_type(self) -> UtilityType:
         return UtilityType.SMOOTH
 
     def __call__(self, x, y):
+        if abs(self.rho) < 1e-9:
+            return x ** self.alpha * y ** self.beta
         return (self.alpha * x ** self.rho + self.beta * y ** self.rho) ** (1 / self.rho)
 
     def ray_slopes(self) -> list[float]:
-        """Return the expansion-path slope (alpha/beta)^{1/(1-rho)}.
+        """Return the expansion-path slope (beta/alpha)^{1/(1-rho)}.
 
-        Falls back to beta/alpha (Cobb-Douglas limit) when rho is near zero,
-        and raises ValueError when rho equals 1.
+        Falls back to beta/alpha (Cobb-Douglas limit) when rho is near zero.
         """
-        if abs(self.rho - 1.0) < 1e-9:
-            raise InvalidParameterError(
-                "CES with rho=1 is equivalent to perfect substitutes; "
-                "use PerfectSubstitutes instead."
-            )
         if abs(self.rho) < 1e-9:
             # Cobb-Douglas limit: slope = beta / alpha
             return [self.beta / self.alpha]
-        return [(self.alpha / self.beta) ** (1 / (1 - self.rho))]
+        return [(self.beta / self.alpha) ** (1 / (1 - self.rho))]
 
     def kink_points(self, levels: list[float]) -> list[tuple[float, float]]:
         return []
@@ -138,6 +157,9 @@ class PerfectSubstitutes:
 
     a: float = 1.0
     b: float = 1.0
+
+    def __post_init__(self) -> None:
+        _require_positive("PerfectSubstitutes", a=self.a, b=self.b)
 
     @property
     def utility_type(self) -> UtilityType:
@@ -171,6 +193,9 @@ class Leontief:
 
     a: float = 1.0
     b: float = 1.0
+
+    def __post_init__(self) -> None:
+        _require_positive("Leontief", a=self.a, b=self.b)
 
     @property
     def utility_type(self) -> UtilityType:
@@ -419,8 +444,21 @@ class Satiation:
     b: float = 1.0
 
     def __post_init__(self) -> None:
-        if self.a <= 0 or self.b <= 0:
-            raise InvalidParameterError("Satiation parameters a and b must be positive.")
+        _require_positive("Satiation", a=self.a, b=self.b)
+        if (
+            not np.isfinite(self.bliss_x)
+            or not np.isfinite(self.bliss_y)
+            or self.bliss_x < 0
+            or self.bliss_y < 0
+        ):
+            raise InvalidParameterError(
+                "Satiation: bliss_x and bliss_y must be finite and non-negative."
+            )
+
+    @property
+    def budget_may_be_slack(self) -> bool:
+        """Return whether the optimum may leave income unspent."""
+        return True
 
     @property
     def utility_type(self) -> UtilityType:

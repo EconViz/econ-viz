@@ -114,12 +114,19 @@ def _solve_interior(func, px: float, py: float, income: float) -> Equilibrium:
         y_floor + (y_max - y_floor) / 2,
     ])
 
+    budget_may_be_slack = bool(getattr(func, "budget_may_be_slack", False))
+    budget_constraint = (
+        {"type": "ineq", "fun": lambda v: income - px * v[0] - py * v[1]}
+        if budget_may_be_slack
+        else {"type": "eq", "fun": lambda v: px * v[0] + py * v[1] - income}
+    )
+
     result = minimize(
         fun=lambda v: -float(func(v[0], v[1])),
         x0=x0,
         method="SLSQP",
         bounds=[(x_floor + 1e-12, x_max), (y_floor + 1e-12, y_max)],
-        constraints={"type": "eq", "fun": lambda v: px * v[0] + py * v[1] - income},
+        constraints=budget_constraint,
     )
 
     if not result.success:
