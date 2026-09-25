@@ -835,7 +835,7 @@ class Canvas:
         y: float,
         label: str | None = None,
         color: str | None = None,
-        markersize: float = 6.0,
+        markersize: float | None = None,
         offset: tuple[float, float] = (5, 5),
         marker: Marker | None = None,
     ) -> Canvas:
@@ -849,8 +849,8 @@ class Canvas:
             Text label (rendered in LaTeX math mode if provided).
         color : str or None
             Marker and label colour. *None* → ``theme.eq_color``.
-        markersize : float
-            Size of the dot.
+        markersize : float or None
+            Size of the dot. *None* → ``theme.point_marker.size``.
         offset : tuple[float, float]
             ``(dx, dy)`` text offset in points from the marker centre.
 
@@ -869,7 +869,7 @@ class Canvas:
                 x=x,
                 y=y,
                 color=c,
-                markersize=markersize,
+                markersize=markersize if markersize is not None else self.theme.point_marker.size,
                 marker="o",
                 linestyle="None",
                 zorder=6,

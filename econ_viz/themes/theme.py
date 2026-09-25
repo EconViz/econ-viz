@@ -119,7 +119,7 @@ class Theme:
 
     # Equilibrium
     eq_color: str = "#E41A1C"
-    eq_markersize: float = 6.0
+    eq_markersize: float = 4.0
 
     # Rays
     ray_color: str = "#999999"
@@ -150,7 +150,7 @@ class Theme:
     @property
     def point_marker(self) -> Marker:
         """Points drawn with ``Canvas.add_point``."""
-        return Marker(color=self.eq_color, size=6.0, shape="o")
+        return Marker(color=self.eq_color, size=self.eq_markersize, shape="o")
 
     @property
     def kink_marker(self) -> Marker:
