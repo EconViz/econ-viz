@@ -21,6 +21,8 @@ from collections.abc import Sequence
 from typing import Callable
 
 from ..constants.canvas import (
+    ARROW_HEAD_ONLY_FRAC,
+    ARROW_WEDGE_FRAC,
     DEFAULT_DPI,
     ENDPOINT_EXTENSION_FRAC,
     MATH_CHARS,
@@ -33,6 +35,8 @@ from ..themes import default as _default_theme
 from ..themes.theme import Theme
 from ..enums import ArrowStyle, LabelPosition, LineStyle
 from ..canvas.fonts import FontApplier, resolve_font, resolve_math_font
+from ..canvas.stroke import styled
+from ..themes.stroke import Stroke
 from ..canvas.primitives import annotate_math, plot_point
 from ..canvas.renderers import (
     render_budget,
@@ -44,11 +48,6 @@ from ..canvas.renderers import (
 from ..io import save_figure
 
 logger = get_logger(__name__)
-
-# Arrow patches only need the head, so they do not paint over dashed axis lines.
-# The wedge is drawn along its whole path and needs a visible length.
-_HEAD_ONLY_FRAC = 0.001
-_ARROW_LENGTH_FRAC = {ArrowStyle.WEDGE: 0.04}
 
 _X_LABEL_POSITIONS = {
     LabelPosition.TOP: ((0, 8), "center", "bottom"),
@@ -85,6 +84,18 @@ def _line_style(value: LineStyle | str) -> LineStyle:
     except ValueError:
         choices = ", ".join(item.value for item in LineStyle)
         raise ValueError(f"invalid line style {value!r}; choose: {choices}") from None
+
+
+def _axis_stroke(theme, line_style, arrow_style, shared: Stroke | None, own: Stroke | None) -> Stroke:
+    """Resolve one axis's stroke; the colour falls back to ``theme.axis_color``."""
+    stroke = Stroke(
+        style=_line_style(line_style) if line_style is not None else None,
+        arrow=_arrow_style(arrow_style) if arrow_style is not None else None,
+    ).merged_over(theme.axis_stroke)
+    for override in (shared, own):
+        if override is not None:
+            stroke = override.merged_over(stroke)
+    return stroke.merged_over(Stroke(color=theme.axis_color))
 
 
 def _arrow_style(value: ArrowStyle | str) -> ArrowStyle:
@@ -214,6 +225,11 @@ class Canvas:
         ``"stixsans"``. ``None`` keeps Matplotlib's default.
     x_line_style, y_line_style : LineStyle or str
         Line style of each axis: solid, dashed, dotted, or dashdot.
+    axis_stroke : Stroke, optional
+        Width, line style, colour, and arrowhead for both axes
+        (default ``theme.axis_stroke``).
+    x_axis_stroke, y_axis_stroke : Stroke, optional
+        Per-axis overrides on top of *axis_stroke*.
     """
 
     def __init__(
@@ -229,12 +245,15 @@ class Canvas:
         theme: Theme = _default_theme,
         fig=None,
         ax=None,
-        x_arrow_style: ArrowStyle | str = ArrowStyle.TRIANGLE,
-        y_arrow_style: ArrowStyle | str = ArrowStyle.TRIANGLE,
+        x_arrow_style: ArrowStyle | str | None = None,
+        y_arrow_style: ArrowStyle | str | None = None,
         font: str | Sequence[str] | None = None,
         math_font: str | None = None,
-        x_line_style: LineStyle | str = LineStyle.SOLID,
-        y_line_style: LineStyle | str = LineStyle.SOLID,
+        x_line_style: LineStyle | str | None = None,
+        y_line_style: LineStyle | str | None = None,
+        axis_stroke: Stroke | None = None,
+        x_axis_stroke: Stroke | None = None,
+        y_axis_stroke: Stroke | None = None,
     ):
         self.x_max = x_max
         self.y_max = y_max
@@ -244,11 +263,14 @@ class Canvas:
         self.dpi = max(MIN_DPI, min(dpi, MAX_DPI))
         self.x_label_pos = _label_position(x_label_pos, axis="x")
         self.y_label_pos = _label_position(y_label_pos, axis="y")
-        self.x_arrow_style = _arrow_style(x_arrow_style)
-        self.y_arrow_style = _arrow_style(y_arrow_style)
-        self.x_line_style = _line_style(x_line_style)
-        self.y_line_style = _line_style(y_line_style)
         self.theme = theme
+        # Precedence: per-axis stroke > shared stroke > x/y_*_style arguments > theme.axis_stroke.
+        self.x_axis_stroke = _axis_stroke(theme, x_line_style, x_arrow_style, axis_stroke, x_axis_stroke)
+        self.y_axis_stroke = _axis_stroke(theme, y_line_style, y_arrow_style, axis_stroke, y_axis_stroke)
+        self.x_line_style = self.x_axis_stroke.style
+        self.y_line_style = self.y_axis_stroke.style
+        self.x_arrow_style = self.x_axis_stroke.arrow
+        self.y_arrow_style = self.y_axis_stroke.arrow
         self.font = resolve_font(font)
         self.math_font = resolve_math_font(math_font)
 
@@ -319,31 +341,36 @@ class Canvas:
         # Spines
         self.ax.spines["top"].set_visible(False)
         self.ax.spines["right"].set_visible(False)
-        self.ax.spines["bottom"].set_color(t.axis_color)
-        self.ax.spines["left"].set_color(t.axis_color)
-        self.ax.spines["bottom"].set_linestyle(self.x_line_style.value)
-        self.ax.spines["left"].set_linestyle(self.y_line_style.value)
+        for spine, stroke in (("bottom", self.x_axis_stroke), ("left", self.y_axis_stroke)):
+            self.ax.spines[spine].set_color(stroke.color)
+            self.ax.spines[spine].set_linewidth(stroke.width)
+            self.ax.spines[spine].set_linestyle(stroke.style.value)
 
         # Arrow terminators at axis tips
-        x_start = self.x_max * (1 - _ARROW_LENGTH_FRAC.get(self.x_arrow_style, _HEAD_ONLY_FRAC))
-        y_start = self.y_max * (1 - _ARROW_LENGTH_FRAC.get(self.y_arrow_style, _HEAD_ONLY_FRAC))
-        for axis, spine, start, end, style in (
-            ("x", "bottom", (x_start, 0), (self.x_max, 0), self.x_arrow_style),
-            ("y", "left", (0, y_start), (0, self.y_max), self.y_arrow_style),
+        def arrow_frac(style: ArrowStyle) -> float:
+            return ARROW_WEDGE_FRAC if style is ArrowStyle.WEDGE else ARROW_HEAD_ONLY_FRAC
+
+        for axis, stroke, tip in (
+            ("x", self.x_axis_stroke, (self.x_max, 0)),
+            ("y", self.y_axis_stroke, (0, self.y_max)),
         ):
+            if stroke.arrow is None:
+                continue
+            frac = arrow_frac(stroke.arrow)
+            start = (self.x_max * (1 - frac), 0) if axis == "x" else (0, self.y_max * (1 - frac))
             arrow = FancyArrowPatch(
                 start,
-                end,
-                arrowstyle=style.value,
+                tip,
+                arrowstyle=stroke.arrow.value,
                 mutation_scale=12,
-                linewidth=self.ax.spines[spine].get_linewidth(),
-                color=t.axis_color,
+                linewidth=stroke.width,
+                color=stroke.color,
                 shrinkA=0,
                 shrinkB=0,
                 clip_on=False,
             )
             arrow._ev_axis_arrow = axis
-            arrow._ev_arrow_style = style
+            arrow._ev_arrow_style = stroke.arrow
             self.ax.add_patch(arrow)
 
         # Transparent background
@@ -379,6 +406,8 @@ class Canvas:
         label: str | None = None,
         show_ic_labels: bool = False,
         ic_label_fmt: str = "{:.2g}",
+        stroke: Stroke | None = None,
+        ray_stroke: Stroke | None = None,
         **kwargs,
     ) -> Canvas:
         """Add indifference curves for a given utility function.
@@ -419,34 +448,40 @@ class Canvas:
         **kwargs
             Forwarded to :meth:`matplotlib.axes.Axes.contour`.
 
+        stroke : Stroke, optional
+            Line style for the indifference curves (default ``theme.ic_stroke``); ``arrow`` adds an arrowhead to each curve.
+        ray_stroke : Stroke, optional
+            Line style for kink-locus rays (default ``theme.ray_stroke``).
+
         Returns
         -------
         Canvas
             *self*, to allow method chaining.
         """
-        t = self.theme
-        ic = render_utility(
-            self.ax,
-            func=func,
-            levels=levels,
-            color=color or t.ic_color,
-            linewidth=linewidth if linewidth is not None else t.ic_linewidth,
-            show_rays=show_rays,
-            ray_color=t.ray_color,
-            ray_linewidth=t.ray_linewidth,
-            show_kinks=show_kinks,
-            kink_color=t.kink_color,
-            kink_radius=kink_radius,
-            label=label,
-            show_ic_labels=show_ic_labels,
-            ic_label_fmt=ic_label_fmt,
-            show_bliss=show_bliss,
-            x_max=self.x_max,
-            y_max=self.y_max,
-            **kwargs,
-        )
-        if ic._proxy is not None:
-            self._legend_handles.append(ic._proxy)
+        with styled(self, {"curve": stroke, "ray": ray_stroke}):
+            t = self.theme
+            ic = render_utility(
+                self.ax,
+                func=func,
+                levels=levels,
+                color=color or t.ic_color,
+                linewidth=linewidth if linewidth is not None else t.ic_linewidth,
+                show_rays=show_rays,
+                ray_color=t.ray_color,
+                ray_linewidth=t.ray_linewidth,
+                show_kinks=show_kinks,
+                kink_color=t.kink_color,
+                kink_radius=kink_radius,
+                label=label,
+                show_ic_labels=show_ic_labels,
+                ic_label_fmt=ic_label_fmt,
+                show_bliss=show_bliss,
+                x_max=self.x_max,
+                y_max=self.y_max,
+                **kwargs,
+            )
+            if ic._proxy is not None:
+                self._legend_handles.append(ic._proxy)
         return self
 
     def add_budget(
@@ -460,6 +495,7 @@ class Canvas:
         label: str | None = None,
         fill: bool = False,
         fill_alpha: float | None = None,
+        stroke: Stroke | None = None,
     ) -> Canvas:
         """Add a linear budget constraint px*x + py*y = income.
 
@@ -485,24 +521,28 @@ class Canvas:
         fill_alpha : float or None
             Opacity of the shading. *None* → ``theme.budget_fill_alpha``.
 
+        stroke : Stroke, optional
+            Line style for the budget line (default ``theme.budget_stroke``).
+
         Returns
         -------
         Canvas
             *self*, to allow method chaining.
         """
-        t = self.theme
-        render_budget(
-            self.ax,
-            px=px,
-            py=py,
-            income=income,
-            color=color or t.budget_color,
-            linewidth=linewidth if linewidth is not None else t.budget_linewidth,
-            linestyle=linestyle,
-            label=label,
-            fill=fill,
-            fill_alpha=fill_alpha if fill_alpha is not None else t.budget_fill_alpha,
-        )
+        with styled(self, {"budget": stroke}):
+            t = self.theme
+            render_budget(
+                self.ax,
+                px=px,
+                py=py,
+                income=income,
+                color=color or t.budget_color,
+                linewidth=linewidth if linewidth is not None else t.budget_linewidth,
+                linestyle=linestyle,
+                label=label,
+                fill=fill,
+                fill_alpha=fill_alpha if fill_alpha is not None else t.budget_fill_alpha,
+            )
         return self
 
     def add_equilibrium(
@@ -513,6 +553,8 @@ class Canvas:
         label: str | None = "x^*",
         drop_dashes: bool = True,
         show_ray: bool = False,
+        drop_stroke: Stroke | None = None,
+        ray_stroke: Stroke | None = None,
     ) -> Canvas:
         """Annotate a pre-solved equilibrium on the canvas.
 
@@ -534,25 +576,31 @@ class Canvas:
         show_ray : bool
             Draw the expansion-path ray from the origin through the optimum.
 
+        drop_stroke : Stroke, optional
+            Line style for the guides to both axes (default ``theme.drop_stroke``).
+        ray_stroke : Stroke, optional
+            Line style for the expansion-path ray (default ``theme.ray_stroke``).
+
         Returns
         -------
         Canvas
             *self*, to allow method chaining.
         """
-        t = self.theme
-        render_equilibrium(
-            self.ax,
-            eq=eq,
-            color=color or t.eq_color,
-            markersize=markersize if markersize is not None else t.eq_markersize,
-            label=label,
-            drop_dashes=drop_dashes,
-            show_ray=show_ray,
-            ray_color=t.ray_color,
-            ray_linewidth=t.ray_linewidth,
-            x_max=self.x_max,
-            y_max=self.y_max,
-        )
+        with styled(self, {"drop": drop_stroke, "ray": ray_stroke}):
+            t = self.theme
+            render_equilibrium(
+                self.ax,
+                eq=eq,
+                color=color or t.eq_color,
+                markersize=markersize if markersize is not None else t.eq_markersize,
+                label=label,
+                drop_dashes=drop_dashes,
+                show_ray=show_ray,
+                ray_color=t.ray_color,
+                ray_linewidth=t.ray_linewidth,
+                x_max=self.x_max,
+                y_max=self.y_max,
+            )
         return self
 
     def add_decomposition(
@@ -576,6 +624,14 @@ class Canvas:
         substitution_color: str | None = None,
         income_color: str | None = None,
         effect_arrow_linewidth: float | None = None,
+        original_budget_stroke: Stroke | None = None,
+        compensated_budget_stroke: Stroke | None = None,
+        final_budget_stroke: Stroke | None = None,
+        substitution_stroke: Stroke | None = None,
+        income_stroke: Stroke | None = None,
+        projection_stroke: Stroke | None = None,
+        guide_stroke: Stroke | None = None,
+        range_stroke: Stroke | None = None,
     ) -> Canvas:
         """Render a Hicks/Slutsky price-effect decomposition on this canvas.
 
@@ -589,102 +645,121 @@ class Canvas:
             If ``True`` annotate effect magnitudes near each arrow.
         show_x_projections : bool
             If ``True`` draw x-axis projection guides and brackets.
+        original_budget_stroke : Stroke, optional
+            Line style for the original budget line (default ``theme.budget_stroke``).
+        compensated_budget_stroke : Stroke, optional
+            Line style for the compensated budget line (default ``theme.compensated_budget_stroke``).
+        final_budget_stroke : Stroke, optional
+            Line style for the final budget line (default ``theme.final_budget_stroke``).
+        substitution_stroke : Stroke, optional
+            Line style for the substitution-effect arrow (default ``theme.substitution_stroke``).
+        income_stroke : Stroke, optional
+            Line style for the income-effect arrow (default ``theme.income_stroke``).
+        projection_stroke : Stroke, optional
+            Line style for vertical guides from A, B, C to the x-axis (default ``theme.projection_stroke``).
+        guide_stroke : Stroke, optional
+            Line style for guides below the x-axis (default ``theme.guide_stroke``).
+        range_stroke : Stroke, optional
+            Line style for effect-size arrows below the x-axis.
         """
-        t = self.theme
-        render_decomposition(
-            self.ax,
-            decomposition=decomposition,
-            point_color=point_color or t.eq_color,
-            point_markersize=(
-                point_markersize if point_markersize is not None else t.eq_markersize
-            ),
-            original_budget_color=original_budget_color or t.budget_color,
-            original_budget_linewidth=(
-                original_budget_linewidth
-                if original_budget_linewidth is not None
-                else t.budget_linewidth
-            ),
-            original_budget_linestyle=original_budget_linestyle,
-            compensated_budget_color=(
-                compensated_budget_color or t.compensated_budget_color
-            ),
-            compensated_budget_linewidth=(
-                compensated_budget_linewidth
-                if compensated_budget_linewidth is not None
-                else t.compensated_budget_linewidth
-            ),
-            compensated_budget_linestyle=(
-                compensated_budget_linestyle
-                if compensated_budget_linestyle is not None
-                else t.compensated_budget_linestyle
-            ),
-            final_budget_color=final_budget_color or t.budget_color,
-            final_budget_linewidth=(
-                final_budget_linewidth
-                if final_budget_linewidth is not None
-                else t.budget_linewidth
-            ),
-            final_budget_linestyle=final_budget_linestyle,
-            show_arrows=show_arrows,
-            arrows_below_axis=show_x_projections,
-            substitution_color=substitution_color or t.sub_effect_color,
-            income_color=income_color or t.inc_effect_color,
-            effect_arrow_linewidth=(
-                effect_arrow_linewidth
-                if effect_arrow_linewidth is not None
-                else t.effect_arrow_linewidth
-            ),
-            show_x_projections=show_x_projections,
-        )
-        if label_effects:
-            sub_dx, sub_dy = decomposition.substitution_effect
-            inc_dx, inc_dy = decomposition.income_effect
-            self._legend_handles.extend([
-                mlines.Line2D(
-                    [],
-                    [],
-                    color=point_color or t.eq_color,
-                    marker="o",
-                    linestyle="None",
-                    markersize=point_markersize if point_markersize is not None else t.eq_markersize,
-                    label=rf"$A=({decomposition.A.x:.2f},{decomposition.A.y:.2f})$",
+        with styled(self, {"original_budget": original_budget_stroke, "compensated_budget": compensated_budget_stroke, "final_budget": final_budget_stroke, "substitution": substitution_stroke, "income": income_stroke, "projection": projection_stroke, "guide": guide_stroke, "range": range_stroke}):
+            t = self.theme
+            render_decomposition(
+                self.ax,
+                decomposition=decomposition,
+                point_color=point_color or t.eq_color,
+                point_markersize=(
+                    point_markersize if point_markersize is not None else t.eq_markersize
                 ),
-                mlines.Line2D(
-                    [],
-                    [],
-                    color=point_color or t.eq_color,
-                    marker="o",
-                    linestyle="None",
-                    markersize=point_markersize if point_markersize is not None else t.eq_markersize,
-                    label=rf"$B=({decomposition.B.x:.2f},{decomposition.B.y:.2f})$",
+                original_budget_color=original_budget_color or t.budget_color,
+                original_budget_linewidth=(
+                    original_budget_linewidth
+                    if original_budget_linewidth is not None
+                    else t.budget_linewidth
                 ),
-                mlines.Line2D(
-                    [],
-                    [],
-                    color=point_color or t.eq_color,
-                    marker="o",
-                    linestyle="None",
-                    markersize=point_markersize if point_markersize is not None else t.eq_markersize,
-                    label=rf"$C=({decomposition.C.x:.2f},{decomposition.C.y:.2f})$",
+                original_budget_linestyle=original_budget_linestyle,
+                compensated_budget_color=(
+                    compensated_budget_color or t.compensated_budget_color
                 ),
-                mlines.Line2D(
-                    [],
-                    [],
-                    color=substitution_color or t.sub_effect_color,
-                    linestyle="--",
-                    linewidth=effect_arrow_linewidth if effect_arrow_linewidth is not None else t.effect_arrow_linewidth,
-                    label=rf"$Sub:\ \Delta x={sub_dx:+.2f},\ \Delta y={sub_dy:+.2f}$",
+                compensated_budget_linewidth=(
+                    compensated_budget_linewidth
+                    if compensated_budget_linewidth is not None
+                    else t.compensated_budget_linewidth
                 ),
-                mlines.Line2D(
-                    [],
-                    [],
-                    color=income_color or t.inc_effect_color,
-                    linestyle="--",
-                    linewidth=effect_arrow_linewidth if effect_arrow_linewidth is not None else t.effect_arrow_linewidth,
-                    label=rf"$Inc:\ \Delta x={inc_dx:+.2f},\ \Delta y={inc_dy:+.2f}$",
+                compensated_budget_linestyle=(
+                    compensated_budget_linestyle
+                    if compensated_budget_linestyle is not None
+                    else t.compensated_budget_linestyle
                 ),
-            ])
-            self.show_legend(loc="upper right")
+                final_budget_color=final_budget_color or t.budget_color,
+                final_budget_linewidth=(
+                    final_budget_linewidth
+                    if final_budget_linewidth is not None
+                    else t.budget_linewidth
+                ),
+                final_budget_linestyle=final_budget_linestyle,
+                show_arrows=show_arrows,
+                arrows_below_axis=show_x_projections,
+                substitution_color=substitution_color or t.sub_effect_color,
+                income_color=income_color or t.inc_effect_color,
+                effect_arrow_linewidth=(
+                    effect_arrow_linewidth
+                    if effect_arrow_linewidth is not None
+                    else t.effect_arrow_linewidth
+                ),
+                show_x_projections=show_x_projections,
+            )
+            if label_effects:
+                sub_dx, sub_dy = decomposition.substitution_effect
+                inc_dx, inc_dy = decomposition.income_effect
+                self._legend_handles.extend([
+                    mlines.Line2D(
+                        [],
+                        [],
+                        color=point_color or t.eq_color,
+                        marker="o",
+                        linestyle="None",
+                        markersize=point_markersize if point_markersize is not None else t.eq_markersize,
+                        label=rf"$A=({decomposition.A.x:.2f},{decomposition.A.y:.2f})$",
+                    ),
+                    mlines.Line2D(
+                        [],
+                        [],
+                        color=point_color or t.eq_color,
+                        marker="o",
+                        linestyle="None",
+                        markersize=point_markersize if point_markersize is not None else t.eq_markersize,
+                        label=rf"$B=({decomposition.B.x:.2f},{decomposition.B.y:.2f})$",
+                    ),
+                    mlines.Line2D(
+                        [],
+                        [],
+                        color=point_color or t.eq_color,
+                        marker="o",
+                        linestyle="None",
+                        markersize=point_markersize if point_markersize is not None else t.eq_markersize,
+                        label=rf"$C=({decomposition.C.x:.2f},{decomposition.C.y:.2f})$",
+                    ),
+                    mlines.Line2D(
+                        [],
+                        [],
+                        color=substitution_color or t.sub_effect_color,
+                        linestyle="--",
+                        linewidth=effect_arrow_linewidth if effect_arrow_linewidth is not None else t.effect_arrow_linewidth,
+                        label=rf"$Sub:\ \Delta x={sub_dx:+.2f},\ \Delta y={sub_dy:+.2f}$",
+                    ),
+                    mlines.Line2D(
+                        [],
+                        [],
+                        color=income_color or t.inc_effect_color,
+                        linestyle="--",
+                        linewidth=effect_arrow_linewidth if effect_arrow_linewidth is not None else t.effect_arrow_linewidth,
+                        label=rf"$Inc:\ \Delta x={inc_dx:+.2f},\ \Delta y={inc_dy:+.2f}$",
+                    ),
+                ])
+                self._legend_handles[-2]._ev_role = "substitution"
+                self._legend_handles[-1]._ev_role = "income"
+                self.show_legend(loc="upper right")
         return self
 
     def add_ray(
@@ -692,6 +767,7 @@ class Canvas:
         slope: float,
         color: str | None = None,
         linewidth: float | None = None,
+        stroke: Stroke | None = None,
     ) -> Canvas:
         """Add a dashed ray emanating from the origin.
 
@@ -704,19 +780,23 @@ class Canvas:
         linewidth : float or None
             *None* → ``theme.ray_linewidth``.
 
+        stroke : Stroke, optional
+            Line style for the ray (default ``theme.ray_stroke``).
+
         Returns
         -------
         Canvas
             *self*, to allow method chaining.
         """
-        from ..components import draw_ray
+        with styled(self, {"ray": stroke}):
+            from ..components import draw_ray
 
-        t = self.theme
-        draw_ray(
-            self.ax, slope, self.x_max, self.y_max,
-            color=color or t.ray_color,
-            linewidth=linewidth if linewidth is not None else t.ray_linewidth,
-        )
+            t = self.theme
+            draw_ray(
+                self.ax, slope, self.x_max, self.y_max,
+                color=color or t.ray_color,
+                linewidth=linewidth if linewidth is not None else t.ray_linewidth,
+            )
         return self
 
     def add_point(
@@ -785,28 +865,39 @@ class Canvas:
         show_equilibria: bool = False,
         invert_axes: bool = False,
         smooth_curve: bool | None = None,
+        stroke: Stroke | None = None,
+        budget_stroke: Stroke | None = None,
+        curve_stroke: Stroke | None = None,
     ) -> Canvas:
-        """Draw a PCC/ICC-style path through a sequence of equilibria."""
-        c = color or self.theme.path_color
-        lw = linewidth if linewidth is not None else self.theme.path_linewidth
-        show_points = path.default_show_points if show_points is None else show_points
-        show_budgets = path.default_show_budgets if show_budgets is None else show_budgets
-        smooth_curve = path.default_smooth_curve if smooth_curve is None else smooth_curve
-        render_path(
-            canvas=self,
-            path=path,
-            color=c,
-            linewidth=lw,
-            label=label,
-            show_points=show_points,
-            show_budgets=show_budgets,
-            show_curves=show_curves,
-            show_equilibria=show_equilibria,
-            invert_axes=invert_axes,
-            smooth_curve=smooth_curve,
-            smooth_fn=_smooth_xy,
-            extend_fn=_extend_curve_endpoints,
-        )
+        """Draw a PCC/ICC-style path through a sequence of equilibria.
+        stroke : Stroke, optional
+            Line style for the path line (default ``theme.path_stroke``).
+        budget_stroke : Stroke, optional
+            Line style for budget lines drawn with ``show_budgets``.
+        curve_stroke : Stroke, optional
+            Line style for indifference curves drawn with ``show_curves``.
+        """
+        with styled(self, {"path": stroke, "budget": budget_stroke, "curve": curve_stroke}):
+            c = color or self.theme.path_color
+            lw = linewidth if linewidth is not None else self.theme.path_linewidth
+            show_points = path.default_show_points if show_points is None else show_points
+            show_budgets = path.default_show_budgets if show_budgets is None else show_budgets
+            smooth_curve = path.default_smooth_curve if smooth_curve is None else smooth_curve
+            render_path(
+                canvas=self,
+                path=path,
+                color=c,
+                linewidth=lw,
+                label=label,
+                show_points=show_points,
+                show_budgets=show_budgets,
+                show_curves=show_curves,
+                show_equilibria=show_equilibria,
+                invert_axes=invert_axes,
+                smooth_curve=smooth_curve,
+                smooth_fn=_smooth_xy,
+                extend_fn=_extend_curve_endpoints,
+            )
         return self
 
     def show_legend(self, **kwargs) -> Canvas:

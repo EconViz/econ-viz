@@ -43,6 +43,7 @@ def render_decomposition(
         fill=False,
         fill_alpha=0.0,
     )
+    _retag_last_budget(ax, "original_budget")
     render_budget(
         ax,
         px=decomposition.px_after,
@@ -55,6 +56,7 @@ def render_decomposition(
         fill=False,
         fill_alpha=0.0,
     )
+    _retag_last_budget(ax, "compensated_budget")
     render_budget(
         ax,
         px=decomposition.px_after,
@@ -67,6 +69,7 @@ def render_decomposition(
         fill=False,
         fill_alpha=0.0,
     )
+    _retag_last_budget(ax, "final_budget")
 
     points = [
         ("A", decomposition.A),
@@ -116,6 +119,7 @@ def render_decomposition(
         end=(decomposition.B.x, decomposition.B.y),
         color=substitution_color,
         linewidth=effect_arrow_linewidth,
+        role="substitution",
     )
     _draw_effect_arrow(
         ax,
@@ -123,6 +127,7 @@ def render_decomposition(
         end=(decomposition.C.x, decomposition.C.y),
         color=income_color,
         linewidth=effect_arrow_linewidth,
+        role="income",
     )
 
 
@@ -133,8 +138,9 @@ def _draw_effect_arrow(
     end: tuple[float, float],
     color: str,
     linewidth: float,
+    role: str,
 ) -> None:
-    ax.annotate(
+    arrow = ax.annotate(
         "",
         xy=end,
         xytext=start,
@@ -147,6 +153,7 @@ def _draw_effect_arrow(
         },
         zorder=8,
     )
+    arrow._ev_role = role
 
 
 def _draw_x_projections(
@@ -168,7 +175,7 @@ def _draw_x_projections(
     projection_bottom = -0.16
 
     for eq in (decomposition.A, decomposition.B, decomposition.C):
-        ax.plot(
+        (projection,) = ax.plot(
             [eq.x, eq.x],
             [0.0, eq.y],
             color="#888888",
@@ -176,7 +183,8 @@ def _draw_x_projections(
             linewidth=0.8,
             zorder=5,
         )
-        ax.plot(
+        projection._ev_role = "projection"
+        (guide,) = ax.plot(
             [eq.x, eq.x],
             [0.0, projection_bottom],
             transform=xaxis_t,
@@ -186,10 +194,11 @@ def _draw_x_projections(
             zorder=6,
             clip_on=False,
         )
+        guide._ev_role = "guide"
 
     sub_y = -0.10
     inc_y = -0.15
-    ax.annotate(
+    sub_range = ax.annotate(
         "",
         xy=(b_x, sub_y),
         xytext=(a_x, sub_y),
@@ -204,7 +213,7 @@ def _draw_x_projections(
         zorder=9,
         clip_on=False,
     )
-    ax.annotate(
+    inc_range = ax.annotate(
         "",
         xy=(c_x, inc_y),
         xytext=(b_x, inc_y),
@@ -219,6 +228,14 @@ def _draw_x_projections(
         zorder=9,
         clip_on=False,
     )
+    sub_range._ev_role = "range"
+    inc_range._ev_role = "range"
+
+
+def _retag_last_budget(ax, role: str) -> None:
+    """Give the budget line just drawn its decomposition role."""
+    line = next(line for line in reversed(ax.lines) if getattr(line, "_ev_role", None) == "budget")
+    line._ev_role = role
 
 
 def _label_overlap_tolerance(ax) -> float:

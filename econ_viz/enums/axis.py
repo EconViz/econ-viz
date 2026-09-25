@@ -28,3 +28,8 @@ class LineStyle(str, Enum):
     DASHED = "dashed"
     DOTTED = "dotted"
     DASHDOT = "dashdot"
+
+    @classmethod
+    def _missing_(cls, value):
+        """Also accept Matplotlib's short forms: ``-``, ``--``, ``:``, ``-.``."""
+        return {"-": cls.SOLID, "--": cls.DASHED, ":": cls.DOTTED, "-.": cls.DASHDOT}.get(value)

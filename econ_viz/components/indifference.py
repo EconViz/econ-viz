@@ -86,12 +86,14 @@ class IndifferenceCurves:
             X, Y, Z, levels=computed,
             colors=self.color, linewidths=self.linewidth, **kwargs,
         )
+        cs._ev_role = "curve"
 
         if self.label is not None:
             import matplotlib.lines as mlines
             self._proxy = mlines.Line2D(
                 [], [], color=self.color, linewidth=self.linewidth, label=self.label
             )
+            self._proxy._ev_role = "curve"
         else:
             self._proxy = None
 
