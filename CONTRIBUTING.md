@@ -7,14 +7,13 @@ Thank you for your interest in contributing! This guide covers everything you ne
 ```bash
 git clone https://github.com/EconViz/econ-viz.git
 cd econ-viz
-pip install poetry
-poetry install --with dev
+uv sync --all-extras
 ```
 
 Run the test suite:
 
 ```bash
-poetry run pytest
+uv run pytest
 ```
 
 ## How to contribute
