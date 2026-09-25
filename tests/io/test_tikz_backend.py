@@ -1,9 +1,5 @@
 """Regression tests for the pure-TikZ export backend."""
 
-import matplotlib
-matplotlib.use("Agg")
-
-import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 from matplotlib.font_manager import FontProperties
@@ -16,12 +12,6 @@ from econ_viz.io.backend_tikz import TikzRenderer
 from econ_viz.io.backend_tikz._document import assemble
 from econ_viz.io.backend_tikz._path import dash_spec, path_to_polylines, strip_closing_vertex
 from econ_viz.models import CobbDouglas
-
-
-@pytest.fixture(autouse=True)
-def close_figures():
-    yield
-    plt.close("all")
 
 
 class _GC:

@@ -5,21 +5,10 @@ that inspect widget internals use mocks where full Jupyter integration is
 not available.
 """
 
-import matplotlib
-matplotlib.use("Agg")
-
-import matplotlib.pyplot as plt
 import pytest
 
 from econ_viz import Canvas
 from econ_viz.models import CobbDouglas
-
-
-@pytest.fixture(autouse=True)
-def close_figures():
-    """Close all matplotlib figures after each test."""
-    yield
-    plt.close("all")
 
 
 # ------------------------------------------------------------------

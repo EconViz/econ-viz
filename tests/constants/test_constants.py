@@ -1,9 +1,5 @@
 """Shared constants are the single source for defaults used across modules."""
 
-import matplotlib
-matplotlib.use("Agg")
-
-import matplotlib.pyplot as plt
 import pytest
 
 from econ_viz import Canvas, Figure, Layout
@@ -12,12 +8,6 @@ from econ_viz.constants.logging import LIBRARY_ROOT
 from econ_viz.consumer.edgeworth import EdgeworthBox
 from econ_viz.models import CobbDouglas
 from econ_viz.utils.logging import get_logger
-
-
-@pytest.fixture(autouse=True)
-def close_figures():
-    yield
-    plt.close("all")
 
 
 def _edgeworth(**kwargs) -> EdgeworthBox:
