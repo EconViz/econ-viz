@@ -13,6 +13,18 @@ from ._text import sanitize_text
 
 _DEFAULT_CM_PER_INCH = 1.25
 
+_SANS = r"\sffamily"
+# TikZ text uses the LaTeX document's fonts, so only generic families can be honoured.
+_LATEX_FAMILIES = {"serif": r"\rmfamily", "sans-serif": _SANS, "monospace": r"\ttfamily"}
+
+
+def _latex_family(families: list[str] | None) -> str | None:
+    """Return the LaTeX family switch for the first generic family, if any."""
+    for family in families or ():
+        if family in _LATEX_FAMILIES:
+            return _LATEX_FAMILIES[family]
+    return None
+
 
 class TikzRenderer(RendererBase):
     """Intercept Matplotlib drawing calls and emit TikZ commands.
@@ -77,12 +89,13 @@ class TikzRenderer(RendererBase):
         if not s:
             return
         is_axis_label = mtext is not None and getattr(mtext, "_ev_axis_label", None) in ("x", "y")
+        family = _latex_family(getattr(mtext, "_ev_font", None))
         body = sanitize_text(s, ismath=bool(ismath))
         if is_axis_label:
             inner = body
             if inner.startswith("$") and inner.endswith("$") and len(inner) >= 2:
                 inner = inner[1:-1]
-            body = rf"$\text{{\sffamily {inner}}}$"
+            body = rf"$\text{{{family or _SANS} {inner}}}$"
         elif ismath and not (body.startswith("$") and body.endswith("$")):
             body = f"${body}$"
         color = self.colors.register(gc.get_rgb()[:3])
@@ -92,7 +105,8 @@ class TikzRenderer(RendererBase):
             f"rotate={angle:.2f}",
             f"text={color}",
             "inner sep=0pt",
-            f"font=\\fontsize{{{size_pt:.2f}}}{{{size_pt * 1.2:.2f}}}\\selectfont",
+            f"font=\\fontsize{{{size_pt:.2f}}}{{{size_pt * 1.2:.2f}}}\\selectfont"
+            + (family if family and not is_axis_label else ""),
         ]
         self._commands.append(
             rf"\node[{','.join(opts)}] at "
