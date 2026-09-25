@@ -18,7 +18,7 @@ A Python toolkit for producing publication-quality microeconomics diagrams. Defi
 pip install econ-viz
 ```
 
-Requires Python 3.12 or later.
+Requires Python 3.10 or later.
 
 ## Quick Start
 
