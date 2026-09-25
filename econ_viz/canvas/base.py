@@ -31,7 +31,7 @@ from ..constants.canvas import (
 from ..utils.logging import get_logger
 from ..themes import default as _default_theme
 from ..themes.theme import Theme
-from ..enums import ArrowStyle, LabelPosition
+from ..enums import ArrowStyle, LabelPosition, LineStyle
 from ..canvas.fonts import FontApplier, resolve_font, resolve_math_font
 from ..canvas.primitives import annotate_math, plot_point
 from ..canvas.renderers import (
@@ -44,6 +44,11 @@ from ..canvas.renderers import (
 from ..io import save_figure
 
 logger = get_logger(__name__)
+
+# Arrow patches only need the head, so they do not paint over dashed axis lines.
+# The wedge is drawn along its whole path and needs a visible length.
+_HEAD_ONLY_FRAC = 0.001
+_ARROW_LENGTH_FRAC = {ArrowStyle.WEDGE: 0.04}
 
 _X_LABEL_POSITIONS = {
     LabelPosition.TOP: ((0, 8), "center", "bottom"),
@@ -71,6 +76,15 @@ def _label_position(value: LabelPosition | str, *, axis: str) -> LabelPosition:
         choices = ", ".join(item.value for item in valid)
         raise ValueError(f"invalid {axis}-axis label position {value!r}; choose: {choices}")
     return position
+
+
+def _line_style(value: LineStyle | str) -> LineStyle:
+    """Normalize one axis line style."""
+    try:
+        return LineStyle(value)
+    except ValueError:
+        choices = ", ".join(item.value for item in LineStyle)
+        raise ValueError(f"invalid line style {value!r}; choose: {choices}") from None
 
 
 def _arrow_style(value: ArrowStyle | str) -> ArrowStyle:
@@ -198,6 +212,8 @@ class Canvas:
         Matplotlib math font set for math text such as axis labels:
         ``"dejavusans"``, ``"dejavuserif"``, ``"cm"``, ``"stix"``, or
         ``"stixsans"``. ``None`` keeps Matplotlib's default.
+    x_line_style, y_line_style : LineStyle or str
+        Line style of each axis: solid, dashed, dotted, or dashdot.
     """
 
     def __init__(
@@ -217,6 +233,8 @@ class Canvas:
         y_arrow_style: ArrowStyle | str = ArrowStyle.TRIANGLE,
         font: str | Sequence[str] | None = None,
         math_font: str | None = None,
+        x_line_style: LineStyle | str = LineStyle.SOLID,
+        y_line_style: LineStyle | str = LineStyle.SOLID,
     ):
         self.x_max = x_max
         self.y_max = y_max
@@ -228,6 +246,8 @@ class Canvas:
         self.y_label_pos = _label_position(y_label_pos, axis="y")
         self.x_arrow_style = _arrow_style(x_arrow_style)
         self.y_arrow_style = _arrow_style(y_arrow_style)
+        self.x_line_style = _line_style(x_line_style)
+        self.y_line_style = _line_style(y_line_style)
         self.theme = theme
         self.font = resolve_font(font)
         self.math_font = resolve_math_font(math_font)
@@ -301,37 +321,30 @@ class Canvas:
         self.ax.spines["right"].set_visible(False)
         self.ax.spines["bottom"].set_color(t.axis_color)
         self.ax.spines["left"].set_color(t.axis_color)
+        self.ax.spines["bottom"].set_linestyle(self.x_line_style.value)
+        self.ax.spines["left"].set_linestyle(self.y_line_style.value)
 
         # Arrow terminators at axis tips
-        x_arrow = FancyArrowPatch(
-            (self.x_max * 0.96, 0),
-            (self.x_max, 0),
-            arrowstyle=self.x_arrow_style.value,
-            mutation_scale=12,
-            linewidth=1,
-            color=t.axis_color,
-            shrinkA=0,
-            shrinkB=0,
-            clip_on=False,
-        )
-        x_arrow._ev_axis_arrow = "x"
-        x_arrow._ev_arrow_style = self.x_arrow_style
-        self.ax.add_patch(x_arrow)
-
-        y_arrow = FancyArrowPatch(
-            (0, self.y_max * 0.96),
-            (0, self.y_max),
-            arrowstyle=self.y_arrow_style.value,
-            mutation_scale=12,
-            linewidth=1,
-            color=t.axis_color,
-            shrinkA=0,
-            shrinkB=0,
-            clip_on=False,
-        )
-        y_arrow._ev_axis_arrow = "y"
-        y_arrow._ev_arrow_style = self.y_arrow_style
-        self.ax.add_patch(y_arrow)
+        x_start = self.x_max * (1 - _ARROW_LENGTH_FRAC.get(self.x_arrow_style, _HEAD_ONLY_FRAC))
+        y_start = self.y_max * (1 - _ARROW_LENGTH_FRAC.get(self.y_arrow_style, _HEAD_ONLY_FRAC))
+        for axis, spine, start, end, style in (
+            ("x", "bottom", (x_start, 0), (self.x_max, 0), self.x_arrow_style),
+            ("y", "left", (0, y_start), (0, self.y_max), self.y_arrow_style),
+        ):
+            arrow = FancyArrowPatch(
+                start,
+                end,
+                arrowstyle=style.value,
+                mutation_scale=12,
+                linewidth=self.ax.spines[spine].get_linewidth(),
+                color=t.axis_color,
+                shrinkA=0,
+                shrinkB=0,
+                clip_on=False,
+            )
+            arrow._ev_axis_arrow = axis
+            arrow._ev_arrow_style = style
+            self.ax.add_patch(arrow)
 
         # Transparent background
         self.fig.patch.set_alpha(0.0)

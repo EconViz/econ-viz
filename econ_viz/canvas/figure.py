@@ -14,7 +14,7 @@ from matplotlib.gridspec import GridSpec
 from .base import Canvas
 from ..constants.canvas import DEFAULT_DPI
 from .fonts import FontApplier, resolve_font, resolve_math_font
-from ..enums import ArrowStyle, LabelPosition, Layout
+from ..enums import ArrowStyle, LabelPosition, Layout, LineStyle
 from ..io import save_figure
 from ..themes import default as _default_theme
 from ..themes.theme import Theme
@@ -76,6 +76,8 @@ class Figure:
         Font family applied to every panel and the super-title.
     math_font : str, optional
         Math font set applied to every panel. See :class:`Canvas`.
+    x_line_style, y_line_style : LineStyle or str
+        Per-panel axis line styles forwarded to :class:`Canvas`.
     """
 
     def __init__(
@@ -99,6 +101,8 @@ class Figure:
         y_arrow_style: ArrowStyle | str = ArrowStyle.TRIANGLE,
         font: str | Sequence[str] | None = None,
         math_font: str | None = None,
+        x_line_style: LineStyle | str = LineStyle.SOLID,
+        y_line_style: LineStyle | str = LineStyle.SOLID,
     ):
         """Create a multi-panel figure composed of injected :class:`Canvas` instances."""
         self.layout = layout
@@ -148,6 +152,8 @@ class Figure:
                 ax=ax,
                 font=self.font,
                 math_font=self.math_font,
+                x_line_style=x_line_style,
+                y_line_style=y_line_style,
             )
             self.canvases.append(canvas)
             self._grid_lookup[(spec.row, spec.col)] = canvas
