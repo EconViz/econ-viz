@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import sys
+from importlib.metadata import version
 
 from .errors import CliConfigError
 from .help import cmd_help
@@ -27,6 +28,7 @@ def build_parser() -> tuple[argparse.ArgumentParser, dict[str, argparse.Argument
         prog="econ-viz",
         description="Produce publication-quality microeconomics diagrams.",
     )
+    parser.add_argument("--version", action="version", version=f"%(prog)s {version('econ-viz')}")
     sub = parser.add_subparsers(dest="command", metavar="<command>")
     sub.required = True
 

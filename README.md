@@ -122,6 +122,7 @@ S = slutsky_matrix(CobbDouglas(alpha=0.4, beta=0.6), px=2.0, py=3.0, income=60.0
 ## CLI
 
 ```bash
+econ-viz --version
 econ-viz help
 econ-viz models
 econ-viz solve-tex --model cobb-douglas --symbolic-params

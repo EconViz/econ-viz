@@ -118,3 +118,14 @@ class TestBuildModelCLI:
         assert "QuasiLinear" in out
         assert "StoneGeary" in out
         assert "Translog" in out
+
+
+class TestVersionFlag:
+    def test_version_prints_installed_version(self, monkeypatch, capsys):
+        from importlib.metadata import version
+
+        monkeypatch.setattr("sys.argv", ["econ-viz", "--version"])
+        with pytest.raises(SystemExit) as exc:
+            main()
+        assert exc.value.code == 0
+        assert capsys.readouterr().out.strip() == f"econ-viz {version('econ-viz')}"
