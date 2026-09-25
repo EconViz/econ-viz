@@ -18,3 +18,7 @@ ENDPOINT_EXTENSION_FRAC = 0.025
 # along the whole patch (fractions of the line or axis length).
 ARROW_HEAD_ONLY_FRAC = 0.001
 ARROW_WEDGE_FRAC = 0.04
+
+# Default heights of the decomposition range arrows below the x-axis (axes fraction).
+SUBSTITUTION_RANGE_Y = -0.10
+INCOME_RANGE_Y = -0.15
