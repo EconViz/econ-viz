@@ -12,6 +12,7 @@ from matplotlib.figure import Figure as MplFigure
 from matplotlib.gridspec import GridSpec
 
 from .base import Canvas
+from ..constants.canvas import DEFAULT_DPI
 from .fonts import FontApplier, resolve_font, resolve_math_font
 from ..enums import ArrowStyle, LabelPosition, Layout
 from ..io import save_figure
@@ -85,7 +86,7 @@ class Figure:
         x_label: str = "X",
         y_label: str = "Y",
         title: str | None = None,
-        dpi: int = 300,
+        dpi: int = DEFAULT_DPI,
         x_label_pos: LabelPosition | str = LabelPosition.RIGHT,
         y_label_pos: LabelPosition | str = LabelPosition.TOP,
         theme: Theme = _default_theme,

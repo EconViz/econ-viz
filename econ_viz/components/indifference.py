@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import numpy as np
 
+from ..constants.canvas import CONTOUR_DOMAIN_MIN
 from ..contours import percentile_levels
 from ..enums import UtilityType
 from ..utils.logging import get_logger
@@ -70,7 +71,9 @@ class IndifferenceCurves:
         from . import draw_ray
 
         res = int(kwargs.pop("res", 400))
-        X, Y, Z = Layer.compute_contour(self.func, (0.1, x_max), (0.1, y_max), res=res)
+        X, Y, Z = Layer.compute_contour(
+            self.func, (CONTOUR_DOMAIN_MIN, x_max), (CONTOUR_DOMAIN_MIN, y_max), res=res
+        )
 
         if isinstance(self.levels, int):
             computed = percentile_levels(Z, n=self.levels)
