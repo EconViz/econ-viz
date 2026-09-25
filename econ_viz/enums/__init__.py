@@ -8,7 +8,7 @@ validate export formats at save time.
 """
 
 from .utility import UtilityType
-from .axis import ArrowStyle, LabelPosition
+from .axis import ArrowStyle, LabelPosition, LineStyle
 from .extension import ExportFormat
 from .layout import Layout
 from .returns import ReturnsToScale
@@ -16,6 +16,7 @@ from .returns import ReturnsToScale
 __all__ = [
     "ArrowStyle",
     "LabelPosition",
+    "LineStyle",
     "UtilityType",
     "ExportFormat",
     "Layout",

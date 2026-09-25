@@ -2,7 +2,7 @@
 
 import pytest
 
-from econ_viz.enums import ArrowStyle, ExportFormat, LabelPosition, Layout, UtilityType
+from econ_viz.enums import ArrowStyle, ExportFormat, LabelPosition, Layout, LineStyle, UtilityType
 from econ_viz.exceptions import ExportError
 
 
@@ -64,3 +64,6 @@ class TestAxisEnums:
         assert ArrowStyle.TRIANGLE.value == "-|>"
         assert ArrowStyle.FANCY.value == "fancy"
         assert ArrowStyle.WEDGE.value == "wedge"
+
+    def test_line_styles_are_matplotlib_names(self):
+        assert [member.value for member in LineStyle] == ["solid", "dashed", "dotted", "dashdot"]

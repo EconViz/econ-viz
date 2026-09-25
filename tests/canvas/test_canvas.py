@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
-from econ_viz import ArrowStyle, Canvas, LabelPosition
+from econ_viz import ArrowStyle, Canvas, LabelPosition, LineStyle
 from econ_viz.consumer.paths import PricePath, LinearBudget
 from econ_viz.canvas.layers import Layer
 from econ_viz.components import IndifferenceCurves, BudgetConstraint, EquilibriumPoint, draw_ray
@@ -124,6 +124,59 @@ class TestCanvasInit:
 
         with pytest.raises(ValueError, match="arrow style"):
             Canvas(x_arrow_style="missing")
+
+    @staticmethod
+    def _axis_arrows(cvs):
+        return {
+            patch._ev_axis_arrow: patch
+            for patch in cvs.ax.patches
+            if getattr(patch, "_ev_axis_arrow", None)
+        }
+
+    @pytest.mark.parametrize("style", list(ArrowStyle))
+    def test_axis_arrow_matches_spine_linewidth(self, style):
+        cvs = Canvas(x_arrow_style=style, y_arrow_style=style)
+        arrows = self._axis_arrows(cvs)
+        assert arrows["x"].get_linewidth() == pytest.approx(cvs.ax.spines["bottom"].get_linewidth())
+        assert arrows["y"].get_linewidth() == pytest.approx(cvs.ax.spines["left"].get_linewidth())
+
+    @pytest.mark.parametrize("style", [ArrowStyle.SIMPLE, ArrowStyle.TRIANGLE, ArrowStyle.FANCY])
+    def test_head_only_arrows_do_not_cover_the_spine(self, style):
+        cvs = Canvas(x_max=10, y_max=10, x_arrow_style=style, y_arrow_style=style)
+        arrows = self._axis_arrows(cvs)
+        (x_start, _), _ = arrows["x"]._posA_posB
+        (_, y_start), _ = arrows["y"]._posA_posB
+        assert x_start > 9.95
+        assert y_start > 9.95
+
+    def test_wedge_arrow_keeps_a_visible_length(self):
+        cvs = Canvas(x_max=10, x_arrow_style=ArrowStyle.WEDGE)
+        (x_start, _), _ = self._axis_arrows(cvs)["x"]._posA_posB
+        assert x_start < 9.8
+
+    def test_axis_line_styles_default_to_solid(self):
+        cvs = Canvas()
+        assert cvs.x_line_style is LineStyle.SOLID
+        assert cvs.y_line_style is LineStyle.SOLID
+        assert cvs.ax.spines["bottom"].get_linestyle() == "solid"
+
+    @pytest.mark.parametrize("style", [LineStyle.DASHED, LineStyle.DOTTED, LineStyle.DASHDOT])
+    def test_axis_line_styles_apply_per_axis(self, style):
+        cvs = Canvas(x_line_style=style)
+        assert cvs.ax.spines["bottom"].get_linestyle() == style.value
+        assert cvs.ax.spines["left"].get_linestyle() == "solid"
+
+    def test_axis_line_styles_accept_values_and_reject_unknown_names(self):
+        cvs = Canvas(y_line_style="dotted")
+        assert cvs.y_line_style is LineStyle.DOTTED
+        with pytest.raises(ValueError, match="line style"):
+            Canvas(x_line_style="wavy")
+
+    def test_dashed_axis_exports_to_tikz(self, tmp_path):
+        path = tmp_path / "dashed.tex"
+        Canvas(x_line_style=LineStyle.DASHED).save(str(path))
+        dashed_lines = [line for line in path.read_text().splitlines() if "dash pattern=" in line or "dashed" in line]
+        assert len(dashed_lines) == 1
 
     def test_title_set(self):
         cvs = Canvas(title="Test Title")
