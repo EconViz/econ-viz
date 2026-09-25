@@ -35,6 +35,7 @@ from ..themes import default as _default_theme
 from ..themes.theme import Theme
 from ..enums import ArrowStyle, LabelPosition, LineStyle
 from ..canvas.fonts import FontApplier, resolve_font, resolve_math_font
+from ..canvas.effect import Effect
 from ..canvas.stroke import styled
 from ..themes.stroke import Stroke
 from ..canvas.primitives import annotate_math, plot_point
@@ -632,6 +633,8 @@ class Canvas:
         projection_stroke: Stroke | None = None,
         guide_stroke: Stroke | None = None,
         range_stroke: Stroke | None = None,
+        substitution: Effect | None = None,
+        income: Effect | None = None,
     ) -> Canvas:
         """Render a Hicks/Slutsky price-effect decomposition on this canvas.
 
@@ -661,8 +664,16 @@ class Canvas:
             Line style for guides below the x-axis (default ``theme.guide_stroke``).
         range_stroke : Stroke, optional
             Line style for effect-size arrows below the x-axis.
+        substitution, income : Effect, optional
+            Colour, range-arrow height, and label of each effect. The colour
+            overrides *substitution_color* / *income_color*; a Stroke colour
+            overrides both.
         """
         with styled(self, {"original_budget": original_budget_stroke, "compensated_budget": compensated_budget_stroke, "final_budget": final_budget_stroke, "substitution": substitution_stroke, "income": income_stroke, "projection": projection_stroke, "guide": guide_stroke, "range": range_stroke}):
+            if substitution is not None and substitution.color is not None:
+                substitution_color = substitution.color
+            if income is not None and income.color is not None:
+                income_color = income.color
             t = self.theme
             render_decomposition(
                 self.ax,
@@ -708,6 +719,8 @@ class Canvas:
                     else t.effect_arrow_linewidth
                 ),
                 show_x_projections=show_x_projections,
+                substitution_effect=substitution,
+                income_effect=income,
             )
             if label_effects:
                 sub_dx, sub_dy = decomposition.substitution_effect

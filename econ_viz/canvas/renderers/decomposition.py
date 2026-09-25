@@ -4,6 +4,9 @@ from __future__ import annotations
 
 from typing import Iterable
 
+from ...constants.canvas import INCOME_RANGE_Y, SUBSTITUTION_RANGE_Y
+from ...enums import LabelPosition
+from ..effect import Effect
 from ..primitives import annotate_math, plot_point
 from .budget import render_budget
 
@@ -29,6 +32,8 @@ def render_decomposition(
     income_color: str,
     effect_arrow_linewidth: float,
     show_x_projections: bool,
+    substitution_effect: Effect | None = None,
+    income_effect: Effect | None = None,
 ) -> None:
     """Render A/B/C bundles, budget lines, and effect arrows."""
     render_budget(
@@ -110,6 +115,8 @@ def render_decomposition(
             substitution_color=substitution_color,
             income_color=income_color,
             linewidth=max(0.8, effect_arrow_linewidth * 0.7),
+            substitution_effect=substitution_effect,
+            income_effect=income_effect,
         )
         return
 
@@ -129,6 +136,11 @@ def render_decomposition(
         linewidth=effect_arrow_linewidth,
         role="income",
     )
+    a, b, c = ((eq.x, eq.y) for eq in (decomposition.A, decomposition.B, decomposition.C))
+    _draw_effect_label(ax, start=a, end=b, effect=substitution_effect, color=substitution_color,
+                       transform=ax.transData, role="substitution_label")
+    _draw_effect_label(ax, start=b, end=c, effect=income_effect, color=income_color,
+                       transform=ax.transData, role="income_label")
 
 
 def _draw_effect_arrow(
@@ -163,6 +175,8 @@ def _draw_x_projections(
     substitution_color: str,
     income_color: str,
     linewidth: float,
+    substitution_effect: Effect | None = None,
+    income_effect: Effect | None = None,
 ) -> None:
     a_x = decomposition.A.x
     b_x = decomposition.B.x
@@ -172,7 +186,10 @@ def _draw_x_projections(
         fig.subplots_adjust(bottom=0.22)
 
     xaxis_t = ax.get_xaxis_transform()
-    projection_bottom = -0.16
+    sub_y = _range_y(substitution_effect, SUBSTITUTION_RANGE_Y)
+    inc_y = _range_y(income_effect, INCOME_RANGE_Y)
+    # Guides reach just past the lowest range arrow.
+    projection_bottom = min(sub_y, inc_y) - 0.01
 
     for eq in (decomposition.A, decomposition.B, decomposition.C):
         (projection,) = ax.plot(
@@ -196,8 +213,6 @@ def _draw_x_projections(
         )
         guide._ev_role = "guide"
 
-    sub_y = -0.10
-    inc_y = -0.15
     sub_range = ax.annotate(
         "",
         xy=(b_x, sub_y),
@@ -230,6 +245,56 @@ def _draw_x_projections(
     )
     sub_range._ev_role = "range"
     inc_range._ev_role = "range"
+    _draw_effect_label(ax, start=(a_x, sub_y), end=(b_x, sub_y), effect=substitution_effect,
+                       color=substitution_color, transform=xaxis_t, role="substitution_label", beyond_ends=True)
+    _draw_effect_label(ax, start=(b_x, inc_y), end=(c_x, inc_y), effect=income_effect,
+                       color=income_color, transform=xaxis_t, role="income_label", beyond_ends=True)
+
+
+def _range_y(effect: Effect | None, default: float) -> float:
+    return effect.y if effect is not None and effect.y is not None else default
+
+
+# Label direction (unit offset), horizontal and vertical alignment per position.
+_LABEL_LAYOUT = {
+    LabelPosition.TOP: ((0, 1), "center", "bottom"),
+    LabelPosition.BOTTOM: ((0, -1), "center", "top"),
+    LabelPosition.LEFT: ((-1, 0), "right", "center"),
+    LabelPosition.RIGHT: ((1, 0), "left", "center"),
+}
+
+
+def _draw_effect_label(
+    ax, *, start, end, effect: Effect | None, color: str, transform, role: str, beyond_ends: bool = False
+) -> None:
+    """Write ``effect.label`` beside the middle of an effect arrow.
+
+    With *beyond_ends* (horizontal range arrows), left and right labels sit past
+    the arrow's left or right end instead.
+    """
+    if effect is None or not effect.label:
+        return
+    (dx, dy), ha, va = _LABEL_LAYOUT[effect.label_position]
+    if beyond_ends and effect.label_position is LabelPosition.LEFT:
+        anchor = min(start, end, key=lambda p: p[0])
+    elif beyond_ends and effect.label_position is LabelPosition.RIGHT:
+        anchor = max(start, end, key=lambda p: p[0])
+    else:
+        anchor = ((start[0] + end[0]) / 2, (start[1] + end[1]) / 2)
+    text = ax.annotate(
+        effect.label,
+        xy=anchor,
+        xycoords=transform,
+        xytext=(dx * effect.label_offset, dy * effect.label_offset),
+        textcoords="offset points",
+        ha=ha,
+        va=va,
+        color=effect.color or color,
+        fontsize=10,
+        zorder=9,
+        annotation_clip=False,
+    )
+    text._ev_role = role
 
 
 def _retag_last_budget(ax, role: str) -> None:
