@@ -7,9 +7,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from ..constants.canvas import DEFAULT_DPI, MAX_DPI, MIN_DPI
+from ..canvas.stroke import styled
 from ..contours import around_anchor_levels, percentile_levels
 from ..io import save_figure
 from ..themes import default as _default_theme
+from ..themes.stroke import Stroke
 from ..themes.theme import Theme
 from .edgeworth_compute import (
     contract_curve_mrs,
@@ -64,6 +66,7 @@ class EdgeworthBox:
         theme: Theme = _default_theme,
         utility_a_color: str | None = None,
         utility_b_color: str | None = None,
+        box_stroke: Stroke | None = None,
     ):
         if total_x <= 0 or total_y <= 0:
             raise ValueError("total_x and total_y must be positive.")
@@ -77,6 +80,9 @@ class EdgeworthBox:
         self.title = title
         self.dpi = max(MIN_DPI, min(int(dpi), MAX_DPI))
         self.theme = theme
+        self.box_stroke = (box_stroke or Stroke()).merged_over(theme.box_stroke).merged_over(
+            Stroke(color=theme.axis_color)
+        )
         self.utility_a_color = utility_a_color or theme.ic_color
         self.utility_b_color = utility_b_color or theme.path_color
 
@@ -148,8 +154,9 @@ class EdgeworthBox:
 
         for side in ("top", "right", "bottom", "left"):
             self.ax.spines[side].set_visible(True)
-            self.ax.spines[side].set_color(t.axis_color)
-            self.ax.spines[side].set_linewidth(1.2)
+            self.ax.spines[side].set_color(self.box_stroke.color)
+            self.ax.spines[side].set_linewidth(self.box_stroke.width)
+            self.ax.spines[side].set_linestyle(self.box_stroke.style.value)
 
         self.ax.set_xlabel(rf"${self.x_label}_A$", color=t.label_color)
         self.ax.set_ylabel(rf"${self.y_label}_A$", color=t.label_color)
@@ -201,30 +208,41 @@ class EdgeworthBox:
         color_b: str | None = None,
         linewidth: float | None = None,
         res: int = 320,
+        stroke_a: Stroke | None = None,
+        stroke_b: Stroke | None = None,
     ) -> "EdgeworthBox":
-        """Draw both consumers' indifference maps."""
-        t = self.theme
-        lw = linewidth if linewidth is not None else t.ic_linewidth
-        ca = color_a or self.utility_a_color
-        cb = color_b or self.utility_b_color
+        """Draw both consumers' indifference maps.
 
-        X, Y = self._grid(res=res)
-        U_a = self.utility_a(X, Y)
-        U_b = self.utility_b(self.total_x - X, self.total_y - Y)
-        lv_a = percentile_levels(U_a, n=levels_a) if isinstance(levels_a, int) else list(levels_a)
-        lv_b = percentile_levels(U_b, n=levels_b) if isinstance(levels_b, int) else list(levels_b)
-        plot_indifference_pair(
-            self.ax,
-            X=X,
-            Y=Y,
-            U_a=U_a,
-            U_b=U_b,
-            levels_a=lv_a,
-            levels_b=lv_b,
-            color_a=ca,
-            color_b=cb,
-            linewidth=lw,
-        )
+        Parameters
+        ----------
+        stroke_a : Stroke, optional
+            Line style for consumer A's indifference curves.
+        stroke_b : Stroke, optional
+            Line style for consumer B's indifference curves.
+        """
+        with styled(self, {"curve_a": stroke_a, "curve_b": stroke_b}):
+            t = self.theme
+            lw = linewidth if linewidth is not None else t.ic_linewidth
+            ca = color_a or self.utility_a_color
+            cb = color_b or self.utility_b_color
+
+            X, Y = self._grid(res=res)
+            U_a = self.utility_a(X, Y)
+            U_b = self.utility_b(self.total_x - X, self.total_y - Y)
+            lv_a = percentile_levels(U_a, n=levels_a) if isinstance(levels_a, int) else list(levels_a)
+            lv_b = percentile_levels(U_b, n=levels_b) if isinstance(levels_b, int) else list(levels_b)
+            plot_indifference_pair(
+                self.ax,
+                X=X,
+                Y=Y,
+                U_a=U_a,
+                U_b=U_b,
+                levels_a=lv_a,
+                levels_b=lv_b,
+                color_a=ca,
+                color_b=cb,
+                linewidth=lw,
+            )
         return self
 
     def add_endowment(
@@ -260,34 +278,45 @@ class EdgeworthBox:
         color_b: str | None = None,
         linewidth: float | None = None,
         res: int = 300,
+        stroke_a: Stroke | None = None,
+        stroke_b: Stroke | None = None,
     ) -> "EdgeworthBox":
-        """Draw each agent's indifference curve through the endowment point."""
-        if self.endowment is None:
-            raise ValueError("Endowment is required. Call add_endowment(...) first.")
+        """Draw each agent's indifference curve through the endowment point.
 
-        ex, ey = self.endowment
-        u_a_e = self._eval_ua(ex, ey)
-        u_b_e = self._eval_ub(ex, ey)
-        t = self.theme
-        lw = linewidth if linewidth is not None else max(t.ic_linewidth, 1.8)
-        ca = color_a or self.utility_a_color
-        cb = color_b or self.utility_b_color
+        Parameters
+        ----------
+        stroke_a : Stroke, optional
+            Line style for consumer A's indifference curves.
+        stroke_b : Stroke, optional
+            Line style for consumer B's indifference curves.
+        """
+        with styled(self, {"curve_a": stroke_a, "curve_b": stroke_b}):
+            if self.endowment is None:
+                raise ValueError("Endowment is required. Call add_endowment(...) first.")
 
-        X, Y = self._grid(res=res)
-        U_a = self.utility_a(X, Y)
-        U_b = self.utility_b(self.total_x - X, self.total_y - Y)
-        plot_indifference_pair(
-            self.ax,
-            X=X,
-            Y=Y,
-            U_a=U_a,
-            U_b=U_b,
-            levels_a=[u_a_e],
-            levels_b=[u_b_e],
-            color_a=ca,
-            color_b=cb,
-            linewidth=lw,
-        )
+            ex, ey = self.endowment
+            u_a_e = self._eval_ua(ex, ey)
+            u_b_e = self._eval_ub(ex, ey)
+            t = self.theme
+            lw = linewidth if linewidth is not None else max(t.ic_linewidth, 1.8)
+            ca = color_a or self.utility_a_color
+            cb = color_b or self.utility_b_color
+
+            X, Y = self._grid(res=res)
+            U_a = self.utility_a(X, Y)
+            U_b = self.utility_b(self.total_x - X, self.total_y - Y)
+            plot_indifference_pair(
+                self.ax,
+                X=X,
+                Y=Y,
+                U_a=U_a,
+                U_b=U_b,
+                levels_a=[u_a_e],
+                levels_b=[u_b_e],
+                color_a=ca,
+                color_b=cb,
+                linewidth=lw,
+            )
         return self
 
     def _levels_around(self, anchor: float, n: int, spread: float) -> list[float]:
@@ -324,18 +353,32 @@ class EdgeworthBox:
         color_b: str | None = None,
         linewidth: float | None = None,
         res: int = 320,
+        stroke_a: Stroke | None = None,
+        stroke_b: Stroke | None = None,
+        contract_stroke: Stroke | None = None,
     ) -> "EdgeworthBox":
-        """Draw indifference curves around the Walrasian equilibrium utility levels."""
-        if px <= 0 or py <= 0:
-            raise ValueError("px and py must be positive.")
-        if self.walrasian_equilibrium is None:
-            self.add_walrasian_equilibrium(px=px, py=py)
+        """Draw indifference curves around the Walrasian equilibrium utility levels.
 
-        x_star, y_star = self.walrasian_equilibrium
-        ua_star = self._eval_ua(x_star, y_star)
-        ub_star = self._eval_ub(x_star, y_star)
-        levels_a = self._levels_around(anchor=ua_star, n=n_a, spread=spread)
-        levels_b = self._levels_around(anchor=ub_star, n=n_b, spread=spread)
+        Parameters
+        ----------
+        stroke_a : Stroke, optional
+            Line style for consumer A's indifference curves.
+        stroke_b : Stroke, optional
+            Line style for consumer B's indifference curves.
+        contract_stroke : Stroke, optional
+            Line style for the contract curve.
+        """
+        with styled(self, {"curve_a": stroke_a, "curve_b": stroke_b, "contract": contract_stroke}):
+            if px <= 0 or py <= 0:
+                raise ValueError("px and py must be positive.")
+            if self.walrasian_equilibrium is None:
+                self.add_walrasian_equilibrium(px=px, py=py)
+
+            x_star, y_star = self.walrasian_equilibrium
+            ua_star = self._eval_ua(x_star, y_star)
+            ub_star = self._eval_ub(x_star, y_star)
+            levels_a = self._levels_around(anchor=ua_star, n=n_a, spread=spread)
+            levels_b = self._levels_around(anchor=ub_star, n=n_b, spread=spread)
         return self.add_indifference_curves(
             levels_a=levels_a,
             levels_b=levels_b,
@@ -354,16 +397,30 @@ class EdgeworthBox:
         color_b: str | None = None,
         linewidth: float | None = None,
         res: int = 300,
+        stroke_a: Stroke | None = None,
+        stroke_b: Stroke | None = None,
+        contract_stroke: Stroke | None = None,
     ) -> "EdgeworthBox":
-        """Draw one indifference curve per agent through the Walrasian equilibrium."""
-        if px <= 0 or py <= 0:
-            raise ValueError("px and py must be positive.")
-        if self.walrasian_equilibrium is None:
-            self.add_walrasian_equilibrium(px=px, py=py)
+        """Draw one indifference curve per agent through the Walrasian equilibrium.
 
-        x_star, y_star = self.walrasian_equilibrium
-        u_a_star = self._eval_ua(x_star, y_star)
-        u_b_star = self._eval_ub(x_star, y_star)
+        Parameters
+        ----------
+        stroke_a : Stroke, optional
+            Line style for consumer A's indifference curves.
+        stroke_b : Stroke, optional
+            Line style for consumer B's indifference curves.
+        contract_stroke : Stroke, optional
+            Line style for the contract curve.
+        """
+        with styled(self, {"curve_a": stroke_a, "curve_b": stroke_b, "contract": contract_stroke}):
+            if px <= 0 or py <= 0:
+                raise ValueError("px and py must be positive.")
+            if self.walrasian_equilibrium is None:
+                self.add_walrasian_equilibrium(px=px, py=py)
+
+            x_star, y_star = self.walrasian_equilibrium
+            u_a_star = self._eval_ua(x_star, y_star)
+            u_b_star = self._eval_ub(x_star, y_star)
         return self.add_indifference_curves(
             levels_a=[u_a_star],
             levels_b=[u_b_star],
@@ -403,28 +460,36 @@ class EdgeworthBox:
         linestyle: str = "--",
         tolerance: float = 0.05,
         method: str = "auto",
+        stroke: Stroke | None = None,
     ) -> "EdgeworthBox":
-        """Approximate and draw the contract curve."""
-        if method not in {"auto", "mrs", "pareto"}:
-            raise ValueError("method must be one of: auto, mrs, pareto.")
+        """Approximate and draw the contract curve.
 
-        points = np.empty((0, 2), dtype=float)
-        if method in {"auto", "mrs"}:
-            points = self._contract_curve_mrs(n=n, tolerance=tolerance)
-        if len(points) < 4 and method in {"auto", "pareto"}:
-            points = self._contract_curve_pareto(n=n)
+        Parameters
+        ----------
+        stroke : Stroke, optional
+            Line style for the contract curve.
+        """
+        with styled(self, {"contract": stroke}):
+            if method not in {"auto", "mrs", "pareto"}:
+                raise ValueError("method must be one of: auto, mrs, pareto.")
 
-        self.contract_curve_points = points
-        c = color or "#000000"
-        lw = linewidth if linewidth is not None else 1.2
-        plot_contract_curve(
-            self.ax,
-            points=points,
-            color=c,
-            linewidth=lw,
-            linestyle=linestyle,
-            label="Contract curve",
-        )
+            points = np.empty((0, 2), dtype=float)
+            if method in {"auto", "mrs"}:
+                points = self._contract_curve_mrs(n=n, tolerance=tolerance)
+            if len(points) < 4 and method in {"auto", "pareto"}:
+                points = self._contract_curve_pareto(n=n)
+
+            self.contract_curve_points = points
+            c = color or "#000000"
+            lw = linewidth if linewidth is not None else 1.2
+            plot_contract_curve(
+                self.ax,
+                points=points,
+                color=c,
+                linewidth=lw,
+                linestyle=linestyle,
+                label="Contract curve",
+            )
         return self
 
     def apply_equilibrium_focus(
@@ -524,31 +589,39 @@ class EdgeworthBox:
         linewidth: float = 3.0,
         min_points: int = 2,
         tol: float = 1e-6,
+        stroke: Stroke | None = None,
     ) -> "EdgeworthBox":
-        """Draw the core segment (IR part of the contract curve)."""
-        if self.endowment is None:
-            raise ValueError("Endowment is required. Call add_endowment(...) first.")
-        if len(self.contract_curve_points) == 0:
-            raise ValueError("Contract curve is required. Call add_contract_curve(...) first.")
+        """Draw the core segment (IR part of the contract curve).
 
-        ex, ey = self.endowment
-        ua_e = self._eval_ua(ex, ey)
-        ub_e = self._eval_ub(ex, ey)
+        Parameters
+        ----------
+        stroke : Stroke, optional
+            Line style for the core.
+        """
+        with styled(self, {"core": stroke}):
+            if self.endowment is None:
+                raise ValueError("Endowment is required. Call add_endowment(...) first.")
+            if len(self.contract_curve_points) == 0:
+                raise ValueError("Contract curve is required. Call add_contract_curve(...) first.")
 
-        core: list[tuple[float, float]] = []
-        for x, y in self.contract_curve_points:
-            if self._eval_ua(float(x), float(y)) >= ua_e - tol and self._eval_ub(float(x), float(y)) >= ub_e - tol:
-                core.append((float(x), float(y)))
+            ex, ey = self.endowment
+            ua_e = self._eval_ua(ex, ey)
+            ub_e = self._eval_ub(ex, ey)
 
-        self.core_points = self._unique_points(core)
-        plot_core(
-            self.ax,
-            core_points=self.core_points,
-            color=color,
-            linewidth=linewidth,
-            label="Core",
-            min_points=min_points,
-        )
+            core: list[tuple[float, float]] = []
+            for x, y in self.contract_curve_points:
+                if self._eval_ua(float(x), float(y)) >= ua_e - tol and self._eval_ub(float(x), float(y)) >= ub_e - tol:
+                    core.append((float(x), float(y)))
+
+            self.core_points = self._unique_points(core)
+            plot_core(
+                self.ax,
+                core_points=self.core_points,
+                color=color,
+                linewidth=linewidth,
+                label="Core",
+                min_points=min_points,
+            )
         return self
 
     def _line_box_intersections(self, px: float, py: float, income: float) -> list[tuple[float, float]]:
@@ -569,24 +642,32 @@ class EdgeworthBox:
         linewidth: float = 1.2,
         linestyle: str = "--",
         label: str = "Price line",
+        stroke: Stroke | None = None,
     ) -> "EdgeworthBox":
-        """Draw the price line through endowment with slope -px/py."""
-        if px <= 0 or py <= 0:
-            raise ValueError("px and py must be positive.")
-        if self.endowment is None:
-            raise ValueError("Endowment is required. Call add_endowment(...) first.")
+        """Draw the price line through endowment with slope -px/py.
 
-        ex, ey = self.endowment
-        income = px * ex + py * ey
-        pts = self._line_box_intersections(px, py, income)
-        plot_price_line(
-            self.ax,
-            points=pts,
-            color=color,
-            linewidth=linewidth,
-            linestyle=linestyle,
-            label=label,
-        )
+        Parameters
+        ----------
+        stroke : Stroke, optional
+            Line style for the price line.
+        """
+        with styled(self, {"price": stroke}):
+            if px <= 0 or py <= 0:
+                raise ValueError("px and py must be positive.")
+            if self.endowment is None:
+                raise ValueError("Endowment is required. Call add_endowment(...) first.")
+
+            ex, ey = self.endowment
+            income = px * ex + py * ey
+            pts = self._line_box_intersections(px, py, income)
+            plot_price_line(
+                self.ax,
+                points=pts,
+                color=color,
+                linewidth=linewidth,
+                linestyle=linestyle,
+                label=label,
+            )
         return self
 
     def add_walrasian_equilibrium(
@@ -598,40 +679,48 @@ class EdgeworthBox:
         marker: str = "*",
         markersize: float = 10.0,
         label: str = r"X^*",
+        contract_stroke: Stroke | None = None,
     ) -> "EdgeworthBox":
-        """Approximate Walrasian equilibrium on the budget line and contract curve."""
-        if px <= 0 or py <= 0:
-            raise ValueError("px and py must be positive.")
-        if self.endowment is None:
-            raise ValueError("Endowment is required. Call add_endowment(...) first.")
-        if len(self.contract_curve_points) == 0:
-            self.add_contract_curve()
+        """Approximate Walrasian equilibrium on the budget line and contract curve.
 
-        ex, ey = self.endowment
-        income = px * ex + py * ey
+        Parameters
+        ----------
+        contract_stroke : Stroke, optional
+            Line style for the contract curve.
+        """
+        with styled(self, {"contract": contract_stroke}):
+            if px <= 0 or py <= 0:
+                raise ValueError("px and py must be positive.")
+            if self.endowment is None:
+                raise ValueError("Endowment is required. Call add_endowment(...) first.")
+            if len(self.contract_curve_points) == 0:
+                self.add_contract_curve()
 
-        candidates = self.contract_curve_points
-        x_star, y_star = walrasian_equilibrium_point(
-            candidates=candidates,
-            px=px,
-            py=py,
-            income=income,
-            mrs_a_fn=lambda x, y: self._mrs(self.utility_a, x, y),
-            mrs_b_fn=lambda x, y: self._mrs(self.utility_b, self.total_x - x, self.total_y - y),
-        )
+            ex, ey = self.endowment
+            income = px * ex + py * ey
 
-        self.walrasian_equilibrium = (x_star, y_star)
-        plot_equilibrium_marker(
-            self.ax,
-            x=x_star,
-            y=y_star,
-            total_x=self.total_x,
-            total_y=self.total_y,
-            color=color,
-            marker=marker,
-            markersize=markersize,
-            label=label,
-        )
+            candidates = self.contract_curve_points
+            x_star, y_star = walrasian_equilibrium_point(
+                candidates=candidates,
+                px=px,
+                py=py,
+                income=income,
+                mrs_a_fn=lambda x, y: self._mrs(self.utility_a, x, y),
+                mrs_b_fn=lambda x, y: self._mrs(self.utility_b, self.total_x - x, self.total_y - y),
+            )
+
+            self.walrasian_equilibrium = (x_star, y_star)
+            plot_equilibrium_marker(
+                self.ax,
+                x=x_star,
+                y=y_star,
+                total_x=self.total_x,
+                total_y=self.total_y,
+                color=color,
+                marker=marker,
+                markersize=markersize,
+                label=label,
+            )
         return self
 
     def check_point(

@@ -1,10 +1,13 @@
 """Tests for the EdgeworthBox diagram helper."""
 
+import types
+
 import matplotlib
 matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt
 from matplotlib.colors import to_hex
+
 import numpy as np
 import pytest
 
@@ -196,6 +199,7 @@ def test_indifference_pair_defaults_to_solid_for_both_agents():
 
         def contour(self, *args, **kwargs):
             self.calls.append(kwargs)
+            return types.SimpleNamespace()  # stands in for the ContourSet Matplotlib returns
 
     spy = _SpyAxis()
     X, Y = np.meshgrid(np.linspace(0.1, 0.9, 3), np.linspace(0.1, 0.9, 3))

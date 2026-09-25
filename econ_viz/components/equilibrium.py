@@ -70,8 +70,9 @@ class EquilibriumPoint:
 
         if self.drop_dashes:
             dash_kw = dict(color=self.color, linestyle=":", linewidth=0.8)
-            ax.plot([eq.x, eq.x], [0, eq.y], **dash_kw)
-            ax.plot([0, eq.x], [eq.y, eq.y], **dash_kw)
+            for xs, ys in (([eq.x, eq.x], [0, eq.y]), ([0, eq.x], [eq.y, eq.y])):
+                (line,) = ax.plot(xs, ys, **dash_kw)
+                line._ev_role = "drop"
 
         if self.show_ray and eq.x > 1e-9:
             draw_ray(ax, eq.y / eq.x, x_max, y_max,
