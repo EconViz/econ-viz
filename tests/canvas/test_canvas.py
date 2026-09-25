@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
-from econ_viz import Canvas
+from econ_viz import ArrowStyle, Canvas, LabelPosition
 from econ_viz.consumer.paths import PricePath, LinearBudget
 from econ_viz.canvas.layers import Layer
 from econ_viz.components import IndifferenceCurves, BudgetConstraint, EquilibriumPoint, draw_ray
@@ -61,8 +61,69 @@ class TestCanvasInit:
 
     def test_label_pos_bottom_left(self):
         cvs = Canvas(x_label_pos="bottom", y_label_pos="left")
-        assert cvs.x_label_pos == "bottom"
-        assert cvs.y_label_pos == "left"
+        assert cvs.x_label_pos is LabelPosition.BOTTOM
+        assert cvs.y_label_pos is LabelPosition.LEFT
+
+    @pytest.mark.parametrize(
+        ("position", "offset", "alignment"),
+        [
+            (LabelPosition.TOP, (0, 8), ("center", "bottom")),
+            (LabelPosition.RIGHT, (8, 0), ("left", "center")),
+            (LabelPosition.BOTTOM, (0, -8), ("center", "top")),
+        ],
+    )
+    def test_x_label_positions_around_arrow(self, position, offset, alignment):
+        cvs = Canvas(x_max=10, x_label="Q", x_label_pos=position)
+        label = next(text for text in cvs.ax.texts if getattr(text, "_ev_axis_label", None) == "x")
+
+        assert label.xy == (10, 0)
+        assert label.get_position() == offset
+        assert (label.get_ha(), label.get_va()) == alignment
+
+    @pytest.mark.parametrize(
+        ("position", "offset", "alignment"),
+        [
+            (LabelPosition.LEFT, (-8, 0), ("right", "center")),
+            (LabelPosition.TOP, (0, 8), ("center", "bottom")),
+            (LabelPosition.RIGHT, (8, 0), ("left", "center")),
+        ],
+    )
+    def test_y_label_positions_around_arrow(self, position, offset, alignment):
+        cvs = Canvas(y_max=10, y_label="P", y_label_pos=position)
+        label = next(text for text in cvs.ax.texts if getattr(text, "_ev_axis_label", None) == "y")
+
+        assert label.xy == (0, 10)
+        assert label.get_position() == offset
+        assert (label.get_ha(), label.get_va()) == alignment
+
+    def test_rejects_positions_that_do_not_surround_the_axis_arrow(self):
+        with pytest.raises(ValueError, match="x-axis label"):
+            Canvas(x_label_pos=LabelPosition.LEFT)
+        with pytest.raises(ValueError, match="y-axis label"):
+            Canvas(y_label_pos=LabelPosition.BOTTOM)
+
+    @pytest.mark.parametrize("style", list(ArrowStyle))
+    def test_axis_arrow_styles_are_selectable(self, style):
+        cvs = Canvas(x_arrow_style=style, y_arrow_style=style)
+        arrows = {
+            getattr(patch, "_ev_axis_arrow", None): patch
+            for patch in cvs.ax.patches
+            if getattr(patch, "_ev_axis_arrow", None)
+        }
+
+        assert cvs.x_arrow_style is style
+        assert cvs.y_arrow_style is style
+        assert set(arrows) == {"x", "y"}
+        assert arrows["x"]._ev_arrow_style is style
+        assert arrows["y"]._ev_arrow_style is style
+
+    def test_axis_arrow_styles_accept_values_and_reject_unknown_names(self):
+        cvs = Canvas(x_arrow_style="->", y_arrow_style="wedge")
+        assert cvs.x_arrow_style is ArrowStyle.SIMPLE
+        assert cvs.y_arrow_style is ArrowStyle.WEDGE
+
+        with pytest.raises(ValueError, match="arrow style"):
+            Canvas(x_arrow_style="missing")
 
     def test_title_set(self):
         cvs = Canvas(title="Test Title")

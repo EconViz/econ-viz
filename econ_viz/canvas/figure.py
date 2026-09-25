@@ -11,7 +11,7 @@ from matplotlib.figure import Figure as MplFigure
 from matplotlib.gridspec import GridSpec
 
 from .base import Canvas
-from ..enums import Layout
+from ..enums import ArrowStyle, LabelPosition, Layout
 from ..io import save_figure
 from ..themes import default as _default_theme
 from ..themes.theme import Theme
@@ -56,7 +56,7 @@ class Figure:
         Optional super-title for the whole figure.
     dpi : int
         Export resolution passed through to panel canvases.
-    x_label_pos, y_label_pos : str
+    x_label_pos, y_label_pos : LabelPosition or str
         Per-panel label placement options forwarded to :class:`Canvas`.
     theme : Theme
         Theme shared across all panels.
@@ -67,6 +67,8 @@ class Figure:
         Optional explicit figure size. Defaults to ``(6 * cols, 6 * rows)``.
     hspace, wspace : float
         GridSpec spacing parameters.
+    x_arrow_style, y_arrow_style : ArrowStyle or str
+        Per-panel axis arrowhead styles forwarded to :class:`Canvas`.
     """
 
     def __init__(
@@ -78,14 +80,16 @@ class Figure:
         y_label: str = "Y",
         title: str | None = None,
         dpi: int = 300,
-        x_label_pos: str = "right",
-        y_label_pos: str = "top",
+        x_label_pos: LabelPosition | str = LabelPosition.RIGHT,
+        y_label_pos: LabelPosition | str = LabelPosition.TOP,
         theme: Theme = _default_theme,
         shared_x: bool = False,
         shared_y: bool = False,
         figsize: tuple[float, float] | None = None,
         hspace: float = 0.3,
         wspace: float = 0.25,
+        x_arrow_style: ArrowStyle | str = ArrowStyle.TRIANGLE,
+        y_arrow_style: ArrowStyle | str = ArrowStyle.TRIANGLE,
     ):
         """Create a multi-panel figure composed of injected :class:`Canvas` instances."""
         self.layout = layout
@@ -124,6 +128,8 @@ class Figure:
                 dpi=dpi,
                 x_label_pos=x_label_pos,
                 y_label_pos=y_label_pos,
+                x_arrow_style=x_arrow_style,
+                y_arrow_style=y_arrow_style,
                 theme=theme,
                 fig=self.fig,
                 ax=ax,

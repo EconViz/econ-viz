@@ -68,6 +68,20 @@ Download it and open it in Jupyter, VS Code, or Colab. The first code cell upgra
 
 ## Additional Tools
 
+Axis labels can be placed around their arrowheads, and each axis can use a
+different arrowhead style:
+
+```python
+from econ_viz import ArrowStyle, Canvas, LabelPosition
+
+canvas = Canvas(
+    x_label_pos=LabelPosition.TOP,
+    y_label_pos=LabelPosition.RIGHT,
+    x_arrow_style=ArrowStyle.SIMPLE,
+    y_arrow_style=ArrowStyle.WEDGE,
+)
+```
+
 Closed-form Marshallian demand in TeX:
 
 ```python
