@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 from econ_viz.exceptions import InvalidParameterError, OptimizationError
-from econ_viz.models import CobbDouglas, Leontief, PerfectSubstitutes, CES, QuasiLinear, StoneGeary
+from econ_viz.models import CobbDouglas, Leontief, PerfectSubstitutes, CES, QuasiLinear, Satiation, StoneGeary
 from econ_viz.optimizer import (
     Equilibrium,
     solve,
@@ -113,6 +113,33 @@ class TestSolveCES:
     def test_bundle_type(self):
         eq = solve(CES(0.5, 0.5, 0.5), 2.0, 3.0, 30.0)
         assert eq.bundle_type == "interior"
+
+
+class TestSolveSatiation:
+    def test_affordable_bliss_point_leaves_budget_slack(self):
+        model = Satiation(bliss_x=5.0, bliss_y=5.0)
+        eq = solve(model, px=1.0, py=1.0, income=100.0)
+
+        assert eq.x == pytest.approx(5.0, abs=1e-5)
+        assert eq.y == pytest.approx(5.0, abs=1e-5)
+        assert eq.utility == pytest.approx(0.0, abs=1e-8)
+        assert eq.x + eq.y < 100.0
+
+    def test_exactly_affordable_bliss_point(self):
+        model = Satiation(bliss_x=5.0, bliss_y=5.0)
+        eq = solve(model, px=1.0, py=1.0, income=10.0)
+
+        assert eq.x == pytest.approx(5.0, abs=1e-5)
+        assert eq.y == pytest.approx(5.0, abs=1e-5)
+        assert eq.utility == pytest.approx(0.0, abs=1e-8)
+
+    def test_unaffordable_bliss_point_uses_budget_frontier(self):
+        model = Satiation(bliss_x=5.0, bliss_y=5.0)
+        eq = solve(model, px=1.0, py=1.0, income=6.0)
+
+        assert eq.x == pytest.approx(3.0, abs=1e-5)
+        assert eq.y == pytest.approx(3.0, abs=1e-5)
+        assert eq.x + eq.y == pytest.approx(6.0, abs=1e-5)
 
 
 class TestSolveInvalidParams:
