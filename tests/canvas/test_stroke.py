@@ -3,7 +3,7 @@
 import numpy as np
 import pytest
 from matplotlib.colors import to_hex
-from matplotlib.patches import FancyArrowPatch
+from matplotlib.patches import ArrowStyle as MplArrowStyle, FancyArrowPatch
 
 from econ_viz import ArrowStyle, Canvas, Figure, Layout, LineStyle, Stroke, levels, solve
 from econ_viz.exceptions import InvalidParameterError
@@ -237,3 +237,26 @@ class TestOtherDiagrams:
 
         box = EdgeworthBox(MODEL, MODEL, total_x=10.0, total_y=10.0)
         assert box.ax.spines["top"].get_linewidth() == pytest.approx(box.theme.box_stroke.width)
+
+
+class TestAnnotationArrows:
+    def test_wedge_on_effect_arrow_covers_only_the_tip(self):
+        dec = decompose_price_effect(MODEL, px=(2.0, 4.0), py=3.0, income=30.0)
+        cvs = Canvas(x_max=20, y_max=15).add_decomposition(dec, income_stroke=Stroke(arrow=ArrowStyle.WEDGE))
+
+        annotation = _role(cvs.ax, "income")[0]
+        assert type(annotation.arrow_patch.get_arrowstyle()) is type(MplArrowStyle("-"))
+        heads = _arrowheads(cvs.ax, "income")
+        assert len(heads) == 1
+        (sx, sy), (ex, ey) = heads[0]._posA_posB
+        assert (ex, ey) == pytest.approx((dec.C.x, dec.C.y))
+        # Wedge length on screen matches the axis wedge: 4% of the axes' longer side.
+        start, end = cvs.ax.transData.transform([(sx, sy), (ex, ey)])
+        bbox = cvs.ax.get_window_extent()
+        assert np.hypot(*(end - start)) == pytest.approx(0.04 * max(bbox.width, bbox.height), rel=0.05)
+
+    @pytest.mark.parametrize("style", [ArrowStyle.SIMPLE, ArrowStyle.TRIANGLE, ArrowStyle.FANCY])
+    def test_head_only_styles_stay_on_the_annotation(self, style):
+        dec = decompose_price_effect(MODEL, px=(2.0, 4.0), py=3.0, income=30.0)
+        cvs = Canvas(x_max=20, y_max=15).add_decomposition(dec, income_stroke=Stroke(arrow=style))
+        assert not _arrowheads(cvs.ax, "income")
