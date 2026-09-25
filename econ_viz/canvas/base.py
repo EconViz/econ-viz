@@ -37,6 +37,7 @@ from ..enums import ArrowStyle, LabelPosition, LineStyle
 from ..canvas.fonts import FontApplier, resolve_font, resolve_math_font
 from ..canvas.effect import Effect
 from ..canvas.stroke import styled
+from ..themes.marker import Marker
 from ..themes.stroke import Stroke
 from ..canvas.primitives import annotate_math, plot_point
 from ..canvas.renderers import (
@@ -409,6 +410,8 @@ class Canvas:
         ic_label_fmt: str = "{:.2g}",
         stroke: Stroke | None = None,
         ray_stroke: Stroke | None = None,
+        kink_marker: Marker | None = None,
+        bliss_marker: Marker | None = None,
         **kwargs,
     ) -> Canvas:
         """Add indifference curves for a given utility function.
@@ -454,12 +457,17 @@ class Canvas:
         ray_stroke : Stroke, optional
             Line style for kink-locus rays (default ``theme.ray_stroke``).
 
+        kink_marker : Marker, optional
+            Colour, size, and shape of kink points (default ``theme.kink_marker``).
+        bliss_marker : Marker, optional
+            Colour, size, and shape of the bliss point (default ``theme.bliss_marker``).
+
         Returns
         -------
         Canvas
             *self*, to allow method chaining.
         """
-        with styled(self, {"curve": stroke, "ray": ray_stroke}):
+        with styled(self, {"curve": stroke, "ray": ray_stroke}, markers={"kink": kink_marker, "bliss": bliss_marker}):
             t = self.theme
             ic = render_utility(
                 self.ax,
@@ -556,6 +564,7 @@ class Canvas:
         show_ray: bool = False,
         drop_stroke: Stroke | None = None,
         ray_stroke: Stroke | None = None,
+        marker: Marker | None = None,
     ) -> Canvas:
         """Annotate a pre-solved equilibrium on the canvas.
 
@@ -582,12 +591,15 @@ class Canvas:
         ray_stroke : Stroke, optional
             Line style for the expansion-path ray (default ``theme.ray_stroke``).
 
+        marker : Marker, optional
+            Colour, size, and shape of the equilibrium point (default ``theme.eq_marker``).
+
         Returns
         -------
         Canvas
             *self*, to allow method chaining.
         """
-        with styled(self, {"drop": drop_stroke, "ray": ray_stroke}):
+        with styled(self, {"drop": drop_stroke, "ray": ray_stroke}, markers={"equilibrium": marker}):
             t = self.theme
             render_equilibrium(
                 self.ax,
@@ -635,6 +647,7 @@ class Canvas:
         range_stroke: Stroke | None = None,
         substitution: Effect | None = None,
         income: Effect | None = None,
+        point_marker: Marker | None = None,
     ) -> Canvas:
         """Render a Hicks/Slutsky price-effect decomposition on this canvas.
 
@@ -668,8 +681,10 @@ class Canvas:
             Colour, range-arrow height, and label of each effect. The colour
             overrides *substitution_color* / *income_color*; a Stroke colour
             overrides both.
+        point_marker : Marker, optional
+            Colour, size, and shape of bundles A, B, C and their legend entries (default ``theme.eq_marker``).
         """
-        with styled(self, {"original_budget": original_budget_stroke, "compensated_budget": compensated_budget_stroke, "final_budget": final_budget_stroke, "substitution": substitution_stroke, "income": income_stroke, "projection": projection_stroke, "guide": guide_stroke, "range": range_stroke}):
+        with styled(self, {"original_budget": original_budget_stroke, "compensated_budget": compensated_budget_stroke, "final_budget": final_budget_stroke, "substitution": substitution_stroke, "income": income_stroke, "projection": projection_stroke, "guide": guide_stroke, "range": range_stroke}, markers={"bundle": point_marker}):
             if substitution is not None and substitution.color is not None:
                 substitution_color = substitution.color
             if income is not None and income.color is not None:
@@ -770,6 +785,8 @@ class Canvas:
                         label=rf"$Inc:\ \Delta x={inc_dx:+.2f},\ \Delta y={inc_dy:+.2f}$",
                     ),
                 ])
+                for handle in self._legend_handles[-5:-2]:
+                    handle._ev_role = "bundle"
                 self._legend_handles[-2]._ev_role = "substitution"
                 self._legend_handles[-1]._ev_role = "income"
                 self.show_legend(loc="upper right")
@@ -818,8 +835,9 @@ class Canvas:
         y: float,
         label: str | None = None,
         color: str | None = None,
-        markersize: float = 6.0,
+        markersize: float | None = None,
         offset: tuple[float, float] = (5, 5),
+        marker: Marker | None = None,
     ) -> Canvas:
         """Plot a labelled point on the canvas.
 
@@ -831,39 +849,44 @@ class Canvas:
             Text label (rendered in LaTeX math mode if provided).
         color : str or None
             Marker and label colour. *None* → ``theme.eq_color``.
-        markersize : float
-            Size of the dot.
+        markersize : float or None
+            Size of the dot. *None* → ``theme.point_marker.size``.
         offset : tuple[float, float]
             ``(dx, dy)`` text offset in points from the marker centre.
+
+        marker : Marker, optional
+            Colour, size, and shape of the point (default ``theme.point_marker``).
 
         Returns
         -------
         Canvas
             *self*, to allow method chaining.
         """
-        c = color or self.theme.eq_color
-        plot_point(
-            self.ax,
-            x=x,
-            y=y,
-            color=c,
-            markersize=markersize,
-            marker="o",
-            linestyle="None",
-            zorder=6,
-            clip_on=False,
-        )
-        if label:
-            annotate_math(
+        with styled(self, {}, markers={"point": marker}):
+            c = color or self.theme.eq_color
+            plot_point(
                 self.ax,
                 x=x,
                 y=y,
-                text=label,
                 color=c,
-                offset=offset,
-                fontsize=12,
-                zorder=7,
+                markersize=markersize if markersize is not None else self.theme.point_marker.size,
+                marker="o",
+                linestyle="None",
+                zorder=6,
+                clip_on=False,
+                role="point",
             )
+            if label:
+                annotate_math(
+                    self.ax,
+                    x=x,
+                    y=y,
+                    text=label,
+                    color=c,
+                    offset=offset,
+                    fontsize=12,
+                    zorder=7,
+                )
         return self
 
     def add_path(
@@ -881,6 +904,8 @@ class Canvas:
         stroke: Stroke | None = None,
         budget_stroke: Stroke | None = None,
         curve_stroke: Stroke | None = None,
+        point_marker: Marker | None = None,
+        equilibrium_marker: Marker | None = None,
     ) -> Canvas:
         """Draw a PCC/ICC-style path through a sequence of equilibria.
         stroke : Stroke, optional
@@ -889,8 +914,12 @@ class Canvas:
             Line style for budget lines drawn with ``show_budgets``.
         curve_stroke : Stroke, optional
             Line style for indifference curves drawn with ``show_curves``.
+        point_marker : Marker, optional
+            Colour, size, and shape of points drawn with ``show_points`` (default ``theme.path_marker``).
+        equilibrium_marker : Marker, optional
+            Colour, size, and shape of points drawn with ``show_equilibria``.
         """
-        with styled(self, {"path": stroke, "budget": budget_stroke, "curve": curve_stroke}):
+        with styled(self, {"path": stroke, "budget": budget_stroke, "curve": curve_stroke}, markers={"path_point": point_marker, "equilibrium": equilibrium_marker}):
             c = color or self.theme.path_color
             lw = linewidth if linewidth is not None else self.theme.path_linewidth
             show_points = path.default_show_points if show_points is None else show_points

@@ -14,9 +14,10 @@ def plot_point(
     linestyle: str = "None",
     zorder: int = 6,
     clip_on: bool = False,
-) -> None:
-    """Draw a point marker with consistent defaults."""
-    ax.plot(
+    role: str | None = None,
+):
+    """Draw a point marker with consistent defaults and return its line."""
+    (point,) = ax.plot(
         x,
         y,
         marker=marker,
@@ -26,6 +27,8 @@ def plot_point(
         clip_on=clip_on,
         zorder=zorder,
     )
+    point._ev_role = role
+    return point
 
 
 def annotate_math(

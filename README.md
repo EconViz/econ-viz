@@ -99,6 +99,17 @@ canvas.add_ray(0.5, stroke=Stroke(arrow=ArrowStyle.TRIANGLE))
 `add_utility`, `add_path`, `add_decomposition`, `DemandDiagram`, and
 `EdgeworthBox` take one `*_stroke` argument per kind of line they draw.
 
+Point markers work the same way with `Marker` (colour, size, and shape);
+fields you leave out keep the theme default, such as `theme.eq_marker`:
+
+```python
+from econ_viz import Marker
+
+canvas.add_equilibrium(eq, marker=Marker(shape="s", size=8))
+canvas.add_point(12, 2, label="A", marker=Marker(color="black", shape="D"))
+canvas.add_decomposition(dec, point_marker=Marker(shape="^"))
+```
+
 Set a font for one canvas or a whole multi-panel figure without touching
 Matplotlib's global settings. Pass a family name, a generic family such as
 `"serif"`, or a fallback list:

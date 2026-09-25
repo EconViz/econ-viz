@@ -91,6 +91,7 @@ def render_decomposition(
             marker="o",
             linestyle="None",
             zorder=7,
+            role="bundle",
         )
     label_tol = _label_overlap_tolerance(ax)
     for labels, x, y in _group_overlapping_labels(points, tol=label_tol):
