@@ -2,12 +2,14 @@
 Comparative statics for consumer demand.
 
 :func:`comparative_statics` numerically computes the six partial derivatives
-of the Marshallian demands with respect to prices and income by applying
-central finite differences to :func:`~econ_viz.optimizer.solver.solve`.
+of the Marshallian demands with respect to prices and income. It uses central
+finite differences where possible and one-sided differences at domain
+boundaries.
 """
 
 from __future__ import annotations
 
+import math
 import warnings
 from dataclasses import dataclass
 
@@ -68,7 +70,8 @@ def comparative_statics(
     """Compute comparative statics for a consumer optimisation problem.
 
     Uses central finite differences to estimate all six partial derivatives
-    of the Marshallian demands with respect to prices and income.
+    of the Marshallian demands with respect to prices and income. If either
+    perturbation is infeasible, a forward or backward difference is used.
 
     Step sizes are *relative*: for each parameter ``p`` the perturbation is
     ``max(h * p, h)`` so that the step is never degenerate when the parameter
@@ -108,22 +111,53 @@ def comparative_statics(
         raise InvalidParameterError(
             f"Prices and income must be positive (px={px}, py={py}, income={income})."
         )
+    if not math.isfinite(h) or h <= 0:
+        raise InvalidParameterError(
+            f"Finite-difference step h must be finite and positive (h={h})."
+        )
+
+    base = {"px": px, "py": py, "income": income}
+    eq_base = solve(func, **base)
+
+    def _try_solve(parameters: dict[str, float]):
+        if any(value <= 0 for value in parameters.values()):
+            return None
+        try:
+            return solve(func, **parameters)
+        except InvalidParameterError:
+            return None
 
     def _deriv(param: str) -> tuple[float, float]:
-        """Return (dx/dparam, dy/dparam) via central differences."""
-        base = {"px": px, "py": py, "income": income}
+        """Return a boundary-safe finite difference for both demands."""
         val = base[param]
         step = max(h * val, h)
 
         lo = {**base, param: val - step}
         hi = {**base, param: val + step}
 
-        eq_lo = solve(func, **lo)
-        eq_hi = solve(func, **hi)
+        eq_lo = _try_solve(lo)
+        eq_hi = _try_solve(hi)
 
-        dx = (eq_hi.x - eq_lo.x) / (2 * step)
-        dy = (eq_hi.y - eq_lo.y) / (2 * step)
-        return dx, dy
+        if eq_lo is not None and eq_hi is not None:
+            denominator = 2 * step
+            dx = (eq_hi.x - eq_lo.x) / denominator
+            dy = (eq_hi.y - eq_lo.y) / denominator
+            return dx, dy
+
+        if eq_hi is not None:
+            dx = (eq_hi.x - eq_base.x) / step
+            dy = (eq_hi.y - eq_base.y) / step
+            return dx, dy
+
+        if eq_lo is not None:
+            dx = (eq_base.x - eq_lo.x) / step
+            dy = (eq_base.y - eq_lo.y) / step
+            return dx, dy
+
+        raise InvalidParameterError(
+            f"Cannot estimate derivative with respect to {param}: "
+            "both perturbations are outside the feasible domain."
+        )
 
     dx_dpx, dy_dpx = _deriv("px")
     dx_dpy, dy_dpy = _deriv("py")
