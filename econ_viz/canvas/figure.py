@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Final
 
@@ -11,6 +12,7 @@ from matplotlib.figure import Figure as MplFigure
 from matplotlib.gridspec import GridSpec
 
 from .base import Canvas
+from .fonts import FontApplier, resolve_font, resolve_math_font
 from ..enums import ArrowStyle, LabelPosition, Layout
 from ..io import save_figure
 from ..themes import default as _default_theme
@@ -69,6 +71,10 @@ class Figure:
         GridSpec spacing parameters.
     x_arrow_style, y_arrow_style : ArrowStyle or str
         Per-panel axis arrowhead styles forwarded to :class:`Canvas`.
+    font : str or sequence of str, optional
+        Font family applied to every panel and the super-title.
+    math_font : str, optional
+        Math font set applied to every panel. See :class:`Canvas`.
     """
 
     def __init__(
@@ -90,17 +96,23 @@ class Figure:
         wspace: float = 0.25,
         x_arrow_style: ArrowStyle | str = ArrowStyle.TRIANGLE,
         y_arrow_style: ArrowStyle | str = ArrowStyle.TRIANGLE,
+        font: str | Sequence[str] | None = None,
+        math_font: str | None = None,
     ):
         """Create a multi-panel figure composed of injected :class:`Canvas` instances."""
         self.layout = layout
         self.shared_x = shared_x
         self.shared_y = shared_y
+        self.font = resolve_font(font)
+        self.math_font = resolve_math_font(math_font)
         shape, specs = _LAYOUT_SPECS[layout]
         rows, cols = shape
         width = 6.0 * cols
         height = 6.0 * rows
         self.fig: MplFigure = plt.figure(figsize=figsize or (width, height))
         self.fig.patch.set_alpha(0.0)
+        if self.font or self.math_font:
+            self.fig.add_artist(FontApplier(self.font, self.math_font))
         if title:
             self.fig.suptitle(title, color=theme.label_color)
 
@@ -133,6 +145,8 @@ class Figure:
                 theme=theme,
                 fig=self.fig,
                 ax=ax,
+                font=self.font,
+                math_font=self.math_font,
             )
             self.canvases.append(canvas)
             self._grid_lookup[(spec.row, spec.col)] = canvas

@@ -82,6 +82,24 @@ canvas = Canvas(
 )
 ```
 
+Set a font for one canvas or a whole multi-panel figure without touching
+Matplotlib's global settings. Pass a family name, a generic family such as
+`"serif"`, or a fallback list:
+
+```python
+from econ_viz import Figure, Layout
+
+canvas = Canvas(font=["Times New Roman", "serif"], math_font="stix")
+figure = Figure(Layout.SIDE_BY_SIDE, font="serif", math_font="stix")
+```
+
+`font` applies to titles, axis labels, annotations, curve labels, and legends.
+Math text, including the default axis labels, uses `math_font`: `"stix"`
+(Times-like), `"cm"` (Computer Modern), `"dejavuserif"`, `"dejavusans"`, or
+`"stixsans"`. An unavailable font raises
+`InvalidParameterError`. TikZ output uses the LaTeX document's fonts, so only
+generic families are mapped (`serif` → `\rmfamily`, `monospace` → `\ttfamily`).
+
 Closed-form Marshallian demand in TeX:
 
 ```python

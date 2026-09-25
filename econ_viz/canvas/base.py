@@ -17,12 +17,14 @@ import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
 from matplotlib.patches import FancyArrowPatch
 
+from collections.abc import Sequence
 from typing import Callable
 
 from ..utils.logging import get_logger
 from ..themes import default as _default_theme
 from ..themes.theme import Theme
 from ..enums import ArrowStyle, LabelPosition
+from ..canvas.fonts import FontApplier, resolve_font, resolve_math_font
 from ..canvas.primitives import annotate_math, plot_point
 from ..canvas.renderers import (
     render_budget,
@@ -183,6 +185,15 @@ class Canvas:
         Colour and style theme. Defaults to the built-in ``default`` theme.
     x_arrow_style, y_arrow_style : ArrowStyle or str
         Independently configurable arrowhead styles for each axis.
+    font : str or sequence of str, optional
+        Font family for every text element on this canvas, or a fallback list.
+        Generic families (``"serif"``, ``"sans-serif"``, ``"monospace"``) are
+        accepted. ``None`` keeps Matplotlib's default. Global rcParams are not
+        modified.
+    math_font : str, optional
+        Matplotlib math font set for math text such as axis labels:
+        ``"dejavusans"``, ``"dejavuserif"``, ``"cm"``, ``"stix"``, or
+        ``"stixsans"``. ``None`` keeps Matplotlib's default.
     """
 
     def __init__(
@@ -200,6 +211,8 @@ class Canvas:
         ax=None,
         x_arrow_style: ArrowStyle | str = ArrowStyle.TRIANGLE,
         y_arrow_style: ArrowStyle | str = ArrowStyle.TRIANGLE,
+        font: str | Sequence[str] | None = None,
+        math_font: str | None = None,
     ):
         self.x_max = x_max
         self.y_max = y_max
@@ -212,12 +225,16 @@ class Canvas:
         self.x_arrow_style = _arrow_style(x_arrow_style)
         self.y_arrow_style = _arrow_style(y_arrow_style)
         self.theme = theme
+        self.font = resolve_font(font)
+        self.math_font = resolve_math_font(math_font)
 
         self._owns_figure = fig is None or ax is None
         if fig is None or ax is None:
             self.fig, self.ax = plt.subplots(figsize=(6, 6))
         else:
             self.fig, self.ax = fig, ax
+        if (self.font or self.math_font) and self._owns_figure:
+            self.fig.add_artist(FontApplier(self.font, self.math_font))
         self._legend_handles: list = []
         self._apply_base_style()
         logger.debug("Canvas created: x_max=%s, y_max=%s, dpi=%s, theme=%s",
