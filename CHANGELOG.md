@@ -2,6 +2,40 @@
 
 <!-- version list -->
 
+## v1.7.0 (2026-09-25)
+
+### Features
+
+- Add independent axis-label positions, line styles, and arrowhead styles to `Canvas` and `Figure`
+
+- Add per-figure `font` and `math_font` controls without changing Matplotlib's global configuration
+
+- Add `Stroke` for per-line width, style, colour, and arrowheads across `Canvas`, `Figure`, `DemandDiagram`, and `EdgeworthBox`
+
+- Add `econ-viz --version`
+
+### Bug Fixes
+
+- Validate utility-model parameter domains, correct the asymmetric CES expansion path and Cobb-Douglas limit, and allow satiation optima to leave budget unspent
+
+- Make contour levels robust around zero and negative utility values
+
+- Use one-sided finite differences when comparative statics approach price, income, or subsistence boundaries
+
+- Make every example script runnable from a clean checkout
+
+- Require tests to pass before tagged releases publish and include complete package licence metadata
+
+### Maintenance
+
+- Migrate package management and builds to `uv`
+
+- Centralize shared numerical, rendering, and logging defaults
+
+- Test Python 3.10 through 3.13, enforce branch coverage, and smoke-test all runnable examples in CI
+
+- Document and automate the release workflow
+
 ## v1.6.0 (2026-04-24)
 
 ### Features
