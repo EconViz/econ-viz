@@ -45,7 +45,7 @@ Issues labelled [`good first issue`](https://github.com/EconViz/econ-viz/issues?
 
 ## Code style
 
-- Python 3.12+
+- Python 3.10+
 - Follow the existing style (no linter is enforced, but keep it clean)
 - Add tests for any new behaviour
 

@@ -5,6 +5,7 @@ description = "A Python toolkit for producing publication-quality microeconomics
 readme = "README.md"
 authors = [{ name = "Anthony Sung", email = "sungpinyue@gmail.com" }]
 license = "MIT"
+license-files = ["LICENSE"]
 requires-python = ">=3.10,<4.0"
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -45,20 +46,6 @@ dev = [
     "pytest (>=8.0.0,<9.0.0)",
     "pytest-cov (>=7.1.0,<8.0.0)"
 ]
-
-[tool.semantic_release]
-version_toml = ["pyproject.toml:project.version"]
-branch = "main"
-changelog_file = "CHANGELOG.md"
-commit_message = "chore(release): {version} [skip ci]"
-upload_to_pypi = false
-upload_to_release = false
-build_command = ""
-
-[tool.semantic_release.commit_parser_options]
-allowed_tags = ["feat", "fix", "perf", "refactor", "docs", "style", "test", "chore", "build", "ci"]
-minor_tags = ["feat"]
-patch_tags = ["fix", "perf"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
