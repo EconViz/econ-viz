@@ -15,12 +15,14 @@ from __future__ import annotations
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
+from matplotlib.patches import FancyArrowPatch
 
 from typing import Callable
 
 from ..utils.logging import get_logger
 from ..themes import default as _default_theme
 from ..themes.theme import Theme
+from ..enums import ArrowStyle, LabelPosition
 from ..canvas.primitives import annotate_math, plot_point
 from ..canvas.renderers import (
     render_budget,
@@ -36,6 +38,42 @@ logger = get_logger(__name__)
 _MAX_DPI = 1200
 _DEFAULT_DPI = 300
 _MATH_CHARS = {"^", "_", "{", "}", "\\"}
+
+_X_LABEL_POSITIONS = {
+    LabelPosition.TOP: ((0, 8), "center", "bottom"),
+    LabelPosition.RIGHT: ((8, 0), "left", "center"),
+    LabelPosition.BOTTOM: ((0, -8), "center", "top"),
+}
+_Y_LABEL_POSITIONS = {
+    LabelPosition.LEFT: ((-8, 0), "right", "center"),
+    LabelPosition.TOP: ((0, 8), "center", "bottom"),
+    LabelPosition.RIGHT: ((8, 0), "left", "center"),
+}
+
+
+def _label_position(value: LabelPosition | str, *, axis: str) -> LabelPosition:
+    """Normalize and validate one axis-label position."""
+    try:
+        position = LabelPosition(value)
+    except ValueError:
+        valid = _X_LABEL_POSITIONS if axis == "x" else _Y_LABEL_POSITIONS
+        choices = ", ".join(item.value for item in valid)
+        raise ValueError(f"invalid {axis}-axis label position {value!r}; choose: {choices}") from None
+
+    valid = _X_LABEL_POSITIONS if axis == "x" else _Y_LABEL_POSITIONS
+    if position not in valid:
+        choices = ", ".join(item.value for item in valid)
+        raise ValueError(f"invalid {axis}-axis label position {value!r}; choose: {choices}")
+    return position
+
+
+def _arrow_style(value: ArrowStyle | str) -> ArrowStyle:
+    """Normalize one axis arrow style."""
+    try:
+        return ArrowStyle(value)
+    except ValueError:
+        choices = ", ".join(item.value for item in ArrowStyle)
+        raise ValueError(f"invalid arrow style {value!r}; choose: {choices}") from None
 
 
 def _label_math(text: str) -> str:
@@ -137,14 +175,14 @@ class Canvas:
         Optional figure title.
     dpi : int
         Resolution for raster export. Clamped to ``[1, 1200]``. Default 300.
-    x_label_pos : str
-        Position of the x-axis label: ``"right"`` (default, at axis tip) or
-        ``"bottom"`` (centred below the axis).
-    y_label_pos : str
-        Position of the y-axis label: ``"top"`` (default, at axis tip) or
-        ``"left"`` (centred to the left of the axis).
+    x_label_pos : LabelPosition or str
+        Position around the x-axis arrowhead: top, right, or bottom.
+    y_label_pos : LabelPosition or str
+        Position around the y-axis arrowhead: left, top, or right.
     theme : Theme
         Colour and style theme. Defaults to the built-in ``default`` theme.
+    x_arrow_style, y_arrow_style : ArrowStyle or str
+        Independently configurable arrowhead styles for each axis.
     """
 
     def __init__(
@@ -155,11 +193,13 @@ class Canvas:
         y_label: str = "Y",
         title: str | None = None,
         dpi: int = _DEFAULT_DPI,
-        x_label_pos: str = "right",
-        y_label_pos: str = "top",
+        x_label_pos: LabelPosition | str = LabelPosition.RIGHT,
+        y_label_pos: LabelPosition | str = LabelPosition.TOP,
         theme: Theme = _default_theme,
         fig=None,
         ax=None,
+        x_arrow_style: ArrowStyle | str = ArrowStyle.TRIANGLE,
+        y_arrow_style: ArrowStyle | str = ArrowStyle.TRIANGLE,
     ):
         self.x_max = x_max
         self.y_max = y_max
@@ -167,8 +207,10 @@ class Canvas:
         self.y_label = y_label
         self.title = title
         self.dpi = max(1, min(dpi, _MAX_DPI))
-        self.x_label_pos = x_label_pos
-        self.y_label_pos = y_label_pos
+        self.x_label_pos = _label_position(x_label_pos, axis="x")
+        self.y_label_pos = _label_position(y_label_pos, axis="y")
+        self.x_arrow_style = _arrow_style(x_arrow_style)
+        self.y_arrow_style = _arrow_style(y_arrow_style)
         self.theme = theme
 
         self._owns_figure = fig is None or ax is None
@@ -196,30 +238,33 @@ class Canvas:
         self.ax.set_yticklabels([])
         self.ax.tick_params(length=0)
 
-        # X-axis label — sits just past the arrow tip on the right
-        if self.x_label_pos == "right":
-            x_label_text = self.ax.text(
-                self.x_max * 1.04, 0,
-                _label_math(self.x_label), ha="left", va="center",
-                fontsize=14, color=t.label_color, clip_on=False,
-            )
-            x_label_text._ev_axis_label = "x"
-        else:  # bottom
-            xl = self.ax.set_xlabel(_label_math(self.x_label), fontsize=14, color=t.label_color)
-            xl._ev_axis_label = "x"
+        x_offset, x_ha, x_va = _X_LABEL_POSITIONS[self.x_label_pos]
+        x_label_text = self.ax.annotate(
+            _label_math(self.x_label),
+            xy=(self.x_max, 0),
+            xytext=x_offset,
+            textcoords="offset points",
+            ha=x_ha,
+            va=x_va,
+            fontsize=14,
+            color=t.label_color,
+            clip_on=False,
+        )
+        x_label_text._ev_axis_label = "x"
 
-        # Y-axis label — sits just above the arrow tip on top
-        if self.y_label_pos == "top":
-            y_label_text = self.ax.text(
-                0, self.y_max * 1.04,
-                _label_math(self.y_label), ha="center", va="bottom",
-                fontsize=14, color=t.label_color, clip_on=False,
-            )
-            y_label_text._ev_axis_label = "y"
-        else:  # left
-            yl = self.ax.set_ylabel(_label_math(self.y_label), fontsize=14,
-                                    rotation=0, color=t.label_color)
-            yl._ev_axis_label = "y"
+        y_offset, y_ha, y_va = _Y_LABEL_POSITIONS[self.y_label_pos]
+        y_label_text = self.ax.annotate(
+            _label_math(self.y_label),
+            xy=(0, self.y_max),
+            xytext=y_offset,
+            textcoords="offset points",
+            ha=y_ha,
+            va=y_va,
+            fontsize=14,
+            color=t.label_color,
+            clip_on=False,
+        )
+        y_label_text._ev_axis_label = "y"
 
         # Origin label
         self.ax.text(
@@ -237,8 +282,35 @@ class Canvas:
         self.ax.spines["left"].set_color(t.axis_color)
 
         # Arrow terminators at axis tips
-        self.ax.plot(self.x_max, 0, ">", color=t.axis_color, markersize=7, clip_on=False)
-        self.ax.plot(0, self.y_max, "^", color=t.axis_color, markersize=7, clip_on=False)
+        x_arrow = FancyArrowPatch(
+            (self.x_max * 0.96, 0),
+            (self.x_max, 0),
+            arrowstyle=self.x_arrow_style.value,
+            mutation_scale=12,
+            linewidth=1,
+            color=t.axis_color,
+            shrinkA=0,
+            shrinkB=0,
+            clip_on=False,
+        )
+        x_arrow._ev_axis_arrow = "x"
+        x_arrow._ev_arrow_style = self.x_arrow_style
+        self.ax.add_patch(x_arrow)
+
+        y_arrow = FancyArrowPatch(
+            (0, self.y_max * 0.96),
+            (0, self.y_max),
+            arrowstyle=self.y_arrow_style.value,
+            mutation_scale=12,
+            linewidth=1,
+            color=t.axis_color,
+            shrinkA=0,
+            shrinkB=0,
+            clip_on=False,
+        )
+        y_arrow._ev_axis_arrow = "y"
+        y_arrow._ev_arrow_style = self.y_arrow_style
+        self.ax.add_patch(y_arrow)
 
         # Transparent background
         self.fig.patch.set_alpha(0.0)

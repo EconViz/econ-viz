@@ -2,7 +2,7 @@
 
 import pytest
 
-from econ_viz.enums import ExportFormat, Layout, UtilityType
+from econ_viz.enums import ArrowStyle, ExportFormat, LabelPosition, Layout, UtilityType
 from econ_viz.exceptions import ExportError
 
 
@@ -51,3 +51,16 @@ class TestLayout:
         assert Layout.SINGLE
         assert Layout.STACKED
         assert Layout.SIDE_BY_SIDE
+
+
+class TestAxisEnums:
+    def test_label_position_has_four_directions(self):
+        assert {member.value for member in LabelPosition} == {
+            "top", "left", "bottom", "right"
+        }
+
+    def test_arrow_styles_are_matplotlib_compatible(self):
+        assert ArrowStyle.SIMPLE.value == "->"
+        assert ArrowStyle.TRIANGLE.value == "-|>"
+        assert ArrowStyle.FANCY.value == "fancy"
+        assert ArrowStyle.WEDGE.value == "wedge"
