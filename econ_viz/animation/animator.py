@@ -8,6 +8,8 @@ from typing import TYPE_CHECKING, Callable, Sequence, Union
 
 import numpy as np
 
+from econ_viz.constants.io import SAVEFIG_BBOX_INCHES
+
 if TYPE_CHECKING:  # pragma: no cover
     from econ_viz.canvas.base import Canvas
     from econ_viz.canvas.figure import Figure
@@ -36,7 +38,7 @@ def _figure_to_pil(fig, dpi: int):
     from PIL import Image
 
     buf = io.BytesIO()
-    fig.savefig(buf, format="png", dpi=dpi, bbox_inches="tight")
+    fig.savefig(buf, format="png", dpi=dpi, bbox_inches=SAVEFIG_BBOX_INCHES)
     buf.seek(0)
     rgba = Image.open(buf).copy().convert("RGBA")
     # Composite onto a solid white background; GIF only supports 1-bit
