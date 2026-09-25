@@ -22,9 +22,11 @@ all         = ["Pillow (>=9.0.0)", "ipywidgets (>=8.0.0)", "IPython (>=8.0.0)"]
 econ-viz = "econ_viz.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/EconViz/econ-viz"
+Homepage = "https://econ-viz.org"
+Documentation = "https://econ-viz.org"
 Repository = "https://github.com/EconViz/econ-viz"
 "Bug Tracker" = "https://github.com/EconViz/econ-viz/issues"
+Changelog = "https://github.com/EconViz/econ-viz/blob/main/CHANGELOG.md"
 
 
 [build-system]
