@@ -7,7 +7,17 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
-from econ_viz import Canvas, DemandDiagram, Figure, IncomePath, Layout, LinearBudget, PricePath
+from econ_viz import (
+    ArrowStyle,
+    Canvas,
+    DemandDiagram,
+    Figure,
+    IncomePath,
+    LabelPosition,
+    Layout,
+    LinearBudget,
+    PricePath,
+)
 from econ_viz.models import CES, CobbDouglas, Leontief, PerfectSubstitutes, QuasiLinear, StoneGeary
 
 
@@ -61,6 +71,21 @@ class TestFigure:
         fig = Figure(Layout.SIDE_BY_SIDE, shared_x=True, shared_y=True)
         assert fig[0].ax.get_shared_x_axes().joined(fig[0].ax, fig[1].ax)
         assert fig[0].ax.get_shared_y_axes().joined(fig[0].ax, fig[1].ax)
+
+    def test_axis_customization_is_forwarded_to_every_panel(self):
+        fig = Figure(
+            Layout.SIDE_BY_SIDE,
+            x_label_pos=LabelPosition.TOP,
+            y_label_pos=LabelPosition.RIGHT,
+            x_arrow_style=ArrowStyle.SIMPLE,
+            y_arrow_style=ArrowStyle.WEDGE,
+        )
+
+        for canvas in fig.canvases:
+            assert canvas.x_label_pos is LabelPosition.TOP
+            assert canvas.y_label_pos is LabelPosition.RIGHT
+            assert canvas.x_arrow_style is ArrowStyle.SIMPLE
+            assert canvas.y_arrow_style is ArrowStyle.WEDGE
 
     def test_save_tex(self, tmp_path):
         out = tmp_path / "multi.tex"
