@@ -1,9 +1,13 @@
 """Compare axis-label positions, arrowhead styles, and axis line styles."""
 
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 
 from econ_viz import ArrowStyle, Canvas, LabelPosition, LineStyle
 
+OUTPUT_DIR = Path("examples/output/customization")
+OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 fig, axes = plt.subplots(2, 2, figsize=(10, 10))
 settings = [
@@ -27,4 +31,4 @@ for ax, (arrow, line, x_position, y_position) in zip(axes.flat, settings):
     )
 
 fig.tight_layout()
-fig.savefig("axis_customization.png", dpi=200, transparent=True)
+fig.savefig(OUTPUT_DIR / "axis_customization.png", dpi=200, transparent=True)

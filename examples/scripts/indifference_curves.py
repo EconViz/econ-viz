@@ -7,12 +7,15 @@ an intentional validation failure for QuasiLinear(v_func=lambda z: z**2).
 import matplotlib
 matplotlib.use("Agg")
 
+from pathlib import Path
+
 import numpy as np
 
 from econ_viz.canvas.base import Canvas
 from econ_viz.models import CobbDouglas, Leontief, PerfectSubstitutes, CES, Satiation, QuasiLinear
 
 OUTPUT_DIR = "examples/output/models"
+Path(OUTPUT_DIR).mkdir(parents=True, exist_ok=True)
 
 # ------------------------------------------------------------------
 # Standard models

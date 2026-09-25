@@ -3,10 +3,13 @@
 import matplotlib
 matplotlib.use("Agg")
 
+from pathlib import Path
+
 from econ_viz import Figure, Layout, levels, solve
 from econ_viz.models import CobbDouglas
 
 OUTPUT_DIR = "examples/output/layouts"
+Path(OUTPUT_DIR).mkdir(parents=True, exist_ok=True)
 
 base = CobbDouglas(alpha=0.5, beta=0.5)
 alt = CobbDouglas(alpha=0.3, beta=0.7)
