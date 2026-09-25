@@ -1,9 +1,14 @@
 """Restyle every line with Stroke: theme defaults on the left, custom strokes on the right."""
 
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 
 from econ_viz import ArrowStyle, Canvas, Stroke, levels, solve
 from econ_viz.models import CobbDouglas
+
+OUTPUT_DIR = Path("examples/output/customization")
+OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 model = CobbDouglas(alpha=0.5, beta=0.5)
 eq = solve(model, px=2.0, py=3.0, income=30.0)
@@ -30,4 +35,4 @@ Canvas(
     )
 
 fig.tight_layout()
-fig.savefig("stroke_customization.png", dpi=200, transparent=True)
+fig.savefig(OUTPUT_DIR / "stroke_customization.png", dpi=200, transparent=True)

@@ -9,9 +9,12 @@ workflow.
 import matplotlib
 matplotlib.use("Agg")
 
+from pathlib import Path
+
 from econ_viz import Canvas, levels, solve, parse_latex
 
 OUTPUT_DIR = "examples/output/latex"
+Path(OUTPUT_DIR).mkdir(parents=True, exist_ok=True)
 
 # (output_name, latex_string)
 cases = [

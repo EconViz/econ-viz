@@ -3,12 +3,15 @@
 import matplotlib
 matplotlib.use("Agg")
 
+from pathlib import Path
+
 import numpy as np
 
 from econ_viz import DemandDiagram, LinearBudget, PricePath
 from econ_viz.models import CES, CobbDouglas, Leontief, PerfectSubstitutes, QuasiLinear, StoneGeary
 
 OUTPUT_DIR = "examples/output/paths"
+Path(OUTPUT_DIR).mkdir(parents=True, exist_ok=True)
 
 cases = [
     (

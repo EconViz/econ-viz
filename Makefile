@@ -1,27 +1,32 @@
 UV ?= uv
 PYTHON := $(UV) run python
+EXAMPLE_SCRIPTS := $(sort $(wildcard examples/scripts/*.py))
 
 .PHONY: sync examples example-ic example-eq example-themes example-latex clean test build
 
 sync:
 	$(UV) sync --frozen --all-extras
 
-examples: example-ic example-eq example-themes example-latex
+examples:
+	@set -e; for script in $(EXAMPLE_SCRIPTS); do \
+		echo "Running $$script"; \
+		$(PYTHON) $$script; \
+	done
 
 example-ic:
-	$(PYTHON) -m examples.indifference_curves
+	$(PYTHON) examples/scripts/indifference_curves.py
 
 example-eq:
-	$(PYTHON) -m examples.equilibrium
+	$(PYTHON) examples/scripts/equilibrium.py
 
 example-themes:
-	$(PYTHON) -m examples.themes
+	$(PYTHON) examples/scripts/themes.py
 
 example-latex:
-	$(PYTHON) -m examples.latex_input
+	$(PYTHON) examples/scripts/latex_input.py
 
 clean:
-	rm -rf examples/output/*.png
+	rm -rf examples/output
 
 test:
 	$(UV) run pytest

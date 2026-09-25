@@ -25,6 +25,7 @@ import matplotlib
 matplotlib.use("Agg")
 
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Callable
 
 import numpy as np
@@ -38,6 +39,9 @@ OUTPUT_DIR = "examples/output/animation"
 PARAMETER_DIR = f"{OUTPUT_DIR}/parameter_sweeps"
 PRICE_DIR = f"{OUTPUT_DIR}/price_sweeps"
 INCOME_DIR = f"{OUTPUT_DIR}/income_sweeps"
+
+for directory in (PARAMETER_DIR, PRICE_DIR, INCOME_DIR):
+    Path(directory).mkdir(parents=True, exist_ok=True)
 
 X_MAX = 14
 Y_MAX = 12
