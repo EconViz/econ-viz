@@ -17,7 +17,7 @@ def plot_endowment(
     label: str,
 ) -> None:
     """Draw and label the endowment point."""
-    ax.plot(
+    (point,) = ax.plot(
         x,
         y,
         "o",
@@ -25,6 +25,7 @@ def plot_endowment(
         markersize=markersize,
         zorder=20,
     )
+    point._ev_role = "endowment"
     ax.text(
         x + total_x * 0.015,
         y + total_y * 0.015,
@@ -71,7 +72,7 @@ def plot_equilibrium_marker(
     label: str,
 ) -> None:
     """Draw and label Walrasian equilibrium marker."""
-    ax.plot(
+    (point,) = ax.plot(
         x,
         y,
         marker=marker,
@@ -80,6 +81,7 @@ def plot_equilibrium_marker(
         label=rf"${label}$",
         zorder=22,
     )
+    point._ev_role = "walrasian"
     ax.text(
         x + total_x * 0.012,
         y + total_y * 0.012,
@@ -165,4 +167,5 @@ def plot_core(
         (line,) = ax.plot(core_points[:, 0], core_points[:, 1], color=color, linewidth=linewidth, label=label)
         line._ev_role = "core"
     elif len(core_points) == 1:
-        ax.plot(core_points[0, 0], core_points[0, 1], "o", color=color, label=label)
+        (point,) = ax.plot(core_points[0, 0], core_points[0, 1], "o", color=color, label=label)
+        point._ev_role = "core_point"

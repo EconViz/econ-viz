@@ -3,6 +3,7 @@
 from dataclasses import dataclass
 
 from ..enums import ArrowStyle, LineStyle
+from .marker import Marker
 from .stroke import Stroke
 
 
@@ -92,6 +93,9 @@ class Theme:
     guides below the x-axis    ``guide_stroke``: 0.8 pt, dashed
     Edgeworth box frame        ``box_stroke``: 1.2 pt, solid
     ========================== =========================================
+
+    Point markers have defaults too (see :class:`Marker`): ``eq_marker``,
+    ``point_marker``, ``kink_marker``, ``bliss_marker``, and ``path_marker``.
     """
 
     name: str
@@ -115,7 +119,7 @@ class Theme:
 
     # Equilibrium
     eq_color: str = "#E41A1C"
-    eq_markersize: float = 6.0
+    eq_markersize: float = 4.0
 
     # Rays
     ray_color: str = "#999999"
@@ -137,6 +141,31 @@ class Theme:
     projection_stroke: Stroke = Stroke(width=0.8, style=LineStyle.DOTTED, color="#888888")
     guide_stroke: Stroke = Stroke(width=0.8, style=LineStyle.DASHED, color="#777777")
     box_stroke: Stroke = Stroke(width=1.2, style=LineStyle.SOLID)
+
+    @property
+    def eq_marker(self) -> Marker:
+        """Equilibrium points, and decomposition bundles A, B, C."""
+        return Marker(color=self.eq_color, size=self.eq_markersize, shape="o")
+
+    @property
+    def point_marker(self) -> Marker:
+        """Points drawn with ``Canvas.add_point``."""
+        return Marker(color=self.eq_color, size=self.eq_markersize, shape="o")
+
+    @property
+    def kink_marker(self) -> Marker:
+        """Kink points of Leontief-type indifference curves."""
+        return Marker(color=self.kink_color, size=4.0, shape="o")
+
+    @property
+    def bliss_marker(self) -> Marker:
+        """Bliss point of satiation preferences. Colour ``None`` uses the curve colour."""
+        return Marker(size=12.0, shape="*")
+
+    @property
+    def path_marker(self) -> Marker:
+        """Points on PCC / ICC paths. Colour ``None`` uses the path colour."""
+        return Marker(size=max(self.eq_markersize - 1, 3), shape="o")
 
     @property
     def ic_stroke(self) -> Stroke:

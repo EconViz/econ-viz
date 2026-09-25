@@ -60,7 +60,8 @@ class EquilibriumPoint:
             eq.bundle_type, eq.x, eq.y, eq.utility,
         )
 
-        ax.plot(eq.x, eq.y, "o", color=self.color, markersize=self.markersize, clip_on=False, zorder=6)
+        (point,) = ax.plot(eq.x, eq.y, "o", color=self.color, markersize=self.markersize, clip_on=False, zorder=6)
+        point._ev_role = "equilibrium"
         if self.label:
             ax.annotate(
                 rf"${self.label}$", (eq.x, eq.y),

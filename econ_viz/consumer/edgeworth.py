@@ -11,6 +11,7 @@ from ..canvas.stroke import styled
 from ..contours import around_anchor_levels, percentile_levels
 from ..io import save_figure
 from ..themes import default as _default_theme
+from ..themes.marker import Marker
 from ..themes.stroke import Stroke
 from ..themes.theme import Theme
 from .edgeworth_compute import (
@@ -252,23 +253,25 @@ class EdgeworthBox:
         *,
         label: str = "e",
         color: str | None = None,
+        marker: Marker | None = None,
     ) -> "EdgeworthBox":
         """Mark the initial endowment point E."""
-        if not (0.0 <= x_endowment <= self.total_x and 0.0 <= y_endowment <= self.total_y):
-            raise ValueError("Endowment must lie inside the Edgeworth box.")
+        with styled(self, {}, markers={"endowment": marker}):
+            if not (0.0 <= x_endowment <= self.total_x and 0.0 <= y_endowment <= self.total_y):
+                raise ValueError("Endowment must lie inside the Edgeworth box.")
 
-        self.endowment = (float(x_endowment), float(y_endowment))
-        c = color or self.theme.eq_color
-        plot_endowment(
-            self.ax,
-            x=x_endowment,
-            y=y_endowment,
-            total_x=self.total_x,
-            total_y=self.total_y,
-            color=c,
-            markersize=max(self.theme.eq_markersize, 6),
-            label=label,
-        )
+            self.endowment = (float(x_endowment), float(y_endowment))
+            c = color or self.theme.eq_color
+            plot_endowment(
+                self.ax,
+                x=x_endowment,
+                y=y_endowment,
+                total_x=self.total_x,
+                total_y=self.total_y,
+                color=c,
+                markersize=max(self.theme.eq_markersize, 6),
+                label=label,
+            )
         return self
 
     def add_endowment_indifference(
@@ -590,6 +593,7 @@ class EdgeworthBox:
         min_points: int = 2,
         tol: float = 1e-6,
         stroke: Stroke | None = None,
+        marker: Marker | None = None,
     ) -> "EdgeworthBox":
         """Draw the core segment (IR part of the contract curve).
 
@@ -598,7 +602,7 @@ class EdgeworthBox:
         stroke : Stroke, optional
             Line style for the core.
         """
-        with styled(self, {"core": stroke}):
+        with styled(self, {"core": stroke}, markers={"core_point": marker}):
             if self.endowment is None:
                 raise ValueError("Endowment is required. Call add_endowment(...) first.")
             if len(self.contract_curve_points) == 0:
@@ -676,7 +680,7 @@ class EdgeworthBox:
         py: float,
         *,
         color: str = "#2E86AB",
-        marker: str = "*",
+        marker: str | Marker = "*",
         markersize: float = 10.0,
         label: str = r"X^*",
         contract_stroke: Stroke | None = None,
@@ -687,8 +691,12 @@ class EdgeworthBox:
         ----------
         contract_stroke : Stroke, optional
             Line style for the contract curve.
+        marker : str or Marker
+            Marker shape (legacy), or a :class:`Marker` for colour, size, and shape.
         """
-        with styled(self, {"contract": contract_stroke}):
+        marker_style = marker if isinstance(marker, Marker) else None
+        shape = marker_style.shape if marker_style and marker_style.shape else ("*" if marker_style else marker)
+        with styled(self, {"contract": contract_stroke}, markers={"walrasian": marker_style}):
             if px <= 0 or py <= 0:
                 raise ValueError("px and py must be positive.")
             if self.endowment is None:
@@ -717,7 +725,7 @@ class EdgeworthBox:
                 total_x=self.total_x,
                 total_y=self.total_y,
                 color=color,
-                marker=marker,
+                marker=shape,
                 markersize=markersize,
                 label=label,
             )

@@ -13,6 +13,7 @@ from matplotlib.text import Annotation
 
 from ..constants.canvas import ARROW_HEAD_ONLY_FRAC, ARROW_WEDGE_FRAC
 from ..enums import ArrowStyle
+from ..themes.marker import Marker
 from ..themes.stroke import Stroke
 
 
@@ -27,10 +28,15 @@ def _children(ax) -> set[int]:
 
 
 @contextmanager
-def styled(canvas, strokes: Mapping[str, Stroke | None], default_role: str | None = None):
-    """Apply *strokes* (role → Stroke) to lines and legend entries drawn inside the block.
+def styled(
+    canvas,
+    strokes: Mapping[str, Stroke | None],
+    default_role: str | None = None,
+    markers: Mapping[str, Marker | None] | None = None,
+):
+    """Apply *strokes* and *markers* (role → style) to what is drawn inside the block.
 
-    Lines created without a role get *default_role*.
+    Lines created without a role get *default_role*. Legend entries follow.
     """
     ax = canvas.ax
     before = _children(ax)
@@ -43,10 +49,14 @@ def styled(canvas, strokes: Mapping[str, Stroke | None], default_role: str | Non
             if getattr(artist, "_ev_role", None) is None and _is_line(artist):
                 tag(artist, default_role)
     apply_strokes(ax, new, strokes)
+    markers = markers or {}
+    apply_markers(new, markers)
     for handle in handles[handles_before:]:
-        stroke = strokes.get(getattr(handle, "_ev_role", default_role))
+        role = getattr(handle, "_ev_role", default_role)
+        stroke = strokes.get(role)
         if stroke is not None and isinstance(handle, Line2D):
             _style_line(handle, stroke)
+        apply_markers([handle], markers)
 
 
 def apply_strokes(ax, artists: Iterable, strokes: Mapping[str, Stroke | None]) -> None:
@@ -82,6 +92,22 @@ def apply_strokes(ax, artists: Iterable, strokes: Mapping[str, Stroke | None]) -
                             ax, segment, stroke.arrow, color=color, width=width,
                             transform=artist.get_transform(), role=artist._ev_role,
                         )
+
+
+def apply_markers(artists: Iterable, markers: Mapping[str, Marker | None]) -> None:
+    """Restyle marker-only lines whose role has a Marker."""
+    for artist in artists:
+        marker = markers.get(getattr(artist, "_ev_role", None))
+        if marker is None or not isinstance(artist, Line2D):
+            continue
+        if marker.color is not None:
+            artist.set_color(marker.color)
+            artist.set_markerfacecolor(marker.color)
+            artist.set_markeredgecolor(marker.color)
+        if marker.size is not None:
+            artist.set_markersize(marker.size)
+        if marker.shape is not None:
+            artist.set_marker(marker.shape)
 
 
 def _is_line(artist) -> bool:
