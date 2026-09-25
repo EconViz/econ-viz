@@ -84,8 +84,9 @@ create_pr_body() {
 - ensure PyPI publish workflow skips existing files
 
 ## Validation
-- poetry run pytest tests/
-- poetry build
+- uv sync --frozen --all-extras
+- uv run pytest
+- uv build
 EOF_BODY
 }
 
@@ -104,10 +105,12 @@ prepare_release() {
   bump_version "$version"
   ensure_skip_existing
 
-  run poetry run pytest tests/
-  run poetry build
+  run uv lock
+  run uv sync --frozen --all-extras
+  run uv run pytest
+  run uv build
 
-  run git add .github/workflows/publish.yml pyproject.toml
+  run git add .github/workflows/publish.yml pyproject.toml uv.lock
   run git commit -m "chore(release): prepare ${tag}"
   run git push -u origin "$rel_branch"
 
@@ -143,7 +146,7 @@ finalize_release() {
 main() {
   need_cmd git
   need_cmd gh
-  need_cmd poetry
+  need_cmd uv
   need_cmd rg
 
   if [[ $# -eq 0 ]]; then

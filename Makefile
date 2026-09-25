@@ -1,6 +1,10 @@
-PYTHON := $(shell if [ -n "$$VIRTUAL_ENV" ]; then echo python3; else echo poetry run python3; fi)
+UV ?= uv
+PYTHON := $(UV) run python
 
-.PHONY: examples example-ic example-eq example-themes example-latex clean test
+.PHONY: sync examples example-ic example-eq example-themes example-latex clean test build
+
+sync:
+	$(UV) sync --frozen --all-extras
 
 examples: example-ic example-eq example-themes example-latex
 
@@ -20,4 +24,7 @@ clean:
 	rm -rf examples/output/*.png
 
 test:
-	$(PYTHON) -m pytest tests/
+	$(UV) run pytest
+
+build:
+	$(UV) build
