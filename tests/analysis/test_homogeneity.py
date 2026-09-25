@@ -9,6 +9,9 @@ from econ_viz.enums import ReturnsToScale
 from econ_viz.models import CobbDouglas, Leontief, PerfectSubstitutes, CES, StoneGeary
 
 
+pytestmark = pytest.mark.filterwarnings("ignore:invalid value encountered in scalar power:RuntimeWarning")
+
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------

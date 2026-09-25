@@ -16,6 +16,9 @@ Run the test suite:
 uv run pytest
 ```
 
+Tests are grouped by package domain under `tests/`. The default command
+measures statement and branch coverage and enforces the project coverage floor.
+
 ## How to contribute
 
 - **Bug reports** — open an issue with a minimal reproducible example

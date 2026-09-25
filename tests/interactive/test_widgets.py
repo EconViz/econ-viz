@@ -181,3 +181,18 @@ class TestWidgetViewerShow:
 
         with pytest.raises(ImportError):
             viewer.show()
+
+    def test_show_renders_initial_frame_with_installed_dependencies(self, monkeypatch):
+        pytest.importorskip("ipywidgets")
+        display_calls = []
+
+        monkeypatch.setattr("IPython.display.display", display_calls.append)
+        monkeypatch.setattr("IPython.display.clear_output", lambda **kwargs: None)
+
+        from econ_viz.interactive import WidgetViewer
+
+        viewer = WidgetViewer(lambda p1: Canvas(), p1=(1.0, 5.0, 1.0))
+        viewer.show()
+
+        assert len(display_calls) == 2
+        assert viewer._links
