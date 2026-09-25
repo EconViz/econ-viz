@@ -29,10 +29,13 @@ def render_path(
     if smooth_curve:
         curve_xs, curve_ys = smooth_fn(xs, ys)
         curve_xs, curve_ys = extend_fn(curve_xs, curve_ys)
-    canvas.ax.plot(curve_xs, curve_ys, color=color, linewidth=linewidth, clip_on=False)
+    (line,) = canvas.ax.plot(curve_xs, curve_ys, color=color, linewidth=linewidth, clip_on=False)
+    line._ev_role = "path"
 
     if label:
-        canvas._legend_handles.append(mlines.Line2D([], [], color=color, linewidth=linewidth, label=label))
+        handle = mlines.Line2D([], [], color=color, linewidth=linewidth, label=label)
+        handle._ev_role = "path"
+        canvas._legend_handles.append(handle)
 
     for idx, eq in enumerate(path.equilibria):
         if show_curves and hasattr(path, "func"):

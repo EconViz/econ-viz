@@ -47,7 +47,7 @@ def plot_price_line(
     """Draw the budget/price line segment inside the Edgeworth box."""
     if len(points) < 2:
         return
-    ax.plot(
+    (line,) = ax.plot(
         [points[0][0], points[-1][0]],
         [points[0][1], points[-1][1]],
         color=color,
@@ -55,6 +55,7 @@ def plot_price_line(
         linestyle=linestyle,
         label=label,
     )
+    line._ev_role = "price"
 
 
 def plot_equilibrium_marker(
@@ -105,7 +106,7 @@ def plot_indifference_pair(
     linestyle_b: str = "-",
 ) -> None:
     """Draw both agents' indifference contour families."""
-    ax.contour(
+    cs = ax.contour(
         X,
         Y,
         U_a,
@@ -114,7 +115,8 @@ def plot_indifference_pair(
         linewidths=linewidth,
         linestyles=linestyle_a,
     )
-    ax.contour(
+    cs._ev_role = "curve_a"
+    cs = ax.contour(
         X,
         Y,
         U_b,
@@ -123,6 +125,7 @@ def plot_indifference_pair(
         linewidths=linewidth,
         linestyles=linestyle_b,
     )
+    cs._ev_role = "curve_b"
 
 
 def plot_contract_curve(
@@ -137,7 +140,7 @@ def plot_contract_curve(
     """Draw contract curve polyline if points exist."""
     if len(points) == 0:
         return
-    ax.plot(
+    (line,) = ax.plot(
         points[:, 0],
         points[:, 1],
         color=color,
@@ -145,6 +148,7 @@ def plot_contract_curve(
         linestyle=linestyle,
         label=label,
     )
+    line._ev_role = "contract"
 
 
 def plot_core(
@@ -158,6 +162,7 @@ def plot_core(
 ) -> None:
     """Draw the core as a segment or singleton point."""
     if len(core_points) >= min_points:
-        ax.plot(core_points[:, 0], core_points[:, 1], color=color, linewidth=linewidth, label=label)
+        (line,) = ax.plot(core_points[:, 0], core_points[:, 1], color=color, linewidth=linewidth, label=label)
+        line._ev_role = "core"
     elif len(core_points) == 1:
         ax.plot(core_points[0, 0], core_points[0, 1], "o", color=color, label=label)

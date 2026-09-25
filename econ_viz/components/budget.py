@@ -68,11 +68,12 @@ class BudgetConstraint:
         )
 
         plot_label = rf"${self.label}$" if self.label else None
-        ax.plot(
+        (line,) = ax.plot(
             [x_int, 0], [0, y_int],
             color=self.color, linewidth=self.linewidth,
             linestyle=self.linestyle, label=plot_label,
         )
+        line._ev_role = "budget"
 
         if self.fill:
             ax.fill_between(

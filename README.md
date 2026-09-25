@@ -83,6 +83,22 @@ canvas = Canvas(
 )
 ```
 
+Every line can be restyled with a `Stroke`: width, line style, colour, and an
+arrowhead at its end. Fields you leave out keep the theme default (see the
+`*_stroke` defaults on `Theme`, such as `theme.budget_stroke`):
+
+```python
+from econ_viz import ArrowStyle, Stroke
+
+canvas = Canvas(axis_stroke=Stroke(width=1.4, arrow=ArrowStyle.SIMPLE))
+canvas.add_budget(2, 3, 30, stroke=Stroke(width=3, style="dashed"))
+canvas.add_equilibrium(eq, drop_stroke=Stroke(style="dashdot"))
+canvas.add_ray(0.5, stroke=Stroke(arrow=ArrowStyle.TRIANGLE))
+```
+
+`add_utility`, `add_path`, `add_decomposition`, `DemandDiagram`, and
+`EdgeworthBox` take one `*_stroke` argument per kind of line they draw.
+
 Set a font for one canvas or a whole multi-panel figure without touching
 Matplotlib's global settings. Pass a family name, a generic family such as
 `"serif"`, or a fallback list:

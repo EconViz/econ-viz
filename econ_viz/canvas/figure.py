@@ -14,6 +14,7 @@ from matplotlib.gridspec import GridSpec
 from .base import Canvas
 from ..constants.canvas import DEFAULT_DPI
 from .fonts import FontApplier, resolve_font, resolve_math_font
+from ..themes.stroke import Stroke
 from ..enums import ArrowStyle, LabelPosition, Layout, LineStyle
 from ..io import save_figure
 from ..themes import default as _default_theme
@@ -78,6 +79,8 @@ class Figure:
         Math font set applied to every panel. See :class:`Canvas`.
     x_line_style, y_line_style : LineStyle or str
         Per-panel axis line styles forwarded to :class:`Canvas`.
+    axis_stroke, x_axis_stroke, y_axis_stroke : Stroke, optional
+        Per-panel axis strokes forwarded to :class:`Canvas`.
     """
 
     def __init__(
@@ -97,12 +100,15 @@ class Figure:
         figsize: tuple[float, float] | None = None,
         hspace: float = 0.3,
         wspace: float = 0.25,
-        x_arrow_style: ArrowStyle | str = ArrowStyle.TRIANGLE,
-        y_arrow_style: ArrowStyle | str = ArrowStyle.TRIANGLE,
+        x_arrow_style: ArrowStyle | str | None = None,
+        y_arrow_style: ArrowStyle | str | None = None,
         font: str | Sequence[str] | None = None,
         math_font: str | None = None,
-        x_line_style: LineStyle | str = LineStyle.SOLID,
-        y_line_style: LineStyle | str = LineStyle.SOLID,
+        x_line_style: LineStyle | str | None = None,
+        y_line_style: LineStyle | str | None = None,
+        axis_stroke: Stroke | None = None,
+        x_axis_stroke: Stroke | None = None,
+        y_axis_stroke: Stroke | None = None,
     ):
         """Create a multi-panel figure composed of injected :class:`Canvas` instances."""
         self.layout = layout
@@ -154,6 +160,9 @@ class Figure:
                 math_font=self.math_font,
                 x_line_style=x_line_style,
                 y_line_style=y_line_style,
+                axis_stroke=axis_stroke,
+                x_axis_stroke=x_axis_stroke,
+                y_axis_stroke=y_axis_stroke,
             )
             self.canvases.append(canvas)
             self._grid_lookup[(spec.row, spec.col)] = canvas
