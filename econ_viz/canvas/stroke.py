@@ -56,6 +56,14 @@ def apply_strokes(ax, artists: Iterable, strokes: Mapping[str, Stroke | None]) -
             continue
         if isinstance(artist, Annotation) and artist.arrow_patch is not None:
             _style_patch(artist.arrow_patch, stroke)
+            if stroke.arrow is ArrowStyle.WEDGE and artist.xycoords == artist.anncoords:
+                # The annotation keeps a plain shaft; the wedge covers only its tip, as on other lines.
+                add_arrowhead(
+                    ax, [artist.xyann, artist.xy], ArrowStyle.WEDGE,
+                    color=artist.arrow_patch.get_edgecolor(), width=artist.arrow_patch.get_linewidth(),
+                    transform=ax.transData if artist.xycoords == "data" else artist.xycoords,
+                    role=artist._ev_role,
+                )
         elif isinstance(artist, Line2D) and _is_line(artist):
             _style_line(artist, stroke)
             if stroke.arrow:
@@ -108,7 +116,8 @@ def _style_patch(patch, stroke: Stroke) -> None:
     if stroke.color is not None:
         patch.set_color(stroke.color)
     if stroke.arrow is not None:
-        patch.set_arrowstyle(stroke.arrow.value)
+        # A wedge along a whole annotation becomes a long taper, so its head is drawn separately.
+        patch.set_arrowstyle("-" if stroke.arrow is ArrowStyle.WEDGE else stroke.arrow.value)
 
 
 def add_arrowhead(
@@ -124,9 +133,16 @@ def add_arrowhead(
     total = float(steps.sum())
     if total == 0:
         return None
-    frac = ARROW_WEDGE_FRAC if style is ArrowStyle.WEDGE else ARROW_HEAD_ONLY_FRAC
+    if style is ArrowStyle.WEDGE:
+        # Same on-screen size on every line: a share of the axes' longer side, capped at the line.
+        display = transform.transform(points)
+        display_total = float(np.linalg.norm(np.diff(display, axis=0), axis=1).sum())
+        bbox = ax.get_window_extent()
+        wanted = ARROW_WEDGE_FRAC * max(bbox.width, bbox.height)
+        remaining = total * min(wanted / display_total, 1.0) if display_total > 0 else 0.0
+    else:
+        remaining = ARROW_HEAD_ONLY_FRAC * total
     # Walk back along the line until the requested length is covered.
-    remaining = frac * total
     start = points[-2]
     for i in range(len(points) - 1, 0, -1):
         if steps[i - 1] >= remaining:
