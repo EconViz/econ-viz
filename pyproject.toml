@@ -62,8 +62,10 @@ addopts = "--cov=econ_viz --cov-report=term-missing --cov-report=html:htmlcov"
 
 [tool.coverage.run]
 source = ["econ_viz"]
+branch = true
 omit = ["econ_viz/logging.py"]
 
 [tool.coverage.report]
 show_missing = true
 skip_covered = false
+fail_under = 92

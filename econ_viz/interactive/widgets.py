@@ -113,6 +113,7 @@ class WidgetViewer:
             values={name: s.value for name, s in sliders.items()},
             plt=plt,
             clear_output=clear_output,
+            display=display,
         )
 
         # Wire each slider to the redraw callback.
@@ -122,6 +123,7 @@ class WidgetViewer:
                 values={name: s.value for name, s in sliders.items()},
                 plt=plt,
                 clear_output=clear_output,
+                display=display,
             )
 
         for slider in sliders.values():
@@ -204,6 +206,7 @@ class WidgetViewer:
         values: dict[str, float],
         plt,
         clear_output: Callable,
+        display: Callable,
     ) -> None:
         """Clear the output widget and render a fresh diagram."""
         with out:
