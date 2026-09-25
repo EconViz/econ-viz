@@ -15,11 +15,11 @@ Developers can lower the threshold to ``DEBUG`` for full numerical traces::
 
 import logging
 
-_LIBRARY_ROOT = "econ_viz"
+from ..constants.logging import LIBRARY_ROOT
 
 # Attach a NullHandler so that library consumers who have not configured
 # logging do not see "No handler found" warnings.
-logging.getLogger(_LIBRARY_ROOT).addHandler(logging.NullHandler())
+logging.getLogger(LIBRARY_ROOT).addHandler(logging.NullHandler())
 
 
 def get_logger(name: str) -> logging.Logger:
@@ -35,6 +35,6 @@ def get_logger(name: str) -> logging.Logger:
     -------
     logging.Logger
     """
-    if not name.startswith(_LIBRARY_ROOT):
-        name = f"{_LIBRARY_ROOT}.{name}"
+    if not name.startswith(LIBRARY_ROOT):
+        name = f"{LIBRARY_ROOT}.{name}"
     return logging.getLogger(name)

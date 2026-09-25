@@ -6,6 +6,7 @@ from dataclasses import dataclass
 import matplotlib.pyplot as plt
 import numpy as np
 
+from ..constants.canvas import DEFAULT_DPI, MAX_DPI, MIN_DPI
 from ..contours import around_anchor_levels, percentile_levels
 from ..io import save_figure
 from ..themes import default as _default_theme
@@ -29,8 +30,6 @@ from .edgeworth_plotter import (
 )
 from .edgeworth_state import EdgeworthState
 
-_MAX_DPI = 1200
-_DEFAULT_DPI = 300
 _EPS = 1e-3
 
 
@@ -61,7 +60,7 @@ class EdgeworthBox:
         x_label: str = "x",
         y_label: str = "y",
         title: str | None = None,
-        dpi: int = _DEFAULT_DPI,
+        dpi: int = DEFAULT_DPI,
         theme: Theme = _default_theme,
         utility_a_color: str | None = None,
         utility_b_color: str | None = None,
@@ -76,7 +75,7 @@ class EdgeworthBox:
         self.x_label = x_label
         self.y_label = y_label
         self.title = title
-        self.dpi = max(1, min(int(dpi), _MAX_DPI))
+        self.dpi = max(MIN_DPI, min(int(dpi), MAX_DPI))
         self.theme = theme
         self.utility_a_color = utility_a_color or theme.ic_color
         self.utility_b_color = utility_b_color or theme.path_color

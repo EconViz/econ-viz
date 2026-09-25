@@ -20,6 +20,14 @@ from matplotlib.patches import FancyArrowPatch
 from collections.abc import Sequence
 from typing import Callable
 
+from ..constants.canvas import (
+    DEFAULT_DPI,
+    ENDPOINT_EXTENSION_FRAC,
+    MATH_CHARS,
+    MAX_DPI,
+    MIN_DPI,
+    SMOOTH_SAMPLES,
+)
 from ..utils.logging import get_logger
 from ..themes import default as _default_theme
 from ..themes.theme import Theme
@@ -36,10 +44,6 @@ from ..canvas.renderers import (
 from ..io import save_figure
 
 logger = get_logger(__name__)
-
-_MAX_DPI = 1200
-_DEFAULT_DPI = 300
-_MATH_CHARS = {"^", "_", "{", "}", "\\"}
 
 _X_LABEL_POSITIONS = {
     LabelPosition.TOP: ((0, 8), "center", "bottom"),
@@ -97,14 +101,14 @@ def _math_wrap(text: str) -> str:
     for part in parts:
         if part.startswith("$") and part.endswith("$"):
             out.append(part)
-        elif any(c in part for c in _MATH_CHARS):
+        elif any(c in part for c in MATH_CHARS):
             out.append(f"${part}$")
         else:
             out.append(part)
     return "".join(out)
 
 
-def _smooth_xy(xs: list[float], ys: list[float], n_samples: int = 200) -> tuple[np.ndarray, np.ndarray]:
+def _smooth_xy(xs: list[float], ys: list[float], n_samples: int = SMOOTH_SAMPLES) -> tuple[np.ndarray, np.ndarray]:
     """Return a parametric spline through ``(xs, ys)`` or the raw data as fallback."""
     if len(xs) < 3 or len(ys) < 3:
         return np.asarray(xs, dtype=float), np.asarray(ys, dtype=float)
@@ -131,7 +135,7 @@ def _smooth_xy(xs: list[float], ys: list[float], n_samples: int = 200) -> tuple[
 def _extend_curve_endpoints(
     xs: np.ndarray,
     ys: np.ndarray,
-    extension_frac: float = 0.025,
+    extension_frac: float = ENDPOINT_EXTENSION_FRAC,
 ) -> tuple[np.ndarray, np.ndarray]:
     """Extend a curve slightly past its first and last points along endpoint tangents."""
     if len(xs) < 2 or len(ys) < 2 or extension_frac <= 0.0:
@@ -203,7 +207,7 @@ class Canvas:
         x_label: str = "X",
         y_label: str = "Y",
         title: str | None = None,
-        dpi: int = _DEFAULT_DPI,
+        dpi: int = DEFAULT_DPI,
         x_label_pos: LabelPosition | str = LabelPosition.RIGHT,
         y_label_pos: LabelPosition | str = LabelPosition.TOP,
         theme: Theme = _default_theme,
@@ -219,7 +223,7 @@ class Canvas:
         self.x_label = x_label
         self.y_label = y_label
         self.title = title
-        self.dpi = max(1, min(dpi, _MAX_DPI))
+        self.dpi = max(MIN_DPI, min(dpi, MAX_DPI))
         self.x_label_pos = _label_position(x_label_pos, axis="x")
         self.y_label_pos = _label_position(y_label_pos, axis="y")
         self.x_arrow_style = _arrow_style(x_arrow_style)

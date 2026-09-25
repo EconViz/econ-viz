@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from matplotlib.figure import Figure as MplFigure
 
+from ..constants.io import SAVEFIG_BBOX_INCHES
 from ..enums import ExportFormat
 from ..exceptions import ExportError
 
@@ -44,7 +45,7 @@ def save_figure(
             path,
             dpi=dpi,
             transparent=True,
-            bbox_inches="tight",
+            bbox_inches=SAVEFIG_BBOX_INCHES,
             **kwargs,
         )
     except OSError as exc:
