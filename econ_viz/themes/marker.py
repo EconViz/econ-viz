@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from matplotlib.markers import MarkerStyle
 
 from ..exceptions import InvalidParameterError
+from .opacity import check_opacity
 
 
 @dataclass(frozen=True)
@@ -21,13 +22,17 @@ class Marker:
         Marker size in points.
     shape : str, optional
         Any Matplotlib marker, e.g. ``"o"``, ``"s"``, ``"^"``, ``"D"``, ``"*"``.
+    opacity : float, optional
+        From 0 (transparent) to 1 (opaque).
     """
 
     color: str | None = None
     size: float | None = None
     shape: str | None = None
+    opacity: float | None = None
 
     def __post_init__(self) -> None:
+        check_opacity("Marker", self.opacity)
         if self.size is not None and not self.size > 0:
             raise InvalidParameterError(f"Marker size must be positive, got {self.size!r}")
         if self.shape is not None:
@@ -44,4 +49,5 @@ class Marker:
             color=self.color if self.color is not None else base.color,
             size=self.size if self.size is not None else base.size,
             shape=self.shape if self.shape is not None else base.shape,
+            opacity=self.opacity if self.opacity is not None else base.opacity,
         )

@@ -139,6 +139,7 @@ class Figure:
                 **({"fontsize": title_style.fontsize} if title_style.fontsize else {}),
             )
             suptitle.set_visible(title_style.visible is not False)
+            suptitle.set_alpha(title_style.opacity)
 
         gs = GridSpec(rows, cols, figure=self.fig, hspace=hspace, wspace=wspace)
         self.canvases: list[Canvas] = []

@@ -41,7 +41,13 @@ def place_legend(ax, handles: list, labels: list[str], legend: Legend) -> MplLeg
     position = legend.position or LegendPosition.AUTO
     if position is LegendPosition.AUTO:
         position = _best_position(ax, handles, labels, legend)
-    return _draw(ax, handles, labels, legend, position)
+    drawn = _draw(ax, handles, labels, legend, position)
+    if legend.opacity is not None:
+        drawn.get_frame().set_alpha(legend.opacity)
+        for artist in (*drawn.get_texts(), *drawn.legend_handles):
+            if artist is not None:
+                artist.set_alpha(legend.opacity)
+    return drawn
 
 
 def _draw(ax, handles, labels, legend: Legend, position: LegendPosition) -> MplLegend:

@@ -353,6 +353,7 @@ class Canvas:
                 clip_on=False,
             )
             axis_text.set_visible(style.visible is not False)
+            axis_text.set_alpha(style.opacity)
             axis_text._ev_axis_label = axis
 
         origin = self.ax.text(
@@ -361,6 +362,7 @@ class Canvas:
             fontsize=self.origin_style.fontsize, color=self.origin_style.color or t.label_color,
         )
         origin.set_visible(self.origin_style.visible is not False)
+        origin.set_alpha(self.origin_style.opacity)
         origin._ev_role = "origin_label"
 
         if self.title:
@@ -369,6 +371,7 @@ class Canvas:
                 **({"fontsize": self.title_style.fontsize} if self.title_style.fontsize else {}),
             )
             title.set_visible(self.title_style.visible is not False)
+            title.set_alpha(self.title_style.opacity)
 
         # Spines
         self.ax.spines["top"].set_visible(False)
@@ -377,6 +380,7 @@ class Canvas:
             self.ax.spines[spine].set_color(stroke.color)
             self.ax.spines[spine].set_linewidth(stroke.width)
             self.ax.spines[spine].set_linestyle(stroke.style.value)
+            self.ax.spines[spine].set_alpha(stroke.opacity)
 
         # Arrow terminators at axis tips
         def arrow_frac(style: ArrowStyle) -> float:
@@ -400,6 +404,7 @@ class Canvas:
                 shrinkA=0,
                 shrinkB=0,
                 clip_on=False,
+                alpha=stroke.opacity,
             )
             arrow._ev_axis_arrow = axis
             arrow._ev_arrow_style = stroke.arrow
@@ -606,7 +611,7 @@ class Canvas:
                 linestyle=linestyle,
                 label=label,
                 fill=fill is not False,
-                fill_alpha=shade.alpha,
+                fill_alpha=shade.opacity,
                 # Unset, the fill follows the line, including a Stroke colour.
                 fill_color=shade.color or (stroke.color if stroke is not None and stroke.color else None),
             )
@@ -870,6 +875,7 @@ class Canvas:
                         linestyle="--",
                         linewidth=effect_arrow_linewidth if effect_arrow_linewidth is not None else t.effect_arrow_linewidth,
                         label=rf"$Sub:\ \Delta x={sub_dx:+.2f},\ \Delta y={sub_dy:+.2f}$",
+                        alpha=substitution.opacity if substitution is not None else None,
                     ),
                     mlines.Line2D(
                         [],
@@ -878,6 +884,7 @@ class Canvas:
                         linestyle="--",
                         linewidth=effect_arrow_linewidth if effect_arrow_linewidth is not None else t.effect_arrow_linewidth,
                         label=rf"$Inc:\ \Delta x={inc_dx:+.2f},\ \Delta y={inc_dy:+.2f}$",
+                        alpha=income.opacity if income is not None else None,
                     ),
                 ])
                 for handle in self._legend_handles[-5:-2]:
