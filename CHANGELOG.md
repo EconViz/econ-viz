@@ -2,6 +2,34 @@
 
 <!-- version list -->
 
+## v1.8.0 (2026-09-26)
+
+### Features
+
+- Add `Effect` to set the colour, range-arrow height, and label (text and position) of each price-effect decomposition effect
+
+- Add `Marker` for point colour, size, and shape across `Canvas`, `DemandDiagram`, and `EdgeworthBox`
+
+- Add `Label` for point-label text, position (four sides and four corners), offset, colour, size, and visibility; labels follow their point's `Marker` colour, and the decomposition's A/B/C labels can be hidden
+
+- Add `Fill` so the budget-set shading can have its own colour and opacity
+
+- Add `Axis` to set one axis's label, label position, and stroke in `Canvas`, `Figure`, `DemandDiagram`, and `EdgeworthBox`
+
+- Add theme defaults for markers, labels, and fills, such as `theme.eq_marker`, `theme.point_label`, and `theme.budget_fill`
+
+### Changes
+
+- Reduce the default equilibrium point size from `6` to `4`
+
+- Document `Stroke` as the preferred way to style lines; the separate `color` / `linewidth` / `linestyle` arguments remain as shorthand
+
+### Bug Fixes
+
+- Draw wedge arrowheads at a fixed on-screen size instead of stretching them along the whole line
+
+- Apply `stroke_a` / `stroke_b` in `EdgeworthBox.add_equilibrium_indifference` and `add_indifference_curves_from_equilibrium`
+
 ## v1.7.0 (2026-09-25)
 
 ### Features
