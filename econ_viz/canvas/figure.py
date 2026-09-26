@@ -218,6 +218,8 @@ class Figure:
         ExportError
             If writing to disk fails.
         """
+        opaque_background = self.canvases[0].theme.background_color if self.canvases else None
+        kwargs.setdefault("transparent", opaque_background is None)
         save_figure(
             self.fig,
             path=path,

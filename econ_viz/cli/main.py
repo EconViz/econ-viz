@@ -110,7 +110,9 @@ def _register_plot(sub) -> argparse.ArgumentParser:
         type=str,
         default=None,
         metavar="NAME",
-        help="Theme name: default, nord (default: default, or the config's base).",
+        help=(
+            "Theme name: default, nord, paper, monochrome, presentation, dark (default: default, or the config's base)."
+        ),
     )
     p.add_argument("--config", type=str, default=None, metavar="FILE", help="TOML settings file (see 'econ-viz init').")
 

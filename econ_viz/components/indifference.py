@@ -35,6 +35,8 @@ class IndifferenceCurves:
         Kink marker colour.
     kink_radius : float
         Kink marker size factor.
+    subsistence_color, subsistence_linewidth : str, float
+        Appearance of Stone-Geary subsistence reference lines.
     """
 
     def __init__(
@@ -52,11 +54,15 @@ class IndifferenceCurves:
         label: str | None = None,
         show_ic_labels: bool = False,
         ic_label_fmt: str = "{:.2g}",
+        subsistence_color: str = "gray",
+        subsistence_linewidth: float = 0.8,
     ):
         self.func = func
         self.levels = levels
         self.color = color
         self.linewidth = linewidth
+        self.subsistence_color = subsistence_color
+        self.subsistence_linewidth = subsistence_linewidth
         self.show_rays = show_rays
         self.ray_color = ray_color
         self.ray_linewidth = ray_linewidth
@@ -145,8 +151,8 @@ class IndifferenceCurves:
 
         if hasattr(self.func, "subsistence_lines"):
             sub_x, sub_y = self.func.subsistence_lines()
-            style = dict(color="gray", linewidth=0.8, linestyle="--", alpha=0.6)
-            ax.axvline(x=sub_x, **style)
-            ax.axhline(y=sub_y, **style)
+            style = dict(color=self.subsistence_color, linewidth=self.subsistence_linewidth, linestyle="--", alpha=0.6)
+            tag(ax.axvline(x=sub_x, **style), "subsistence")
+            tag(ax.axhline(y=sub_y, **style), "subsistence")
 
         return computed

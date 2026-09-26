@@ -154,10 +154,15 @@ def active_theme() -> Theme:
 # ------------------------------------------------------------------
 
 
+def _builtin_theme_names() -> list[str]:
+    return [name for name in themes.__all__ if isinstance(getattr(themes, name, None), Theme)]
+
+
 def _base_theme(name: str, source: str) -> Theme:
     theme = getattr(themes, str(name), None)
     if not isinstance(theme, Theme):
-        raise InvalidParameterError(f"{source}: unknown base theme {name!r}; choose: default, nord")
+        choices = ", ".join(_builtin_theme_names())
+        raise InvalidParameterError(f"{source}: unknown base theme {name!r}; choose: {choices}")
     return theme
 
 
@@ -236,11 +241,12 @@ def template() -> str:
         return _choices(theme, pattern).removeprefix("choose: ")
 
     colours = sorted(f.name[: -len("_color")] for f in dataclasses.fields(theme) if f.name.endswith("_color"))
+    base_choices = ", ".join(_builtin_theme_names())
     return f"""# econ-viz settings. Load with:  Config.load("econ-viz.toml").use()
 # or on the command line:          econ-viz plot --config econ-viz.toml ...
 # Anything left out keeps the built-in default; delete what you don't need.
 
-base = "default"                 # built-in theme to start from: default, nord
+base = "default"                 # built-in theme to start from: {base_choices}
 
 [font]
 # text = "TeX Gyre Pagella"      # any installed font family

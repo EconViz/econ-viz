@@ -18,6 +18,9 @@ def render_equilibrium(
     ray_linewidth: float,
     x_max: float,
     y_max: float,
+    marker_shape: str = "o",
+    drop_linestyle: str = ":",
+    ray_linestyle: str = "--",
 ) -> None:
     """Render equilibrium marker/drop-lines/ray."""
     ep = EquilibriumPoint(
@@ -29,5 +32,8 @@ def render_equilibrium(
         show_ray=show_ray,
         ray_color=ray_color,
         ray_linewidth=ray_linewidth,
+        marker_shape=marker_shape,
+        drop_linestyle=drop_linestyle,
+        ray_linestyle=ray_linestyle,
     )
     ep.draw(ax, x_max, y_max)

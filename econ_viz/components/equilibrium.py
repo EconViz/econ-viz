@@ -43,6 +43,9 @@ class EquilibriumPoint:
         show_ray: bool = False,
         ray_color: str | None = None,
         ray_linewidth: float = 0.8,
+        marker_shape: str = "o",
+        drop_linestyle: str = ":",
+        ray_linestyle: str = "--",
     ):
         self.eq = eq
         self.color = color
@@ -52,6 +55,9 @@ class EquilibriumPoint:
         self.show_ray = show_ray
         self.ray_color = ray_color or color
         self.ray_linewidth = ray_linewidth
+        self.marker_shape = marker_shape
+        self.drop_linestyle = drop_linestyle
+        self.ray_linestyle = ray_linestyle
 
     def draw(self, ax, x_max: float, y_max: float) -> None:
         """Draw the equilibrium annotation onto *ax*."""
@@ -66,7 +72,9 @@ class EquilibriumPoint:
             eq.utility,
         )
 
-        (point,) = ax.plot(eq.x, eq.y, "o", color=self.color, markersize=self.markersize, clip_on=False, zorder=6)
+        (point,) = ax.plot(
+            eq.x, eq.y, self.marker_shape, color=self.color, markersize=self.markersize, clip_on=False, zorder=6
+        )
         tag(point, "equilibrium")
         if self.label:
             text = ax.annotate(
@@ -82,10 +90,18 @@ class EquilibriumPoint:
             tag_attr(text, "_ev_label_default", Label(position=LabelPosition.TOP_RIGHT, offset=5))
 
         if self.drop_dashes:
-            dash_kw = dict(color=self.color, linestyle=":", linewidth=0.8)
+            dash_kw = dict(color=self.color, linestyle=self.drop_linestyle, linewidth=0.8)
             for xs, ys in (([eq.x, eq.x], [0, eq.y]), ([0, eq.x], [eq.y, eq.y])):
                 (line,) = ax.plot(xs, ys, **dash_kw)
                 tag(line, "drop")
 
         if self.show_ray and eq.x > 1e-9:
-            draw_ray(ax, eq.y / eq.x, x_max, y_max, color=self.ray_color, linewidth=self.ray_linewidth)
+            draw_ray(
+                ax,
+                eq.y / eq.x,
+                x_max,
+                y_max,
+                color=self.ray_color,
+                linewidth=self.ray_linewidth,
+                linestyle=self.ray_linestyle,
+            )
