@@ -2,6 +2,20 @@
 
 <!-- version list -->
 
+## v1.11.0 (2026-09-26)
+
+### Features
+
+- Complete the theme system so Canvas, Figure, decomposition diagrams, and Edgeworth boxes consistently use theme-defined backgrounds, labels, strokes, markers, and auxiliary economic lines
+
+- Add four purpose-built themes: `paper` for journal figures, `monochrome` for black-and-white printing, `presentation` for projected slides, and `dark` for dark interfaces
+
+- Add theme-level `background_color` and `label_scale` controls, plus defaults for titles, boxes, paths, kinks, bliss points, contract curves, cores, endowments, prices, and Walrasian equilibria
+
+### Changes
+
+- Make CLI/config theme resolution recognize every built-in theme and preserve visual semantics across Canvas, Figure, DemandDiagram, and EdgeworthBox
+
 ## v1.10.1 (2026-09-26)
 
 ### Maintenance
