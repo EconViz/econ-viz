@@ -144,7 +144,15 @@ opacity of its own (default `theme.budget_fill`, coloured like the line):
 ```python
 from econ_viz import Fill
 
-canvas.add_budget(2, 3, 30, color="black", fill=Fill(color="lightgrey", alpha=0.4))
+canvas.add_budget(2, 3, 30, color="black", fill=Fill(color="lightgrey", opacity=0.4))
+```
+
+Every style object takes an `opacity` from 0 to 1, for example to show the
+original budget line faintly:
+
+```python
+canvas.add_budget(2, 3, 30, stroke=Stroke(opacity=0.35))
+canvas.add_decomposition(dec, income=Effect(opacity=0.5), legend=Legend(opacity=0.8))
 ```
 
 Each axis's label, label position, and stroke fit in one `Axis`, accepted by

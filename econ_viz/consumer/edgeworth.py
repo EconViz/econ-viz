@@ -188,12 +188,14 @@ class EdgeworthBox:
             self.ax.spines[side].set_color(stroke.color)
             self.ax.spines[side].set_linewidth(stroke.width)
             self.ax.spines[side].set_linestyle(stroke.style.value)
+            self.ax.spines[side].set_alpha(stroke.opacity)
 
         def styled_text(text, style: Label):
             text.set_color(style.color or t.label_color)
             if style.fontsize is not None:
                 text.set_fontsize(style.fontsize)
             text.set_visible(style.visible is not False)
+            text.set_alpha(style.opacity)
             return text
 
         styled_text(self.ax.set_xlabel(rf"${self.x_label}_A$"), self.x_label_style)

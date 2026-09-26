@@ -6,6 +6,7 @@ from dataclasses import dataclass, replace
 
 from ..enums import LabelPosition
 from ..exceptions import InvalidParameterError
+from .opacity import check_opacity
 
 _ALIASES = {"above": "top", "below": "bottom"}
 
@@ -39,6 +40,8 @@ class Label:
         Font size in points.
     visible : bool, optional
         ``False`` hides the label.
+    opacity : float, optional
+        From 0 (transparent) to 1 (opaque).
     """
 
     text: str | None = None
@@ -47,8 +50,10 @@ class Label:
     color: str | None = None
     fontsize: float | None = None
     visible: bool | None = None
+    opacity: float | None = None
 
     def __post_init__(self) -> None:
+        check_opacity("Label", self.opacity)
         if self.position is not None:
             object.__setattr__(self, "position", to_position(self.position, what="Label position"))
         if self.fontsize is not None and not self.fontsize > 0:
@@ -58,7 +63,7 @@ class Label:
         """Return this label with unset fields taken from *base*."""
         if base is None:
             return self
-        fields = ("text", "position", "offset", "color", "fontsize", "visible")
+        fields = ("text", "position", "offset", "color", "fontsize", "visible", "opacity")
         return Label(**{
             field: getattr(self, field) if getattr(self, field) is not None else getattr(base, field)
             for field in fields

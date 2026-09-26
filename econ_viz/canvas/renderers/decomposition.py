@@ -134,6 +134,7 @@ def render_decomposition(
         color=substitution_color,
         linewidth=effect_arrow_linewidth,
         role="substitution",
+        opacity=_opacity(substitution_effect),
     )
     _draw_effect_arrow(
         ax,
@@ -142,6 +143,7 @@ def render_decomposition(
         color=income_color,
         linewidth=effect_arrow_linewidth,
         role="income",
+        opacity=_opacity(income_effect),
     )
     a, b, c = ((eq.x, eq.y) for eq in (decomposition.A, decomposition.B, decomposition.C))
     _draw_effect_label(ax, start=a, end=b, effect=substitution_effect, color=substitution_color,
@@ -158,6 +160,7 @@ def _draw_effect_arrow(
     color: str,
     linewidth: float,
     role: str,
+    opacity: float | None = None,
 ) -> None:
     arrow = ax.annotate(
         "",
@@ -169,6 +172,7 @@ def _draw_effect_arrow(
             "linewidth": linewidth,
             "shrinkA": 0.0,
             "shrinkB": 0.0,
+            "alpha": opacity,
         },
         zorder=8,
     )
@@ -224,7 +228,11 @@ def _draw_x_projections(
     x0, x1 = ax.get_xlim()
     # A zero effect has no range; an arrow there would be a bare head.
     min_length = 1e-3 * abs(x1 - x0)
-    for (start_x, end_x, y, color) in ((a_x, b_x, sub_y, substitution_color), (b_x, c_x, inc_y, income_color)):
+    ranges = (
+        (a_x, b_x, sub_y, substitution_color, _opacity(substitution_effect)),
+        (b_x, c_x, inc_y, income_color, _opacity(income_effect)),
+    )
+    for (start_x, end_x, y, color, opacity) in ranges:
         if abs(end_x - start_x) <= min_length:
             continue
         effect_range = ax.annotate(
@@ -240,6 +248,7 @@ def _draw_x_projections(
                 "linestyle": "--",
                 "shrinkA": 0.0,
                 "shrinkB": 0.0,
+                "alpha": opacity,
             },
             zorder=9,
             clip_on=False,
@@ -251,6 +260,10 @@ def _draw_x_projections(
     _draw_effect_label(ax, start=(b_x, inc_y), end=(c_x, inc_y), effect=income_effect,
                        color=income_color, transform=xaxis_t, role="income_label", beyond_ends=True,
                        default=effect_label)
+
+
+def _opacity(effect: Effect | None) -> float | None:
+    return effect.opacity if effect is not None else None
 
 
 def _range_y(effect: Effect | None, default: float) -> float:
@@ -292,6 +305,7 @@ def _draw_effect_label(
         annotation_clip=False,
     )
     label.set_visible(style.visible is not False)
+    label.set_alpha(style.opacity if style.opacity is not None else effect.opacity)
     label._ev_role = role
 
 

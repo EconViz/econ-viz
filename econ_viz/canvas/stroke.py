@@ -76,7 +76,7 @@ def apply_strokes(ax, artists: Iterable, strokes: Mapping[str, Stroke | None]) -
                     ax, [artist.xyann, artist.xy], ArrowStyle.WEDGE,
                     color=artist.arrow_patch.get_edgecolor(), width=artist.arrow_patch.get_linewidth(),
                     transform=ax.transData if artist.xycoords == "data" else artist.xycoords,
-                    role=artist._ev_role,
+                    role=artist._ev_role, opacity=stroke.opacity,
                 )
         elif isinstance(artist, Line2D) and _is_line(artist):
             _style_line(artist, stroke)
@@ -84,7 +84,7 @@ def apply_strokes(ax, artists: Iterable, strokes: Mapping[str, Stroke | None]) -
                 add_arrowhead(
                     ax, artist.get_xydata(), stroke.arrow,
                     color=artist.get_color(), width=artist.get_linewidth(),
-                    transform=artist.get_transform(), role=artist._ev_role,
+                    transform=artist.get_transform(), role=artist._ev_role, opacity=stroke.opacity,
                 )
         elif isinstance(artist, Collection) and not isinstance(artist, PolyCollection):
             _style_collection(artist, stroke)
@@ -94,7 +94,7 @@ def apply_strokes(ax, artists: Iterable, strokes: Mapping[str, Stroke | None]) -
                     for segment in path.to_polygons(closed_only=False):
                         add_arrowhead(
                             ax, segment, stroke.arrow, color=color, width=width,
-                            transform=artist.get_transform(), role=artist._ev_role,
+                            transform=artist.get_transform(), role=artist._ev_role, opacity=stroke.opacity,
                         )
 
 
@@ -112,6 +112,8 @@ def apply_markers(artists: Iterable, markers: Mapping[str, Marker | None]) -> No
             artist.set_markersize(marker.size)
         if marker.shape is not None:
             artist.set_marker(marker.shape)
+        if marker.opacity is not None:
+            artist.set_alpha(marker.opacity)
 
 
 def apply_labels(artists: Iterable, labels: Mapping[str, Label | None], markers: Mapping[str, Marker | None]) -> None:
@@ -132,6 +134,8 @@ def apply_labels(artists: Iterable, labels: Mapping[str, Label | None], markers:
             artist.set_text(rf"${label.text}$")
         if label.fontsize is not None:
             artist.set_fontsize(label.fontsize)
+        if label.opacity is not None:
+            artist.set_alpha(label.opacity)
         placed = label.merged_over(default)
         moved = (placed.position, placed.offset) != (default.position, default.offset)
         if moved and isinstance(artist, Annotation):
@@ -155,6 +159,8 @@ def _style_line(line: Line2D, stroke: Stroke) -> None:
         line.set_linestyle(stroke.style.value)
     if stroke.color is not None:
         line.set_color(stroke.color)
+    if stroke.opacity is not None:
+        line.set_alpha(stroke.opacity)
 
 
 def _style_collection(collection: Collection, stroke: Stroke) -> None:
@@ -164,6 +170,8 @@ def _style_collection(collection: Collection, stroke: Stroke) -> None:
         collection.set_linestyle(stroke.style.value)
     if stroke.color is not None:
         collection.set_edgecolor(stroke.color)
+    if stroke.opacity is not None:
+        collection.set_alpha(stroke.opacity)
 
 
 def _style_patch(patch, stroke: Stroke) -> None:
@@ -173,13 +181,16 @@ def _style_patch(patch, stroke: Stroke) -> None:
         patch.set_linestyle(stroke.style.value)
     if stroke.color is not None:
         patch.set_color(stroke.color)
+    if stroke.opacity is not None:
+        patch.set_alpha(stroke.opacity)
     if stroke.arrow is not None:
         # A wedge along a whole annotation becomes a long taper, so its head is drawn separately.
         patch.set_arrowstyle("-" if stroke.arrow is ArrowStyle.WEDGE else stroke.arrow.value)
 
 
 def add_arrowhead(
-    ax, points, style: ArrowStyle, *, color, width: float, transform, role: str | None = None
+    ax, points, style: ArrowStyle, *, color, width: float, transform, role: str | None = None,
+    opacity: float | None = None,
 ) -> FancyArrowPatch | None:
     """Draw an arrowhead at the last point of *points* (N×2), pointing along the line."""
     points = np.asarray(points, dtype=float)
@@ -220,6 +231,7 @@ def add_arrowhead(
         transform=transform,
         clip_on=False,
         zorder=6,
+        alpha=opacity,
     )
     arrow._ev_arrow_for = role
     arrow._ev_arrow_style = style
