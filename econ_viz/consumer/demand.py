@@ -12,6 +12,8 @@ from ..enums import UtilityType
 from ..optimizer import solve
 from ..themes.axis import Axis
 from ..themes.label import Label, split_label
+from ..themes.legend import Legend
+from ..canvas.legend import place_legend
 from ..themes.marker import Marker
 from ..themes.stroke import Stroke
 from .paths import PricePath
@@ -85,6 +87,7 @@ class DemandDiagram(Figure):
         guide_stroke: Stroke | None = None,
         point_marker: Marker | None = None,
         point_label: Label | None = None,
+        legend: Legend | None = None,
     ) -> "DemandDiagram":
         """Draw the goods-space panel and the linked Marshallian demand panel.
 
@@ -93,7 +96,8 @@ class DemandDiagram(Figure):
         panel; the demand curve and its guides in the bottom panel.
         ``point_marker`` restyles the equilibrium points in both panels, and
         ``point_label`` their labels (its *text* is ignored; default
-        ``theme.point_label``).
+        ``theme.point_label``). ``legend`` places both panels' legends (default
+        ``theme.legend``: where they cover the least of each panel).
         """
         price_markers = price_markers or [self.path.parameter_values[len(self.path.parameter_values) // 2]]
         quantity_axis = self._quantity_axis()
@@ -139,7 +143,7 @@ class DemandDiagram(Figure):
             if show_pcc:
                 self.utility_canvas.add_path(self.path, label="PCC", show_points=False)
         if show_legend:
-            self.utility_canvas.show_legend(loc="upper right")
+            self.utility_canvas.show_legend(legend=legend)
             handles = [
                 mlines.Line2D([], [], color=self.demand_canvas.theme.ic_color, label="Marshallian demand"),
                 mlines.Line2D([], [], color=self.demand_canvas.theme.ic_color, linestyle="--", label="corner / boundary"),
@@ -148,14 +152,15 @@ class DemandDiagram(Figure):
                 for handle in handles:
                     handle._ev_role = "demand"
                 apply_strokes(self.demand_canvas.ax, handles, bottom)
-            self.demand_canvas.ax.legend(handles=handles, frameon=False, fontsize=11, loc="upper right")
+            place_legend(
+                self.demand_canvas.ax, handles, [h.get_label() for h in handles],
+                (legend or Legend()).merged_over(self.demand_canvas.theme.legend),
+            )
         else:
-            legend = self.utility_canvas.ax.get_legend()
-            if legend is not None:
-                legend.remove()
-            legend = self.demand_canvas.ax.get_legend()
-            if legend is not None:
-                legend.remove()
+            for ax in (self.utility_canvas.ax, self.demand_canvas.ax):
+                existing = ax.get_legend()
+                if existing is not None:
+                    existing.remove()
         return self
 
     def _quantity_axis(self) -> str:

@@ -41,6 +41,8 @@ from ..canvas.stroke import styled
 from ..themes.axis import Axis
 from ..themes.fill import Fill
 from ..themes.label import Label, split_label
+from ..themes.legend import Legend
+from ..canvas.legend import place_legend
 from ..themes.marker import Marker
 from ..themes.stroke import Stroke
 from ..canvas.primitives import annotate_math, plot_point
@@ -697,6 +699,7 @@ class Canvas:
         show_curves: bool = True,
         curve_stroke: Stroke | None = None,
         curve_label: Label | None = None,
+        legend: Legend | None = None,
     ) -> Canvas:
         """Render a Hicks/Slutsky price-effect decomposition on this canvas.
 
@@ -752,6 +755,10 @@ class Canvas:
             Turns on the :math:`U_0`, :math:`U_1`, :math:`U_B` labels at the
             curves' right ends and sets their position, colour, and size (default
             ``theme.ic_label``). Its *text* is ignored.
+        legend : Legend, optional
+            Where and how the A, B, C and effect legend is drawn (default
+            ``theme.legend``: placed where it covers the least of the diagram).
+            ``Legend(visible=False)`` hides it.
         """
         if show_curves and decomposition.func is not None:
             self._add_decomposition_curves(decomposition, curve_stroke, curve_label)
@@ -861,7 +868,7 @@ class Canvas:
                     handle._ev_role = "bundle"
                 self._legend_handles[-2]._ev_role = "substitution"
                 self._legend_handles[-1]._ev_role = "income"
-                self.show_legend(loc="upper right")
+                self.show_legend(legend=legend)
         return self
 
     def _add_decomposition_curves(self, decomposition, stroke: Stroke | None, label: Label | None) -> None:
@@ -1050,18 +1057,21 @@ class Canvas:
             )
         return self
 
-    def show_legend(self, **kwargs) -> Canvas:
+    def show_legend(self, legend: Legend | None = None, **kwargs) -> Canvas:
         """Render a legend for all labelled layers.
 
         Collects proxy artists registered by :meth:`add_utility`,
         :meth:`add_budget` (when a *label* is supplied), and any future
-        labelled layers, then delegates to :meth:`matplotlib.axes.Axes.legend`.
+        labelled layers.
 
         Parameters
         ----------
+        legend : Legend, optional
+            Position, font size, frame, and columns (default ``theme.legend``,
+            which places the legend where it covers the least of the diagram).
         **kwargs
-            Forwarded to :meth:`matplotlib.axes.Axes.legend`.  Common options:
-            ``loc``, ``frameon``, ``fontsize``.
+            Forwarded to :meth:`matplotlib.axes.Axes.legend` instead, when
+            given: ``loc``, ``frameon``, ``fontsize``, and so on.
 
         Returns
         -------
@@ -1072,9 +1082,12 @@ class Canvas:
         all_handles = self._legend_handles + budget_handles
         if all_handles:
             all_labels = [h.get_label() for h in self._legend_handles] + budget_labels
-            kwargs.setdefault("frameon", False)
-            kwargs.setdefault("fontsize", 11)
-            self.ax.legend(handles=all_handles, labels=all_labels, **kwargs)
+            if kwargs:
+                kwargs.setdefault("frameon", False)
+                kwargs.setdefault("fontsize", 11)
+                self.ax.legend(handles=all_handles, labels=all_labels, **kwargs)
+            else:
+                place_legend(self.ax, all_handles, all_labels, (legend or Legend()).merged_over(self.theme.legend))
         return self
 
     # ------------------------------------------------------------------

@@ -14,6 +14,8 @@ from ..themes import default as _default_theme
 from ..exceptions import InvalidParameterError
 from ..themes.axis import Axis
 from ..themes.label import Label, split_label
+from ..themes.legend import Legend
+from ..canvas.legend import place_legend
 from ..themes.marker import Marker
 from ..themes.stroke import Stroke
 from ..themes.theme import Theme
@@ -827,10 +829,21 @@ class EdgeworthBox:
         )
         return checks
 
-    def show_legend(self, **kwargs) -> "EdgeworthBox":
-        kwargs.setdefault("frameon", False)
-        kwargs.setdefault("fontsize", 10)
-        self.ax.legend(**kwargs)
+    def show_legend(self, legend: Legend | None = None, **kwargs) -> "EdgeworthBox":
+        """Draw the legend.
+
+        *legend* sets position, font size, frame, and columns (default
+        ``theme.legend`` at 10 pt, placed where it covers the least of the
+        box). Matplotlib ``**kwargs`` such as ``loc`` are used instead when given.
+        """
+        if kwargs:
+            kwargs.setdefault("frameon", False)
+            kwargs.setdefault("fontsize", 10)
+            self.ax.legend(**kwargs)
+            return self
+        handles, labels = self.ax.get_legend_handles_labels()
+        place_legend(self.ax, handles, labels,
+                     (legend or Legend()).merged_over(Legend(fontsize=10).merged_over(self.theme.legend)))
         return self
 
     def save(self, path: str, **kwargs) -> None:

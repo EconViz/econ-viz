@@ -149,6 +149,18 @@ canvas = Canvas(
 )
 ```
 
+Legends go where they cover the least of the diagram by default, moving
+outside the plot area when every corner is taken. Pass a `Legend` to choose
+an inside corner (`"upper left"`, …) or a side outside (`"top"`, `"bottom"`,
+`"left"`, `"right"`), or to change its font size, frame, and columns:
+
+```python
+from econ_viz import Legend
+
+canvas.add_decomposition(dec, legend=Legend(position="bottom"))
+canvas.show_legend(legend=Legend(position="upper left", fontsize=10))
+```
+
 Set a font for one canvas or a whole multi-panel figure without touching
 Matplotlib's global settings. Pass a family name, a generic family such as
 `"serif"`, or a fallback list:
