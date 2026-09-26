@@ -2,6 +2,20 @@
 
 <!-- version list -->
 
+## v1.10.0 (2026-09-26)
+
+### Features
+
+- Add `Config`, which loads diagram settings from an `econ-viz.toml` file: section names map to Theme properties (`[stroke.budget]`, `[label.point]`, `[marker.equilibrium]`, `[fill.budget]`, `[legend]`), plus `[color]`, `[font]`, and a `base` theme; `Config.load(...).use()` makes it the default for later diagrams
+
+- Add `econ-viz init`, which writes a commented settings template, and `econ-viz plot --config FILE`
+
+### Changes
+
+- `Canvas`, `Figure`, and `EdgeworthBox` take their theme and fonts from the active `Config` when none is passed; with no config the output is unchanged
+
+- Add `tomli` as a dependency on Python 3.10
+
 ## v1.9.0 (2026-09-26)
 
 ### Features
