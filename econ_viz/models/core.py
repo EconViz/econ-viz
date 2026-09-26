@@ -22,6 +22,7 @@ Class order
 6. QuasiLinear      — one linear good, no income effect
 7. StoneGeary       — subsistence extension of Cobb-Douglas
 8. Satiation        — bliss-point / non-monotone preferences
+9. Haagsma          — inferior good x, Giffen at high enough income
 """
 
 import numpy as np
@@ -472,6 +473,102 @@ class Satiation:
         if self.bliss_x == 0:
             return []
         return [self.bliss_y / self.bliss_x]
+
+    def kink_points(self, levels: list[float]) -> list[tuple[float, float]]:
+        return []
+
+
+@dataclass
+class Haagsma:
+    """Haagsma (2012) utility: U(x, y) = alpha_x ln(x - gamma_x) - alpha_y ln(gamma_y - y).
+
+    A separable, quasi-concave utility whose good *x* is always inferior and
+    becomes a Giffen good when income is high enough. Utility is defined for
+    x > gamma_x and 0 <= y < gamma_y. At an interior optimum, Marshallian
+    demand is
+
+        x* = alpha_x (gamma_y py - I) / ((alpha_y - alpha_x) px)
+             + alpha_y gamma_x / (alpha_y - alpha_x)
+
+    so dx*/dI < 0 always, and dx*/dpx > 0 (Giffen) exactly when
+    I > gamma_y * py. An optimum exists only while I < gamma_y * py +
+    gamma_x * px: with more income the consumer can push y towards gamma_y and
+    utility grows without bound.
+
+    Reference: Haagsma, R. (2012). A convenient utility function with Giffen
+    behaviour. *ISRN Economics*, 2012, 1-4. https://doi.org/10.5402/2012/608645
+
+    Parameters
+    ----------
+    alpha_x : float
+        Weight on good *x*. Must be positive and below *alpha_y*.
+    alpha_y : float
+        Weight on good *y*. Must exceed *alpha_x*.
+    gamma_x : float
+        Lower bound of good *x*. Must be positive.
+    gamma_y : float
+        Upper bound of good *y*. Must be positive.
+    """
+
+    alpha_x: float = 1.0
+    alpha_y: float = 2.0
+    gamma_x: float = 2.0
+    gamma_y: float = 27.0
+
+    def __post_init__(self) -> None:
+        _require_positive(
+            "Haagsma", alpha_x=self.alpha_x, alpha_y=self.alpha_y, gamma_x=self.gamma_x, gamma_y=self.gamma_y
+        )
+        if not self.alpha_x < self.alpha_y:
+            raise InvalidParameterError("Haagsma: alpha_x must be smaller than alpha_y.")
+
+    @property
+    def utility_type(self) -> UtilityType:
+        return UtilityType.SMOOTH
+
+    def __call__(self, x, y):
+        dx = np.asarray(x, dtype=float) - self.gamma_x
+        dy = self.gamma_y - np.asarray(y, dtype=float)
+        with np.errstate(invalid="ignore", divide="ignore"):
+            result = np.where(
+                (dx > 0) & (dy > 0),
+                self.alpha_x * np.log(dx) - self.alpha_y * np.log(dy),
+                np.nan,
+            )
+        return float(result) if result.ndim == 0 else result
+
+    def lower_bounds(self) -> tuple[float, float]:
+        """Return the minimum feasible (x, y)."""
+        return (self.gamma_x, 0.0)
+
+    def upper_bounds(self) -> tuple[float, float]:
+        """Return the supremum of feasible (x, y); y must stay below gamma_y."""
+        return (np.inf, self.gamma_y)
+
+    def validate_budget(self, px: float, py: float, income: float) -> None:
+        """Raise when utility is unbounded on the budget line, so no optimum exists."""
+        ceiling = self.gamma_y * py + self.gamma_x * px
+        if income >= ceiling:
+            raise InvalidParameterError(
+                f"Haagsma: income ({income:g}) must be below gamma_y*py + gamma_x*px ({ceiling:g}); "
+                "otherwise y can approach gamma_y and utility has no maximum."
+            )
+
+    def demand(self, px: float, py: float, income: float) -> tuple[float, float]:
+        """Closed-form interior Marshallian demand (x*, y*).
+
+        Valid when the result satisfies x* > gamma_x and 0 <= y* < gamma_y.
+        """
+        spread = self.alpha_y - self.alpha_x
+        x = self.alpha_x * (self.gamma_y * py - income) / (spread * px) + self.alpha_y * self.gamma_x / spread
+        return x, (income - px * x) / py
+
+    def is_giffen(self, px: float, py: float, income: float) -> bool:
+        """Return whether x is a Giffen good: gamma_y*py < I < gamma_y*py + gamma_x*px."""
+        return self.gamma_y * py < income < self.gamma_y * py + self.gamma_x * px
+
+    def ray_slopes(self) -> list[float]:
+        return []
 
     def kink_points(self, levels: list[float]) -> list[tuple[float, float]]:
         return []
