@@ -2,6 +2,22 @@
 
 <!-- version list -->
 
+## v1.10.1 (2026-09-26)
+
+### Maintenance
+
+- Add Ruff linting and formatting checks plus Mypy type checking to local contributor tooling and CI
+
+- Publish `econ-viz` as a PEP 561 typed package with an included `py.typed` marker
+
+- Standardize the remaining public exception messages in English
+
+### Bug Fixes
+
+- Import NumPy in `analysis.levels`, fixing the unresolved `np.ndarray` annotation
+
+- Bind the Pareto-search weight in each Edgeworth objective closure, preventing every objective from reusing the final loop value
+
 ## v1.10.0 (2026-09-26)
 
 ### Features
