@@ -26,6 +26,14 @@ class Theme:
         Colour for axis spines, ticks, and arrow terminators.
     label_color : str
         Colour for axis labels and the origin marker.
+    background_color : str, optional
+        Figure/axes background. ``None`` keeps the fully transparent default
+        (the previous, only, behaviour); set it for themes meant to be
+        viewed against a fixed backdrop, such as a dark theme.
+    label_scale : float
+        Multiplier applied to the font size of every :class:`Label` property
+        below that has one (``title_label`` and ``box_label`` follow
+        Matplotlib's own default size instead, so this doesn't reach them).
     ic_color : str
         Default colour for indifference curves.
     ic_linewidth : float
@@ -112,6 +120,8 @@ class Theme:
     # Axes & labels
     axis_color: str = "#222222"
     label_color: str = "#222222"
+    background_color: str | None = None
+    label_scale: float = 1.0
 
     # Indifference curves
     ic_color: str = "#377EB8"
@@ -203,12 +213,12 @@ class Theme:
     @property
     def axis_label(self) -> Label:
         """Axis labels at the arrow tips. Colour ``None`` uses ``label_color``."""
-        return Label(offset=8, fontsize=14)
+        return Label(offset=8, fontsize=round(14 * self.label_scale))
 
     @property
     def origin_label(self) -> Label:
         """The ``0`` at the origin. Colour ``None`` uses ``label_color``."""
-        return Label(text="0", fontsize=12)
+        return Label(text="0", fontsize=round(12 * self.label_scale))
 
     @property
     def title_label(self) -> Label:
@@ -223,32 +233,34 @@ class Theme:
     @property
     def effect_label(self) -> Label:
         """Labels beside decomposition effect arrows. Colour ``None`` follows the effect."""
-        return Label(fontsize=10)
+        return Label(fontsize=round(10 * self.label_scale))
 
     @property
     def point_label(self) -> Label:
         """Labels of equilibria and ``add_point`` points. Colour ``None`` follows the marker."""
-        return Label(position=LabelPosition.TOP_RIGHT, offset=5, fontsize=12)
+        return Label(position=LabelPosition.TOP_RIGHT, offset=5, fontsize=round(12 * self.label_scale))
 
     @property
     def bundle_label(self) -> Label:
         """Labels of decomposition bundles A, B, C."""
-        return Label(position=LabelPosition.TOP_RIGHT, offset=6, fontsize=12)
+        return Label(position=LabelPosition.TOP_RIGHT, offset=6, fontsize=round(12 * self.label_scale))
 
     @property
     def bliss_label(self) -> Label:
         """Label of the bliss point of satiation preferences."""
-        return Label(text=r"\mathbf{x}^*", position=LabelPosition.TOP_RIGHT, offset=5, fontsize=12)
+        return Label(
+            text=r"\mathbf{x}^*", position=LabelPosition.TOP_RIGHT, offset=5, fontsize=round(12 * self.label_scale)
+        )
 
     @property
     def ic_label(self) -> Label:
         """Utility-level labels at the right end of indifference curves; *text* is a format string."""
-        return Label(text="{:.2g}", position=LabelPosition.RIGHT, offset=4, fontsize=9)
+        return Label(text="{:.2g}", position=LabelPosition.RIGHT, offset=4, fontsize=round(9 * self.label_scale))
 
     @property
     def edgeworth_label(self) -> Label:
         """Labels of Edgeworth endowment and Walrasian equilibrium points."""
-        return Label(position=LabelPosition.TOP_RIGHT, offset=5, fontsize=11)
+        return Label(position=LabelPosition.TOP_RIGHT, offset=5, fontsize=round(11 * self.label_scale))
 
     @property
     def ic_stroke(self) -> Stroke:

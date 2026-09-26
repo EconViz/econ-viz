@@ -16,6 +16,7 @@ def save_figure(
     dpi: int,
     close: bool = False,
     unsupported_as_value_error: bool = False,
+    transparent: bool = True,
     **kwargs,
 ) -> None:
     """Save a matplotlib figure with consistent format validation and errors."""
@@ -44,7 +45,7 @@ def save_figure(
         fig.savefig(
             path,
             dpi=dpi,
-            transparent=True,
+            transparent=transparent,
             bbox_inches=SAVEFIG_BBOX_INCHES,
             **kwargs,
         )

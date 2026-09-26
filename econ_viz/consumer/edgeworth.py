@@ -181,6 +181,11 @@ class EdgeworthBox:
 
     def _apply_base_style(self) -> None:
         t = self.theme
+        if t.background_color is not None:
+            self.fig.patch.set_facecolor(t.background_color)
+            self.fig.patch.set_alpha(1.0)
+            self.ax.patch.set_facecolor(t.background_color)
+            self.ax.patch.set_alpha(1.0)
         self.ax.set_xlim(0.0, self.total_x)
         self.ax.set_ylim(0.0, self.total_y)
         self.ax.set_xticks([])
@@ -918,6 +923,7 @@ class EdgeworthBox:
 
     def save(self, path: str, **kwargs) -> None:
         """Export the Edgeworth box figure to disk."""
+        kwargs.setdefault("transparent", self.theme.background_color is None)
         save_figure(self.fig, path=path, dpi=self.dpi, close=True, **kwargs)
 
     def show(self) -> None:
