@@ -554,7 +554,11 @@ class Canvas:
         t = self.theme
         ic_fmt, ic_style = split_label(ic_label, t.ic_label, ic_label_fmt)
         bliss_text, bliss_style = split_label(bliss_label, t.bliss_label, t.bliss_label.text)
-        labels = {"ic_label": ic_style, "bliss_label": bliss_style}
+        labels = {
+            "ic_label": ic_style,
+            "secondary_ic_label": ic_style,
+            "bliss_label": bliss_style,
+        }
         markers = {"kink": kink_marker, "bliss": bliss_marker}
         sec = (secondary_stroke or Stroke()).merged_over(t.secondary_ic_stroke)
         with styled(

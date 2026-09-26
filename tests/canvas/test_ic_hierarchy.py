@@ -107,3 +107,19 @@ class TestThemeControlsHierarchy:
     def test_secondary_ic_color_falls_back_to_ic_color(self):
         assert themes.default.secondary_ic_color is None
         assert themes.default.secondary_ic_stroke.color == themes.default.ic_color
+
+    def test_ic_label_style_applies_to_focal_and_secondary_labels(self):
+        from dataclasses import replace
+
+        custom = replace(themes.default, label_scale=1.6)
+        cvs = Canvas(x_max=20, y_max=15, theme=custom).add_utility(
+            MODEL,
+            levels=[3, 5, 8],
+            highlight_level=5,
+            show_ic_labels=True,
+        )
+        labels = [
+            artist for artist in cvs.ax.texts if getattr(artist, "_ev_role", None) in ("ic_label", "secondary_ic_label")
+        ]
+        assert {getattr(artist, "_ev_role", None) for artist in labels} == {"ic_label", "secondary_ic_label"}
+        assert all(artist.get_fontsize() == pytest.approx(custom.ic_label.fontsize) for artist in labels)
