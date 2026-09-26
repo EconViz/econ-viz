@@ -2,6 +2,22 @@
 
 <!-- version list -->
 
+## v1.12.0 (2026-09-26)
+
+### Features
+
+- Add `highlight_level` to `Canvas.add_utility(...)` so one focal indifference curve can be emphasized while the remaining levels are drawn as a subdued secondary set
+
+- Add `secondary_stroke` plus theme-level secondary curve colour, linewidth, and opacity controls
+
+- Add numeric and textbook-style ordinal curve labels (`u_1`, `u_2`, ...) with tangent-aligned placement that stays inside the visible plotting area
+
+- Add a before/after/ordinal example for the indifference-curve hierarchy workflow
+
+### Changes
+
+- Apply indifference-curve label styling consistently to focal and secondary labels, while preserving smooth, linear, kinked, and satiation preferences
+
 ## v1.11.0 (2026-09-26)
 
 ### Features
