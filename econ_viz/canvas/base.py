@@ -427,9 +427,15 @@ class Canvas:
             tag_attr(arrow, "_ev_arrow_style", stroke.arrow)
             self.ax.add_patch(arrow)
 
-        # Transparent background
-        self.fig.patch.set_alpha(0.0)
-        self.ax.patch.set_alpha(0.0)
+        # Background: transparent by default, or theme.background_color when set.
+        if t.background_color is not None:
+            self.fig.patch.set_facecolor(t.background_color)
+            self.fig.patch.set_alpha(1.0)
+            self.ax.patch.set_facecolor(t.background_color)
+            self.ax.patch.set_alpha(1.0)
+        else:
+            self.fig.patch.set_alpha(0.0)
+            self.ax.patch.set_alpha(0.0)
 
     def set_axis_visibility(self, *, show_x_label: bool = True, show_y_label: bool = True) -> Canvas:
         """Toggle canvas axis-tip labels and origin marker for shared layouts."""
@@ -554,6 +560,9 @@ class Canvas:
                 ic_label_fmt=ic_fmt or ic_label_fmt,
                 show_bliss=show_bliss,
                 bliss_text=bliss_text or t.bliss_label.text or "x^*",
+                bliss_markersize=t.bliss_marker.size if t.bliss_marker.size is not None else 12.0,
+                subsistence_color=t.subsistence_color,
+                subsistence_linewidth=t.subsistence_linewidth,
                 x_max=self.x_max,
                 y_max=self.y_max,
                 **kwargs,
@@ -569,7 +578,7 @@ class Canvas:
         income: float,
         color: str | None = None,
         linewidth: float | None = None,
-        linestyle: str = "-",
+        linestyle: str | None = None,
         label: str | None = None,
         fill: bool | Fill = False,
         fill_alpha: float | None = None,
@@ -593,8 +602,8 @@ class Canvas:
             Line colour. *None* → ``theme.budget_color``.
         linewidth : float or None
             Stroke width. *None* → ``theme.budget_linewidth``.
-        linestyle : str
-            Matplotlib line-style string.
+        linestyle : str, optional
+            Matplotlib line-style string. *None* -> ``theme.budget_stroke``'s style.
         label : str or None
             Optional legend label rendered in LaTeX math mode.
         fill : bool or Fill
@@ -626,7 +635,8 @@ class Canvas:
                 income=income,
                 color=line_color,
                 linewidth=linewidth if linewidth is not None else t.budget_linewidth,
-                linestyle=linestyle,
+                # Theme.budget_stroke always normalises style to a LineStyle.
+                linestyle=linestyle or cast(LineStyle, t.budget_stroke.style).value,
                 label=label,
                 fill=fill is not False,
                 fill_alpha=shade.opacity if shade.opacity is not None else t.budget_fill_alpha,
@@ -690,6 +700,7 @@ class Canvas:
             markers={"equilibrium": marker},
             labels={"equilibrium_label": style},
         ):
+            # Theme.eq_marker/drop_stroke/ray_stroke always normalise shape/style.
             render_equilibrium(
                 self.ax,
                 eq=eq,
@@ -702,6 +713,9 @@ class Canvas:
                 ray_linewidth=t.ray_linewidth,
                 x_max=self.x_max,
                 y_max=self.y_max,
+                marker_shape=t.eq_marker.shape or "o",
+                drop_linestyle=cast(LineStyle, t.drop_stroke.style).value,
+                ray_linestyle=cast(LineStyle, t.ray_stroke.style).value,
             )
         return self
 
@@ -716,13 +730,13 @@ class Canvas:
         point_markersize: float | None = None,
         original_budget_color: str | None = None,
         original_budget_linewidth: float | None = None,
-        original_budget_linestyle: str = "-",
+        original_budget_linestyle: str | None = None,
         compensated_budget_color: str | None = None,
         compensated_budget_linewidth: float | None = None,
         compensated_budget_linestyle: str | None = None,
         final_budget_color: str | None = None,
         final_budget_linewidth: float | None = None,
-        final_budget_linestyle: str = "-.",
+        final_budget_linestyle: str | None = None,
         substitution_color: str | None = None,
         income_color: str | None = None,
         effect_arrow_linewidth: float | None = None,
@@ -830,11 +844,13 @@ class Canvas:
                 decomposition=decomposition,
                 point_color=point_color or t.eq_color,
                 point_markersize=(point_markersize if point_markersize is not None else t.eq_markersize),
+                point_marker_shape=t.eq_marker.shape or "o",
                 original_budget_color=original_budget_color or t.budget_color,
                 original_budget_linewidth=(
                     original_budget_linewidth if original_budget_linewidth is not None else t.budget_linewidth
                 ),
-                original_budget_linestyle=original_budget_linestyle,
+                # Theme.budget_stroke always normalises style to a LineStyle.
+                original_budget_linestyle=original_budget_linestyle or cast(LineStyle, t.budget_stroke.style).value,
                 compensated_budget_color=(compensated_budget_color or t.compensated_budget_color),
                 compensated_budget_linewidth=(
                     compensated_budget_linewidth
@@ -850,7 +866,7 @@ class Canvas:
                 final_budget_linewidth=(
                     final_budget_linewidth if final_budget_linewidth is not None else t.budget_linewidth
                 ),
-                final_budget_linestyle=final_budget_linestyle,
+                final_budget_linestyle=(final_budget_linestyle or cast(LineStyle, t.final_budget_stroke.style).value),
                 show_arrows=show_arrows,
                 arrows_below_axis=show_x_projections,
                 substitution_color=substitution_color or t.sub_effect_color,
@@ -858,6 +874,9 @@ class Canvas:
                 effect_arrow_linewidth=(
                     effect_arrow_linewidth if effect_arrow_linewidth is not None else t.effect_arrow_linewidth
                 ),
+                # Theme.substitution_stroke / income_stroke always normalise style to a LineStyle.
+                substitution_linestyle=cast(LineStyle, t.substitution_stroke.style).value,
+                income_linestyle=cast(LineStyle, t.income_stroke.style).value,
                 show_x_projections=show_x_projections,
                 substitution_effect=substitution,
                 income_effect=income,
@@ -983,6 +1002,8 @@ class Canvas:
                 self.y_max,
                 color=color or t.ray_color,
                 linewidth=linewidth if linewidth is not None else t.ray_linewidth,
+                # Theme.ray_stroke always normalises style to a LineStyle.
+                linestyle=cast(LineStyle, t.ray_stroke.style).value,
             )
         return self
 
@@ -1037,7 +1058,7 @@ class Canvas:
                 markersize=(
                     markersize if markersize is not None else (self.theme.point_marker.size or self.theme.eq_markersize)
                 ),
-                marker="o",
+                marker=self.theme.point_marker.shape or "o",
                 linestyle="None",
                 zorder=6,
                 clip_on=False,
@@ -1178,6 +1199,7 @@ class Canvas:
             ``tikz_scale`` and ``tikz_standalone``.
         """
         logger.info("Exporting figure to %s (dpi=%s)", path, self.dpi)
+        kwargs.setdefault("transparent", self.theme.background_color is None)
         save_figure(
             self.fig,
             path=path,

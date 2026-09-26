@@ -26,6 +26,14 @@ class Theme:
         Colour for axis spines, ticks, and arrow terminators.
     label_color : str
         Colour for axis labels and the origin marker.
+    background_color : str, optional
+        Figure/axes background. ``None`` keeps the fully transparent default
+        (the previous, only, behaviour); set it for themes meant to be
+        viewed against a fixed backdrop, such as a dark theme.
+    label_scale : float
+        Multiplier applied to the font size of every :class:`Label` property
+        below that has one (``title_label`` and ``box_label`` follow
+        Matplotlib's own default size instead, so this doesn't reach them).
     ic_color : str
         Default colour for indifference curves.
     ic_linewidth : float
@@ -98,9 +106,13 @@ class Theme:
     ========================== =========================================
 
     Point markers have defaults too (see :class:`Marker`): ``eq_marker``,
-    ``point_marker``, ``kink_marker``, ``bliss_marker``, and ``path_marker``;
-    so do text labels (see :class:`Label`): ``point_label``, ``bundle_label``,
-    ``bliss_label``, ``ic_label``, and ``edgeworth_label``.
+    ``point_marker``, ``kink_marker``, ``bliss_marker``, ``path_marker``,
+    ``core_marker``, ``endowment_marker``, and ``walrasian_marker``; so do
+    text labels (see :class:`Label`): ``point_label``, ``bundle_label``,
+    ``bliss_label``, ``ic_label``, and ``edgeworth_label``. Auxiliary lines
+    without their own colour/width fields have :class:`Stroke` defaults too:
+    ``subsistence_stroke``, ``contract_stroke``, ``core_stroke``, and
+    ``price_stroke``.
     """
 
     name: str
@@ -108,6 +120,8 @@ class Theme:
     # Axes & labels
     axis_color: str = "#222222"
     label_color: str = "#222222"
+    background_color: str | None = None
+    label_scale: float = 1.0
 
     # Indifference curves
     ic_color: str = "#377EB8"
@@ -140,6 +154,20 @@ class Theme:
     compensated_budget_color: str = "#777777"
     compensated_budget_linewidth: float = 1.5
     compensated_budget_linestyle: str = "--"
+    # Stone-Geary subsistence reference lines
+    subsistence_color: str = "gray"
+    subsistence_linewidth: float = 0.8
+
+    # Edgeworth box: contract curve, core, price line, Walrasian equilibrium
+    contract_color: str = "#000000"
+    contract_linewidth: float = 1.2
+    core_color: str = "#C0392B"
+    core_linewidth: float = 3.0
+    price_color: str = "#000000"
+    price_linewidth: float = 1.2
+    walrasian_color: str = "#2E86AB"
+    walrasian_markersize: float = 10.0
+
     # Lines without their own width/colour fields
     axis_stroke: Stroke = Stroke(width=0.8, style=LineStyle.SOLID, arrow=ArrowStyle.TRIANGLE)
     drop_stroke: Stroke = Stroke(width=0.8, style=LineStyle.DOTTED)
@@ -185,12 +213,12 @@ class Theme:
     @property
     def axis_label(self) -> Label:
         """Axis labels at the arrow tips. Colour ``None`` uses ``label_color``."""
-        return Label(offset=8, fontsize=14)
+        return Label(offset=8, fontsize=round(14 * self.label_scale))
 
     @property
     def origin_label(self) -> Label:
         """The ``0`` at the origin. Colour ``None`` uses ``label_color``."""
-        return Label(text="0", fontsize=12)
+        return Label(text="0", fontsize=round(12 * self.label_scale))
 
     @property
     def title_label(self) -> Label:
@@ -205,32 +233,34 @@ class Theme:
     @property
     def effect_label(self) -> Label:
         """Labels beside decomposition effect arrows. Colour ``None`` follows the effect."""
-        return Label(fontsize=10)
+        return Label(fontsize=round(10 * self.label_scale))
 
     @property
     def point_label(self) -> Label:
         """Labels of equilibria and ``add_point`` points. Colour ``None`` follows the marker."""
-        return Label(position=LabelPosition.TOP_RIGHT, offset=5, fontsize=12)
+        return Label(position=LabelPosition.TOP_RIGHT, offset=5, fontsize=round(12 * self.label_scale))
 
     @property
     def bundle_label(self) -> Label:
         """Labels of decomposition bundles A, B, C."""
-        return Label(position=LabelPosition.TOP_RIGHT, offset=6, fontsize=12)
+        return Label(position=LabelPosition.TOP_RIGHT, offset=6, fontsize=round(12 * self.label_scale))
 
     @property
     def bliss_label(self) -> Label:
         """Label of the bliss point of satiation preferences."""
-        return Label(text=r"\mathbf{x}^*", position=LabelPosition.TOP_RIGHT, offset=5, fontsize=12)
+        return Label(
+            text=r"\mathbf{x}^*", position=LabelPosition.TOP_RIGHT, offset=5, fontsize=round(12 * self.label_scale)
+        )
 
     @property
     def ic_label(self) -> Label:
         """Utility-level labels at the right end of indifference curves; *text* is a format string."""
-        return Label(text="{:.2g}", position=LabelPosition.RIGHT, offset=4, fontsize=9)
+        return Label(text="{:.2g}", position=LabelPosition.RIGHT, offset=4, fontsize=round(9 * self.label_scale))
 
     @property
     def edgeworth_label(self) -> Label:
         """Labels of Edgeworth endowment and Walrasian equilibrium points."""
-        return Label(position=LabelPosition.TOP_RIGHT, offset=5, fontsize=11)
+        return Label(position=LabelPosition.TOP_RIGHT, offset=5, fontsize=round(11 * self.label_scale))
 
     @property
     def ic_stroke(self) -> Stroke:
@@ -277,3 +307,38 @@ class Theme:
             color=self.inc_effect_color,
             arrow=ArrowStyle.SIMPLE,
         )
+
+    @property
+    def subsistence_stroke(self) -> Stroke:
+        """Stone-Geary subsistence reference lines."""
+        return Stroke(width=self.subsistence_linewidth, style=LineStyle.DASHED, color=self.subsistence_color)
+
+    @property
+    def contract_stroke(self) -> Stroke:
+        """Edgeworth contract curve."""
+        return Stroke(width=self.contract_linewidth, style=LineStyle.DASHED, color=self.contract_color)
+
+    @property
+    def core_stroke(self) -> Stroke:
+        """Edgeworth core segment."""
+        return Stroke(width=self.core_linewidth, style=LineStyle.SOLID, color=self.core_color)
+
+    @property
+    def core_marker(self) -> Marker:
+        """The core when it collapses to a single point."""
+        return Marker(color=self.core_color, shape="o")
+
+    @property
+    def price_stroke(self) -> Stroke:
+        """Edgeworth price line through the endowment."""
+        return Stroke(width=self.price_linewidth, style=LineStyle.DASHED, color=self.price_color)
+
+    @property
+    def endowment_marker(self) -> Marker:
+        """Edgeworth endowment point."""
+        return Marker(color=self.eq_color, size=max(self.eq_markersize, 6.0), shape="o")
+
+    @property
+    def walrasian_marker(self) -> Marker:
+        """Edgeworth Walrasian equilibrium point."""
+        return Marker(color=self.walrasian_color, size=self.walrasian_markersize, shape="*")

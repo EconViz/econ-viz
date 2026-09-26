@@ -49,6 +49,10 @@ def _themes_map() -> dict[str, object]:
         _THEMES = {
             "default": themes.default,
             "nord": themes.nord,
+            "paper": themes.paper,
+            "monochrome": themes.monochrome,
+            "presentation": themes.presentation,
+            "dark": themes.dark,
         }
     return _THEMES
 

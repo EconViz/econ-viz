@@ -26,6 +26,9 @@ def render_utility(
     ic_label_fmt: str,
     show_bliss: bool,
     bliss_text: str,
+    bliss_markersize: float,
+    subsistence_color: str,
+    subsistence_linewidth: float,
     x_max: float,
     y_max: float,
     **kwargs,
@@ -45,6 +48,8 @@ def render_utility(
         label=label,
         show_ic_labels=show_ic_labels,
         ic_label_fmt=ic_label_fmt,
+        subsistence_color=subsistence_color,
+        subsistence_linewidth=subsistence_linewidth,
     )
     ic.draw(ax, x_max, y_max, **kwargs)
 
@@ -54,7 +59,7 @@ def render_utility(
             func.bliss_y,
             "*",
             color=color,
-            markersize=12,
+            markersize=bliss_markersize,
             zorder=5,
         )
         tag(bliss, "bliss")

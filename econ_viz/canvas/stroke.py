@@ -85,6 +85,10 @@ _ROLE_STROKES = {
     "income": "income_stroke",
     "projection": "projection_stroke",
     "guide": "guide_stroke",
+    "subsistence": "subsistence_stroke",
+    "contract": "contract_stroke",
+    "core": "core_stroke",
+    "price": "price_stroke",
 }
 _ROLE_MARKERS = {
     "equilibrium": "eq_marker",
@@ -93,6 +97,9 @@ _ROLE_MARKERS = {
     "kink": "kink_marker",
     "bliss": "bliss_marker",
     "path_point": "path_marker",
+    "core_point": "core_marker",
+    "endowment": "endowment_marker",
+    "walrasian": "walrasian_marker",
 }
 
 
