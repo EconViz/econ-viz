@@ -98,9 +98,13 @@ class Theme:
     ========================== =========================================
 
     Point markers have defaults too (see :class:`Marker`): ``eq_marker``,
-    ``point_marker``, ``kink_marker``, ``bliss_marker``, and ``path_marker``;
-    so do text labels (see :class:`Label`): ``point_label``, ``bundle_label``,
-    ``bliss_label``, ``ic_label``, and ``edgeworth_label``.
+    ``point_marker``, ``kink_marker``, ``bliss_marker``, ``path_marker``,
+    ``core_marker``, ``endowment_marker``, and ``walrasian_marker``; so do
+    text labels (see :class:`Label`): ``point_label``, ``bundle_label``,
+    ``bliss_label``, ``ic_label``, and ``edgeworth_label``. Auxiliary lines
+    without their own colour/width fields have :class:`Stroke` defaults too:
+    ``subsistence_stroke``, ``contract_stroke``, ``core_stroke``, and
+    ``price_stroke``.
     """
 
     name: str
@@ -140,6 +144,20 @@ class Theme:
     compensated_budget_color: str = "#777777"
     compensated_budget_linewidth: float = 1.5
     compensated_budget_linestyle: str = "--"
+    # Stone-Geary subsistence reference lines
+    subsistence_color: str = "gray"
+    subsistence_linewidth: float = 0.8
+
+    # Edgeworth box: contract curve, core, price line, Walrasian equilibrium
+    contract_color: str = "#000000"
+    contract_linewidth: float = 1.2
+    core_color: str = "#C0392B"
+    core_linewidth: float = 3.0
+    price_color: str = "#000000"
+    price_linewidth: float = 1.2
+    walrasian_color: str = "#2E86AB"
+    walrasian_markersize: float = 10.0
+
     # Lines without their own width/colour fields
     axis_stroke: Stroke = Stroke(width=0.8, style=LineStyle.SOLID, arrow=ArrowStyle.TRIANGLE)
     drop_stroke: Stroke = Stroke(width=0.8, style=LineStyle.DOTTED)
@@ -277,3 +295,38 @@ class Theme:
             color=self.inc_effect_color,
             arrow=ArrowStyle.SIMPLE,
         )
+
+    @property
+    def subsistence_stroke(self) -> Stroke:
+        """Stone-Geary subsistence reference lines."""
+        return Stroke(width=self.subsistence_linewidth, style=LineStyle.DASHED, color=self.subsistence_color)
+
+    @property
+    def contract_stroke(self) -> Stroke:
+        """Edgeworth contract curve."""
+        return Stroke(width=self.contract_linewidth, style=LineStyle.DASHED, color=self.contract_color)
+
+    @property
+    def core_stroke(self) -> Stroke:
+        """Edgeworth core segment."""
+        return Stroke(width=self.core_linewidth, style=LineStyle.SOLID, color=self.core_color)
+
+    @property
+    def core_marker(self) -> Marker:
+        """The core when it collapses to a single point."""
+        return Marker(color=self.core_color, shape="o")
+
+    @property
+    def price_stroke(self) -> Stroke:
+        """Edgeworth price line through the endowment."""
+        return Stroke(width=self.price_linewidth, style=LineStyle.DASHED, color=self.price_color)
+
+    @property
+    def endowment_marker(self) -> Marker:
+        """Edgeworth endowment point."""
+        return Marker(color=self.eq_color, size=max(self.eq_markersize, 6.0), shape="o")
+
+    @property
+    def walrasian_marker(self) -> Marker:
+        """Edgeworth Walrasian equilibrium point."""
+        return Marker(color=self.walrasian_color, size=self.walrasian_markersize, shape="*")

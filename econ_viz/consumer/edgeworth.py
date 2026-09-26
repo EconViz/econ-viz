@@ -317,7 +317,9 @@ class EdgeworthBox:
                 raise ValueError("Endowment must lie inside the Edgeworth box.")
 
             self.endowment = (float(x_endowment), float(y_endowment))
-            c = color or self.theme.eq_color
+            endowment_marker = self.theme.endowment_marker
+            c = color or endowment_marker.color or self.theme.eq_color
+            size = endowment_marker.size if endowment_marker.size is not None else self.theme.eq_markersize
             plot_endowment(
                 self.ax,
                 x=x_endowment,
@@ -325,7 +327,7 @@ class EdgeworthBox:
                 total_x=self.total_x,
                 total_y=self.total_y,
                 color=c,
-                markersize=max(self.theme.eq_markersize, 6),
+                markersize=size,
                 label=text,
             )
         return self
@@ -532,8 +534,8 @@ class EdgeworthBox:
         *,
         n: int = 120,
         color: str | None = None,
-        linewidth: float | None = 1.2,
-        linestyle: str = "--",
+        linewidth: float | None = None,
+        linestyle: str | None = None,
         tolerance: float = 0.05,
         method: str = "auto",
         stroke: Stroke | None = None,
@@ -545,9 +547,16 @@ class EdgeworthBox:
 
         Parameters
         ----------
+        color : str, optional
+            Line colour. *None* → ``theme.contract_color``.
+        linewidth : float, optional
+            Line width. *None* → ``theme.contract_linewidth``.
+        linestyle : str, optional
+            Matplotlib line-style string. *None* → ``theme.contract_stroke``'s style.
         stroke : Stroke, optional
-            Line style for the contract curve.
+            Line style for the contract curve (default ``theme.contract_stroke``).
         """
+        t = self.theme
         with styled(self, {"contract": stroke}):
             if method not in {"auto", "mrs", "pareto"}:
                 raise ValueError("method must be one of: auto, mrs, pareto.")
@@ -559,14 +568,13 @@ class EdgeworthBox:
                 points = self._contract_curve_pareto(n=n)
 
             self.contract_curve_points = points
-            c = color or "#000000"
-            lw = linewidth if linewidth is not None else 1.2
+            # Theme.contract_stroke always normalises style to a LineStyle.
             plot_contract_curve(
                 self.ax,
                 points=points,
-                color=c,
-                linewidth=lw,
-                linestyle=linestyle,
+                color=color or t.contract_color,
+                linewidth=linewidth if linewidth is not None else t.contract_linewidth,
+                linestyle=linestyle or cast(LineStyle, t.contract_stroke.style).value,
                 label="Contract curve",
             )
         return self
@@ -664,8 +672,8 @@ class EdgeworthBox:
     def add_core(
         self,
         *,
-        color: str = "#C0392B",
-        linewidth: float = 3.0,
+        color: str | None = None,
+        linewidth: float | None = None,
         min_points: int = 2,
         tol: float = 1e-6,
         stroke: Stroke | None = None,
@@ -678,9 +686,17 @@ class EdgeworthBox:
 
         Parameters
         ----------
+        color : str, optional
+            Line/point colour. *None* → ``theme.core_color``.
+        linewidth : float, optional
+            Line width. *None* → ``theme.core_linewidth``.
         stroke : Stroke, optional
-            Line style for the core.
+            Line style for the core (default ``theme.core_stroke``).
+        marker : Marker, optional
+            Colour and shape when the core collapses to a single point
+            (default ``theme.core_marker``).
         """
+        t = self.theme
         with styled(self, {"core": stroke}, markers={"core_point": marker}):
             if self.endowment is None:
                 raise ValueError("Endowment is required. Call add_endowment(...) first.")
@@ -700,8 +716,8 @@ class EdgeworthBox:
             plot_core(
                 self.ax,
                 core_points=self.core_points,
-                color=color,
-                linewidth=linewidth,
+                color=color or t.core_color,
+                linewidth=linewidth if linewidth is not None else t.core_linewidth,
                 label="Core",
                 min_points=min_points,
             )
@@ -721,9 +737,9 @@ class EdgeworthBox:
         px: float,
         py: float,
         *,
-        color: str = "#000000",
-        linewidth: float = 1.2,
-        linestyle: str = "--",
+        color: str | None = None,
+        linewidth: float | None = None,
+        linestyle: str | None = None,
         label: str = "Price line",
         stroke: Stroke | None = None,
     ) -> EdgeworthBox:
@@ -734,9 +750,16 @@ class EdgeworthBox:
 
         Parameters
         ----------
+        color : str, optional
+            Line colour. *None* → ``theme.price_color``.
+        linewidth : float, optional
+            Line width. *None* → ``theme.price_linewidth``.
+        linestyle : str, optional
+            Matplotlib line-style string. *None* → ``theme.price_stroke``'s style.
         stroke : Stroke, optional
-            Line style for the price line.
+            Line style for the price line (default ``theme.price_stroke``).
         """
+        t = self.theme
         with styled(self, {"price": stroke}):
             if px <= 0 or py <= 0:
                 raise ValueError("px and py must be positive.")
@@ -749,9 +772,10 @@ class EdgeworthBox:
             plot_price_line(
                 self.ax,
                 points=pts,
-                color=color,
-                linewidth=linewidth,
-                linestyle=linestyle,
+                color=color or t.price_color,
+                linewidth=linewidth if linewidth is not None else t.price_linewidth,
+                # Theme.price_stroke always normalises style to a LineStyle.
+                linestyle=linestyle or cast(LineStyle, t.price_stroke.style).value,
                 label=label,
             )
         return self
@@ -761,9 +785,9 @@ class EdgeworthBox:
         px: float,
         py: float,
         *,
-        color: str = "#2E86AB",
-        marker: str | Marker = "*",
-        markersize: float = 10.0,
+        color: str | None = None,
+        marker: str | Marker | None = None,
+        markersize: float | None = None,
         label: str | Label = r"X^*",
         contract_stroke: Stroke | None = None,
     ) -> EdgeworthBox:
@@ -771,22 +795,30 @@ class EdgeworthBox:
 
         Parameters
         ----------
+        color : str, optional
+            Marker colour. *None* → ``theme.walrasian_color``.
+        markersize : float, optional
+            Marker size. *None* → ``theme.walrasian_markersize``.
         contract_stroke : Stroke, optional
-            Line style for the contract curve.
-        marker : str or Marker
-            Marker shape (legacy), or a :class:`Marker` for colour, size, and shape.
+            Line style for the contract curve (default ``theme.contract_stroke``).
+        marker : str or Marker, optional
+            Marker shape (legacy), or a :class:`Marker` for colour, size, and
+            shape (default ``theme.walrasian_marker``).
         label : str or Label
             Label text, or a :class:`Label` for its text, position, colour,
             and size (default ``theme.edgeworth_label``).
         """
+        t = self.theme
         text, label_style = split_label(label, self.theme.edgeworth_label, r"X^*")
         assert text is not None
         marker_style = marker if isinstance(marker, Marker) else None
+        default_shape = t.walrasian_marker.shape or "*"
         if marker_style is not None:
-            shape = marker_style.shape or "*"
-        else:
-            assert isinstance(marker, str)
+            shape = marker_style.shape or default_shape
+        elif isinstance(marker, str):
             shape = marker
+        else:
+            shape = default_shape
         with styled(
             self,
             {"contract": contract_stroke},
@@ -820,9 +852,9 @@ class EdgeworthBox:
                 y=y_star,
                 total_x=self.total_x,
                 total_y=self.total_y,
-                color=color,
+                color=color or t.walrasian_color,
                 marker=shape,
-                markersize=markersize,
+                markersize=markersize if markersize is not None else t.walrasian_markersize,
                 label=text,
             )
         return self
