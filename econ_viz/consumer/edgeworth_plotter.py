@@ -4,6 +4,9 @@ from __future__ import annotations
 
 import numpy as np
 
+from ..enums import LabelPosition
+from ..themes.label import Label
+
 
 def plot_endowment(
     ax,
@@ -26,14 +29,17 @@ def plot_endowment(
         zorder=20,
     )
     point._ev_role = "endowment"
-    ax.text(
-        x + total_x * 0.015,
-        y + total_y * 0.015,
+    text = ax.annotate(
         rf"${label}$",
+        (x, y),
+        textcoords="offset points",
+        xytext=(5, 5),
         color=color,
         fontsize=11,
         zorder=21,
     )
+    text._ev_role = "endowment_label"
+    text._ev_label_default = Label(position=LabelPosition.TOP_RIGHT, offset=5)
 
 
 def plot_price_line(
@@ -82,14 +88,17 @@ def plot_equilibrium_marker(
         zorder=22,
     )
     point._ev_role = "walrasian"
-    ax.text(
-        x + total_x * 0.012,
-        y + total_y * 0.012,
+    text = ax.annotate(
         rf"${label}$",
+        (x, y),
+        textcoords="offset points",
+        xytext=(5, 5),
         color=color,
         fontsize=11,
         zorder=23,
     )
+    text._ev_role = "walrasian_label"
+    text._ev_label_default = Label(position=LabelPosition.TOP_RIGHT, offset=5)
 
 
 def plot_indifference_pair(

@@ -6,7 +6,9 @@ from typing import Iterable
 
 from ...constants.canvas import INCOME_RANGE_Y, SUBSTITUTION_RANGE_Y
 from ...enums import LabelPosition
+from ...themes.label import Label
 from ..effect import Effect
+from ..labels import placement
 from ..primitives import annotate_math, plot_point
 from .budget import render_budget
 
@@ -104,6 +106,8 @@ def render_decomposition(
             offset=(6, 6),
             fontsize=12,
             zorder=8,
+            role="bundle_label",
+            default=Label(position=LabelPosition.TOP_RIGHT, offset=6),
         )
 
     if not show_arrows:
@@ -256,15 +260,6 @@ def _range_y(effect: Effect | None, default: float) -> float:
     return effect.y if effect is not None and effect.y is not None else default
 
 
-# Label direction (unit offset), horizontal and vertical alignment per position.
-_LABEL_LAYOUT = {
-    LabelPosition.TOP: ((0, 1), "center", "bottom"),
-    LabelPosition.BOTTOM: ((0, -1), "center", "top"),
-    LabelPosition.LEFT: ((-1, 0), "right", "center"),
-    LabelPosition.RIGHT: ((1, 0), "left", "center"),
-}
-
-
 def _draw_effect_label(
     ax, *, start, end, effect: Effect | None, color: str, transform, role: str, beyond_ends: bool = False
 ) -> None:
@@ -275,7 +270,7 @@ def _draw_effect_label(
     """
     if effect is None or not effect.label:
         return
-    (dx, dy), ha, va = _LABEL_LAYOUT[effect.label_position]
+    (dx, dy), ha, va = placement(effect.label_position, effect.label_offset)
     if beyond_ends and effect.label_position is LabelPosition.LEFT:
         anchor = min(start, end, key=lambda p: p[0])
     elif beyond_ends and effect.label_position is LabelPosition.RIGHT:
@@ -286,7 +281,7 @@ def _draw_effect_label(
         effect.label,
         xy=anchor,
         xycoords=transform,
-        xytext=(dx * effect.label_offset, dy * effect.label_offset),
+        xytext=(dx, dy),
         textcoords="offset points",
         ha=ha,
         va=va,

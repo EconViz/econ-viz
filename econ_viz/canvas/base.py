@@ -18,6 +18,7 @@ import matplotlib.lines as mlines
 from matplotlib.patches import FancyArrowPatch
 
 from collections.abc import Sequence
+from dataclasses import replace
 from typing import Callable
 
 from ..constants.canvas import (
@@ -37,6 +38,7 @@ from ..enums import ArrowStyle, LabelPosition, LineStyle
 from ..canvas.fonts import FontApplier, resolve_font, resolve_math_font
 from ..canvas.effect import Effect
 from ..canvas.stroke import styled
+from ..themes.label import Label, split_label
 from ..themes.marker import Marker
 from ..themes.stroke import Stroke
 from ..canvas.primitives import annotate_math, plot_point
@@ -412,6 +414,8 @@ class Canvas:
         ray_stroke: Stroke | None = None,
         kink_marker: Marker | None = None,
         bliss_marker: Marker | None = None,
+        ic_label: Label | None = None,
+        bliss_label: str | Label | None = None,
         **kwargs,
     ) -> Canvas:
         """Add indifference curves for a given utility function.
@@ -462,13 +466,24 @@ class Canvas:
         bliss_marker : Marker, optional
             Colour, size, and shape of the bliss point (default ``theme.bliss_marker``).
 
+        ic_label : Label, optional
+            Utility-level labels at the right end of each curve (default
+            ``theme.ic_label``); passing one turns them on. Its *text* is the
+            format string, like *ic_label_fmt*.
+        bliss_label : str or Label, optional
+            Text and placement of the bliss-point label (default ``theme.bliss_label``).
+
         Returns
         -------
         Canvas
             *self*, to allow method chaining.
         """
-        with styled(self, {"curve": stroke, "ray": ray_stroke}, markers={"kink": kink_marker, "bliss": bliss_marker}):
-            t = self.theme
+        t = self.theme
+        ic_fmt, ic_style = split_label(ic_label, t.ic_label, ic_label_fmt)
+        bliss_text, bliss_style = split_label(bliss_label, t.bliss_label, t.bliss_label.text)
+        labels = {"ic_label": ic_style, "bliss_label": bliss_style}
+        markers = {"kink": kink_marker, "bliss": bliss_marker}
+        with styled(self, {"curve": stroke, "ray": ray_stroke}, markers=markers, labels=labels):
             ic = render_utility(
                 self.ax,
                 func=func,
@@ -482,9 +497,10 @@ class Canvas:
                 kink_color=t.kink_color,
                 kink_radius=kink_radius,
                 label=label,
-                show_ic_labels=show_ic_labels,
-                ic_label_fmt=ic_label_fmt,
+                show_ic_labels=show_ic_labels or ic_label is not None,
+                ic_label_fmt=ic_fmt or ic_label_fmt,
                 show_bliss=show_bliss,
+                bliss_text=bliss_text or t.bliss_label.text,
                 x_max=self.x_max,
                 y_max=self.y_max,
                 **kwargs,
@@ -559,7 +575,7 @@ class Canvas:
         eq,
         color: str | None = None,
         markersize: float | None = None,
-        label: str | None = "x^*",
+        label: str | Label | None = "x^*",
         drop_dashes: bool = True,
         show_ray: bool = False,
         drop_stroke: Stroke | None = None,
@@ -579,8 +595,10 @@ class Canvas:
             Marker / drop-line colour. *None* → ``theme.eq_color``.
         markersize : float or None
             Dot size. *None* → ``theme.eq_markersize``.
-        label : str or None
-            LaTeX label placed next to the dot.
+        label : str, Label, or None
+            LaTeX label placed next to the dot, or a :class:`Label` for its
+            text, position, colour, and size (default ``theme.point_label``;
+            a Label without text keeps ``x^*``). *None* draws no label.
         drop_dashes : bool
             Draw dashed perpendicular lines from the optimum to both axes.
         show_ray : bool
@@ -599,14 +617,16 @@ class Canvas:
         Canvas
             *self*, to allow method chaining.
         """
-        with styled(self, {"drop": drop_stroke, "ray": ray_stroke}, markers={"equilibrium": marker}):
-            t = self.theme
+        t = self.theme
+        text, style = split_label(label, t.point_label, "x^*")
+        with styled(self, {"drop": drop_stroke, "ray": ray_stroke}, markers={"equilibrium": marker},
+                    labels={"equilibrium_label": style}):
             render_equilibrium(
                 self.ax,
                 eq=eq,
                 color=color or t.eq_color,
                 markersize=markersize if markersize is not None else t.eq_markersize,
-                label=label,
+                label=text,
                 drop_dashes=drop_dashes,
                 show_ray=show_ray,
                 ray_color=t.ray_color,
@@ -648,6 +668,7 @@ class Canvas:
         substitution: Effect | None = None,
         income: Effect | None = None,
         point_marker: Marker | None = None,
+        point_label: Label | None = None,
     ) -> Canvas:
         """Render a Hicks/Slutsky price-effect decomposition on this canvas.
 
@@ -683,8 +704,13 @@ class Canvas:
             overrides both.
         point_marker : Marker, optional
             Colour, size, and shape of bundles A, B, C and their legend entries (default ``theme.eq_marker``).
+        point_label : Label, optional
+            Position, colour, and size of the A, B, C labels (default
+            ``theme.bundle_label``); ``Label(visible=False)`` hides them. Its
+            *text* is ignored.
         """
-        with styled(self, {"original_budget": original_budget_stroke, "compensated_budget": compensated_budget_stroke, "final_budget": final_budget_stroke, "substitution": substitution_stroke, "income": income_stroke, "projection": projection_stroke, "guide": guide_stroke, "range": range_stroke}, markers={"bundle": point_marker}):
+        _, bundle_style = split_label(point_label, self.theme.bundle_label)
+        with styled(self, {"original_budget": original_budget_stroke, "compensated_budget": compensated_budget_stroke, "final_budget": final_budget_stroke, "substitution": substitution_stroke, "income": income_stroke, "projection": projection_stroke, "guide": guide_stroke, "range": range_stroke}, markers={"bundle": point_marker}, labels={"bundle_label": bundle_style}):
             if substitution is not None and substitution.color is not None:
                 substitution_color = substitution.color
             if income is not None and income.color is not None:
@@ -833,10 +859,10 @@ class Canvas:
         self,
         x: float,
         y: float,
-        label: str | None = None,
+        label: str | Label | None = None,
         color: str | None = None,
         markersize: float | None = None,
-        offset: tuple[float, float] = (5, 5),
+        offset: tuple[float, float] | None = None,
         marker: Marker | None = None,
     ) -> Canvas:
         """Plot a labelled point on the canvas.
@@ -845,14 +871,17 @@ class Canvas:
         ----------
         x, y : float
             Coordinates of the point.
-        label : str or None
-            Text label (rendered in LaTeX math mode if provided).
+        label : str, Label, or None
+            Text label (rendered in LaTeX math mode if provided), or a
+            :class:`Label` for its text, position, colour, and size (default
+            ``theme.point_label``).
         color : str or None
             Marker and label colour. *None* → ``theme.eq_color``.
         markersize : float or None
             Size of the dot. *None* → ``theme.point_marker.size``.
-        offset : tuple[float, float]
-            ``(dx, dy)`` text offset in points from the marker centre.
+        offset : tuple[float, float], optional
+            ``(dx, dy)`` text offset in points from the marker centre
+            (default ``(5, 5)``). A Label position or offset takes precedence.
 
         marker : Marker, optional
             Colour, size, and shape of the point (default ``theme.point_marker``).
@@ -862,7 +891,12 @@ class Canvas:
         Canvas
             *self*, to allow method chaining.
         """
-        with styled(self, {}, markers={"point": marker}):
+        text, style = split_label(label, self.theme.point_label)
+        moves = isinstance(label, Label) and (label.position is not None or label.offset is not None)
+        if offset is not None and not moves:
+            # An explicit (dx, dy) keeps its place unless the Label itself moves the text.
+            style = replace(style, position=None, offset=None)
+        with styled(self, {}, markers={"point": marker}, labels={"point_label": style}):
             c = color or self.theme.eq_color
             plot_point(
                 self.ax,
@@ -876,16 +910,18 @@ class Canvas:
                 clip_on=False,
                 role="point",
             )
-            if label:
+            if text:
                 annotate_math(
                     self.ax,
                     x=x,
                     y=y,
-                    text=label,
+                    text=text,
                     color=c,
-                    offset=offset,
+                    offset=offset or (5, 5),
                     fontsize=12,
                     zorder=7,
+                    role="point_label",
+                    default=None if offset else Label(position=LabelPosition.TOP_RIGHT, offset=5),
                 )
         return self
 

@@ -2,7 +2,8 @@
 
 from dataclasses import dataclass
 
-from ..enums import ArrowStyle, LineStyle
+from ..enums import ArrowStyle, LabelPosition, LineStyle
+from .label import Label
 from .marker import Marker
 from .stroke import Stroke
 
@@ -95,7 +96,9 @@ class Theme:
     ========================== =========================================
 
     Point markers have defaults too (see :class:`Marker`): ``eq_marker``,
-    ``point_marker``, ``kink_marker``, ``bliss_marker``, and ``path_marker``.
+    ``point_marker``, ``kink_marker``, ``bliss_marker``, and ``path_marker``;
+    so do text labels (see :class:`Label`): ``point_label``, ``bundle_label``,
+    ``bliss_label``, ``ic_label``, and ``edgeworth_label``.
     """
 
     name: str
@@ -166,6 +169,31 @@ class Theme:
     def path_marker(self) -> Marker:
         """Points on PCC / ICC paths. Colour ``None`` uses the path colour."""
         return Marker(size=max(self.eq_markersize - 1, 3), shape="o")
+
+    @property
+    def point_label(self) -> Label:
+        """Labels of equilibria and ``add_point`` points. Colour ``None`` follows the marker."""
+        return Label(position=LabelPosition.TOP_RIGHT, offset=5, fontsize=12)
+
+    @property
+    def bundle_label(self) -> Label:
+        """Labels of decomposition bundles A, B, C."""
+        return Label(position=LabelPosition.TOP_RIGHT, offset=6, fontsize=12)
+
+    @property
+    def bliss_label(self) -> Label:
+        """Label of the bliss point of satiation preferences."""
+        return Label(text=r"\mathbf{x}^*", position=LabelPosition.TOP_RIGHT, offset=5, fontsize=12)
+
+    @property
+    def ic_label(self) -> Label:
+        """Utility-level labels at the right end of indifference curves; *text* is a format string."""
+        return Label(text="{:.2g}", position=LabelPosition.RIGHT, offset=4, fontsize=9)
+
+    @property
+    def edgeworth_label(self) -> Label:
+        """Labels of Edgeworth endowment and Walrasian equilibrium points."""
+        return Label(position=LabelPosition.TOP_RIGHT, offset=5, fontsize=11)
 
     @property
     def ic_stroke(self) -> Stroke:
