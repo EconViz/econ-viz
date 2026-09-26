@@ -9,10 +9,12 @@ import numpy as np
 from matplotlib.collections import Collection, PolyCollection
 from matplotlib.lines import Line2D
 from matplotlib.patches import FancyArrowPatch
-from matplotlib.text import Annotation
+from matplotlib.text import Annotation, Text
 
 from ..constants.canvas import ARROW_HEAD_ONLY_FRAC, ARROW_WEDGE_FRAC
-from ..enums import ArrowStyle
+from ..enums import ArrowStyle, LabelPosition
+from .labels import placement
+from ..themes.label import Label
 from ..themes.marker import Marker
 from ..themes.stroke import Stroke
 
@@ -33,6 +35,7 @@ def styled(
     strokes: Mapping[str, Stroke | None],
     default_role: str | None = None,
     markers: Mapping[str, Marker | None] | None = None,
+    labels: Mapping[str, Label | None] | None = None,
 ):
     """Apply *strokes* and *markers* (role → style) to what is drawn inside the block.
 
@@ -51,6 +54,7 @@ def styled(
     apply_strokes(ax, new, strokes)
     markers = markers or {}
     apply_markers(new, markers)
+    apply_labels(new, labels or {}, markers)
     for handle in handles[handles_before:]:
         role = getattr(handle, "_ev_role", default_role)
         stroke = strokes.get(role)
@@ -108,6 +112,34 @@ def apply_markers(artists: Iterable, markers: Mapping[str, Marker | None]) -> No
             artist.set_markersize(marker.size)
         if marker.shape is not None:
             artist.set_marker(marker.shape)
+
+
+def apply_labels(artists: Iterable, labels: Mapping[str, Label | None], markers: Mapping[str, Marker | None]) -> None:
+    """Restyle text labels whose role (``<point role>_label``) has a Label or a coloured Marker."""
+    for artist in artists:
+        role = getattr(artist, "_ev_role", None)
+        if not isinstance(role, str) or not role.endswith("_label") or not isinstance(artist, Text):
+            continue
+        label = labels.get(role) or Label()
+        default = getattr(artist, "_ev_label_default", None) or Label()
+        marker = markers.get(role[: -len("_label")])
+        color = label.color or (marker.color if marker is not None else None)
+        if color is not None:
+            artist.set_color(color)
+        if label.visible is False:
+            artist.set_visible(False)
+        if label.text is not None:
+            artist.set_text(rf"${label.text}$")
+        if label.fontsize is not None:
+            artist.set_fontsize(label.fontsize)
+        placed = label.merged_over(default)
+        moved = (placed.position, placed.offset) != (default.position, default.offset)
+        if moved and isinstance(artist, Annotation):
+            xytext, ha, va = placement(placed.position or LabelPosition.TOP_RIGHT,
+                                       placed.offset if placed.offset is not None else 5.0)
+            artist.set_position(xytext)
+            artist.set_horizontalalignment(ha)
+            artist.set_verticalalignment(va)
 
 
 def _is_line(artist) -> bool:

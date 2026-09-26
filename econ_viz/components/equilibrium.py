@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from ..enums import LabelPosition
+from ..themes.label import Label
 from ..utils.logging import get_logger
 
 logger = get_logger(__name__)
@@ -63,11 +65,13 @@ class EquilibriumPoint:
         (point,) = ax.plot(eq.x, eq.y, "o", color=self.color, markersize=self.markersize, clip_on=False, zorder=6)
         point._ev_role = "equilibrium"
         if self.label:
-            ax.annotate(
+            text = ax.annotate(
                 rf"${self.label}$", (eq.x, eq.y),
                 textcoords="offset points", xytext=(5, 5),
                 fontsize=12, color=self.color, zorder=7,
             )
+            text._ev_role = "equilibrium_label"
+            text._ev_label_default = Label(position=LabelPosition.TOP_RIGHT, offset=5)
 
         if self.drop_dashes:
             dash_kw = dict(color=self.color, linestyle=":", linewidth=0.8)

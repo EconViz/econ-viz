@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from ...enums import LabelPosition
+from ...themes.label import Label
 from ...components.indifference import IndifferenceCurves
 
 
@@ -22,6 +24,7 @@ def render_utility(
     show_ic_labels: bool,
     ic_label_fmt: str,
     show_bliss: bool,
+    bliss_text: str,
     x_max: float,
     y_max: float,
     **kwargs,
@@ -54,13 +57,15 @@ def render_utility(
             zorder=5,
         )
         bliss._ev_role = "bliss"
-        ax.annotate(
-            r"$\mathbf{x}^*$",
+        text = ax.annotate(
+            rf"${bliss_text}$",
             (func.bliss_x, func.bliss_y),
             textcoords="offset points",
-            xytext=(6, 4),
+            xytext=(5, 5),
             fontsize=12,
             color=color,
         )
+        text._ev_role = "bliss_label"
+        text._ev_label_default = Label(position=LabelPosition.TOP_RIGHT, offset=5)
     return ic
 

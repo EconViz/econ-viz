@@ -10,6 +10,10 @@ class LabelPosition(str, Enum):
     LEFT = "left"
     BOTTOM = "bottom"
     RIGHT = "right"
+    TOP_RIGHT = "top-right"
+    TOP_LEFT = "top-left"
+    BOTTOM_RIGHT = "bottom-right"
+    BOTTOM_LEFT = "bottom-left"
 
 
 class ArrowStyle(str, Enum):

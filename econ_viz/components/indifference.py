@@ -6,7 +6,8 @@ import numpy as np
 
 from ..constants.canvas import CONTOUR_DOMAIN_MIN
 from ..contours import percentile_levels
-from ..enums import UtilityType
+from ..enums import LabelPosition, UtilityType
+from ..themes.label import Label
 from ..utils.logging import get_logger
 
 logger = get_logger(__name__)
@@ -111,12 +112,14 @@ class IndifferenceCurves:
                     if seg[idx, 0] > best_x:
                         best_x, best_y = seg[idx, 0], seg[idx, 1]
                 if best_y is not None:
-                    ax.text(
-                        best_x + x_max * 0.01, best_y,
-                        self.ic_label_fmt.format(level),
-                        color=self.color, fontsize=9, va="center",
-                        clip_on=True,
+                    text = ax.annotate(
+                        self.ic_label_fmt.format(level), (best_x, best_y),
+                        textcoords="offset points", xytext=(4, 0),
+                        color=self.color, fontsize=9, ha="left", va="center",
+                        annotation_clip=True,
                     )
+                    text._ev_role = "ic_label"
+                    text._ev_label_default = Label(position=LabelPosition.RIGHT, offset=4)
 
         if self.show_rays and hasattr(self.func, "utility_type"):
             if self.func.utility_type is UtilityType.KINKED:

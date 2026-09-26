@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from ..themes.label import Label
+
 
 def plot_point(
     ax,
@@ -41,9 +43,11 @@ def annotate_math(
     offset: tuple[float, float] = (5, 5),
     fontsize: int = 12,
     zorder: int = 7,
-) -> None:
-    """Add a math-formatted annotation offset from a point."""
-    ax.annotate(
+    role: str | None = None,
+    default: Label | None = None,
+):
+    """Add a math-formatted annotation offset from a point and return it."""
+    text_artist = ax.annotate(
         rf"${text}$",
         (x, y),
         textcoords="offset points",
@@ -52,4 +56,7 @@ def annotate_math(
         color=color,
         zorder=zorder,
     )
+    text_artist._ev_role = role
+    text_artist._ev_label_default = default
+    return text_artist
 

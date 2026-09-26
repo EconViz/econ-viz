@@ -11,6 +11,7 @@ from ..canvas.stroke import styled
 from ..contours import around_anchor_levels, percentile_levels
 from ..io import save_figure
 from ..themes import default as _default_theme
+from ..themes.label import Label, split_label
 from ..themes.marker import Marker
 from ..themes.stroke import Stroke
 from ..themes.theme import Theme
@@ -251,12 +252,17 @@ class EdgeworthBox:
         x_endowment: float,
         y_endowment: float,
         *,
-        label: str = "e",
+        label: str | Label = "e",
         color: str | None = None,
         marker: Marker | None = None,
     ) -> "EdgeworthBox":
-        """Mark the initial endowment point E."""
-        with styled(self, {}, markers={"endowment": marker}):
+        """Mark the initial endowment point E.
+
+        *label* is the text, or a :class:`Label` for its text, position,
+        colour, and size (default ``theme.edgeworth_label``).
+        """
+        text, style = split_label(label, self.theme.edgeworth_label, "e")
+        with styled(self, {}, markers={"endowment": marker}, labels={"endowment_label": style}):
             if not (0.0 <= x_endowment <= self.total_x and 0.0 <= y_endowment <= self.total_y):
                 raise ValueError("Endowment must lie inside the Edgeworth box.")
 
@@ -270,7 +276,7 @@ class EdgeworthBox:
                 total_y=self.total_y,
                 color=c,
                 markersize=max(self.theme.eq_markersize, 6),
-                label=label,
+                label=text,
             )
         return self
 
@@ -682,7 +688,7 @@ class EdgeworthBox:
         color: str = "#2E86AB",
         marker: str | Marker = "*",
         markersize: float = 10.0,
-        label: str = r"X^*",
+        label: str | Label = r"X^*",
         contract_stroke: Stroke | None = None,
     ) -> "EdgeworthBox":
         """Approximate Walrasian equilibrium on the budget line and contract curve.
@@ -693,10 +699,15 @@ class EdgeworthBox:
             Line style for the contract curve.
         marker : str or Marker
             Marker shape (legacy), or a :class:`Marker` for colour, size, and shape.
+        label : str or Label
+            Label text, or a :class:`Label` for its text, position, colour,
+            and size (default ``theme.edgeworth_label``).
         """
+        text, label_style = split_label(label, self.theme.edgeworth_label, r"X^*")
         marker_style = marker if isinstance(marker, Marker) else None
         shape = marker_style.shape if marker_style and marker_style.shape else ("*" if marker_style else marker)
-        with styled(self, {"contract": contract_stroke}, markers={"walrasian": marker_style}):
+        with styled(self, {"contract": contract_stroke}, markers={"walrasian": marker_style},
+                    labels={"walrasian_label": label_style}):
             if px <= 0 or py <= 0:
                 raise ValueError("px and py must be positive.")
             if self.endowment is None:
@@ -727,7 +738,7 @@ class EdgeworthBox:
                 color=color,
                 marker=shape,
                 markersize=markersize,
-                label=label,
+                label=text,
             )
         return self
 
