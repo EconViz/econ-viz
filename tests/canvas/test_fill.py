@@ -1,6 +1,7 @@
 """Tests for Fill: colour and opacity of the shaded budget set."""
 
 import matplotlib
+
 matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt

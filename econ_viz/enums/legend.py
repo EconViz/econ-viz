@@ -21,9 +21,11 @@ class LegendPosition(str, Enum):
         return self in _INSIDE
 
 
-_INSIDE = frozenset({
-    LegendPosition.UPPER_RIGHT,
-    LegendPosition.UPPER_LEFT,
-    LegendPosition.LOWER_LEFT,
-    LegendPosition.LOWER_RIGHT,
-})
+_INSIDE = frozenset(
+    {
+        LegendPosition.UPPER_RIGHT,
+        LegendPosition.UPPER_LEFT,
+        LegendPosition.LOWER_LEFT,
+        LegendPosition.LOWER_RIGHT,
+    }
+)

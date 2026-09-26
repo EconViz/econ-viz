@@ -20,15 +20,22 @@ class TestPlotCommand:
         _run(
             monkeypatch,
             "plot",
-            "--model", "cobb-douglas",
-            "--px", "2",
-            "--py", "3",
-            "--income", "30",
-            "--x-max", "20",
-            "--y-max", "20",
+            "--model",
+            "cobb-douglas",
+            "--px",
+            "2",
+            "--py",
+            "3",
+            "--income",
+            "30",
+            "--x-max",
+            "20",
+            "--y-max",
+            "20",
             "--fill",
             "--show-ray",
-            "--output", str(output),
+            "--output",
+            str(output),
         )
 
         assert output.exists()
@@ -40,9 +47,12 @@ class TestPlotCommand:
         _run(
             monkeypatch,
             "plot",
-            "--latex", r"x^{0.5} y^{0.5}",
-            "--n-curves", "3",
-            "--output", str(output),
+            "--latex",
+            r"x^{0.5} y^{0.5}",
+            "--n-curves",
+            "3",
+            "--output",
+            str(output),
         )
 
         assert output.exists()
@@ -54,7 +64,8 @@ class TestPlotCommand:
         _run(
             monkeypatch,
             "plot",
-            "--model", "leontief",
+            "--model",
+            "leontief",
             "--no-curves",
             "--no-budget",
             "--no-equilibrium",

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from ..canvas.stroke import tag, tag_attr
 from ..enums import LabelPosition
 from ..themes.label import Label
 from ..utils.logging import get_logger
@@ -59,26 +60,32 @@ class EquilibriumPoint:
         eq = self.eq
         logger.info(
             "Equilibrium (%s): x=%.4f, y=%.4f, U=%.4f",
-            eq.bundle_type, eq.x, eq.y, eq.utility,
+            eq.bundle_type,
+            eq.x,
+            eq.y,
+            eq.utility,
         )
 
         (point,) = ax.plot(eq.x, eq.y, "o", color=self.color, markersize=self.markersize, clip_on=False, zorder=6)
-        point._ev_role = "equilibrium"
+        tag(point, "equilibrium")
         if self.label:
             text = ax.annotate(
-                rf"${self.label}$", (eq.x, eq.y),
-                textcoords="offset points", xytext=(5, 5),
-                fontsize=12, color=self.color, zorder=7,
+                rf"${self.label}$",
+                (eq.x, eq.y),
+                textcoords="offset points",
+                xytext=(5, 5),
+                fontsize=12,
+                color=self.color,
+                zorder=7,
             )
-            text._ev_role = "equilibrium_label"
-            text._ev_label_default = Label(position=LabelPosition.TOP_RIGHT, offset=5)
+            tag(text, "equilibrium_label")
+            tag_attr(text, "_ev_label_default", Label(position=LabelPosition.TOP_RIGHT, offset=5))
 
         if self.drop_dashes:
             dash_kw = dict(color=self.color, linestyle=":", linewidth=0.8)
             for xs, ys in (([eq.x, eq.x], [0, eq.y]), ([0, eq.x], [eq.y, eq.y])):
                 (line,) = ax.plot(xs, ys, **dash_kw)
-                line._ev_role = "drop"
+                tag(line, "drop")
 
         if self.show_ray and eq.x > 1e-9:
-            draw_ray(ax, eq.y / eq.x, x_max, y_max,
-                     color=self.ray_color, linewidth=self.ray_linewidth)
+            draw_ray(ax, eq.y / eq.x, x_max, y_max, color=self.ray_color, linewidth=self.ray_linewidth)

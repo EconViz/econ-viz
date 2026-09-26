@@ -1,6 +1,7 @@
 """Generate demand-diagram examples for common core models."""
 
 import matplotlib
+
 matplotlib.use("Agg")
 
 from pathlib import Path

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from ..themes.label import Label
+from .stroke import tag, tag_attr
 
 
 def plot_point(
@@ -16,7 +17,7 @@ def plot_point(
     linestyle: str = "None",
     zorder: int = 6,
     clip_on: bool = False,
-    role: str | None = None,
+    role: str,
 ):
     """Draw a point marker with consistent defaults and return its line."""
     (point,) = ax.plot(
@@ -29,7 +30,7 @@ def plot_point(
         clip_on=clip_on,
         zorder=zorder,
     )
-    point._ev_role = role
+    tag(point, role)
     return point
 
 
@@ -43,7 +44,7 @@ def annotate_math(
     offset: tuple[float, float] = (5, 5),
     fontsize: int = 12,
     zorder: int = 7,
-    role: str | None = None,
+    role: str,
     default: Label | None = None,
 ):
     """Add a math-formatted annotation offset from a point and return it."""
@@ -56,7 +57,6 @@ def annotate_math(
         color=color,
         zorder=zorder,
     )
-    text_artist._ev_role = role
-    text_artist._ev_label_default = default
+    tag(text_artist, role)
+    tag_attr(text_artist, "_ev_label_default", default)
     return text_artist
-

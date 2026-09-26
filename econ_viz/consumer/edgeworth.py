@@ -3,19 +3,22 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import cast
+
 import matplotlib.pyplot as plt
 import numpy as np
 
-from ..constants.canvas import DEFAULT_DPI, MAX_DPI, MIN_DPI
+from ..canvas.legend import place_legend
 from ..canvas.stroke import styled
-from ..contours import around_anchor_levels, percentile_levels
-from ..io import save_figure
 from ..config import Config
+from ..constants.canvas import DEFAULT_DPI, MAX_DPI, MIN_DPI
+from ..contours import around_anchor_levels, percentile_levels
+from ..enums import LineStyle
 from ..exceptions import InvalidParameterError
+from ..io import save_figure
 from ..themes.axis import Axis
 from ..themes.label import Label, split_label
 from ..themes.legend import Legend
-from ..canvas.legend import place_legend
 from ..themes.marker import Marker
 from ..themes.stroke import Stroke
 from ..themes.theme import Theme
@@ -109,8 +112,8 @@ class EdgeworthBox:
         self.title = title
         self.dpi = max(MIN_DPI, min(int(dpi), MAX_DPI))
         self.theme = theme
-        self.box_stroke = (box_stroke or Stroke()).merged_over(theme.box_stroke).merged_over(
-            Stroke(color=theme.axis_color)
+        self.box_stroke = (
+            (box_stroke or Stroke()).merged_over(theme.box_stroke).merged_over(Stroke(color=theme.axis_color))
         )
         self.x_side_stroke = (x_axis.stroke or Stroke()).merged_over(self.box_stroke)
         self.y_side_stroke = (y_axis.stroke or Stroke()).merged_over(self.box_stroke)
@@ -170,7 +173,7 @@ class EdgeworthBox:
     def equilibrium_focus_levels_b(self, value: list[float]) -> None:
         self._state.equilibrium_focus_levels_b = value
 
-    def set_utility_colors(self, *, color_a: str, color_b: str) -> "EdgeworthBox":
+    def set_utility_colors(self, *, color_a: str, color_b: str) -> EdgeworthBox:
         """Update default colors for utility A/B curves."""
         self.utility_a_color = color_a
         self.utility_b_color = color_b
@@ -188,7 +191,7 @@ class EdgeworthBox:
             self.ax.spines[side].set_visible(True)
             self.ax.spines[side].set_color(stroke.color)
             self.ax.spines[side].set_linewidth(stroke.width)
-            self.ax.spines[side].set_linestyle(stroke.style.value)
+            self.ax.spines[side].set_linestyle(cast(LineStyle, stroke.style).value)
             self.ax.spines[side].set_alpha(stroke.opacity)
 
         def styled_text(text, style: Label):
@@ -203,21 +206,27 @@ class EdgeworthBox:
         styled_text(self.ax.set_ylabel(rf"${self.y_label}_A$"), self.y_label_style)
         styled_text(self.ax.text(0.0, 0.0, r"$O_A$", ha="right", va="top"), self.origin_style)
         styled_text(self.ax.text(self.total_x, self.total_y, r"$O_B$", ha="left", va="bottom"), self.origin_style)
-        styled_text(self.ax.text(
-            self.total_x * 0.98,
-            self.total_y * -0.06,
-            rf"${self.x_label}_B$",
-            ha="right",
-            va="top",
-        ), self.x_label_style)
-        styled_text(self.ax.text(
-            self.total_x * -0.04,
-            self.total_y * 0.98,
-            rf"${self.y_label}_B$",
-            ha="right",
-            va="top",
-            rotation=90,
-        ), self.y_label_style)
+        styled_text(
+            self.ax.text(
+                self.total_x * 0.98,
+                self.total_y * -0.06,
+                rf"${self.x_label}_B$",
+                ha="right",
+                va="top",
+            ),
+            self.x_label_style,
+        )
+        styled_text(
+            self.ax.text(
+                self.total_x * -0.04,
+                self.total_y * 0.98,
+                rf"${self.y_label}_B$",
+                ha="right",
+                va="top",
+                rotation=90,
+            ),
+            self.y_label_style,
+        )
         if self.title:
             styled_text(self.ax.set_title(self.title), self.title_style)
 
@@ -249,7 +258,7 @@ class EdgeworthBox:
         res: int = 320,
         stroke_a: Stroke | None = None,
         stroke_b: Stroke | None = None,
-    ) -> "EdgeworthBox":
+    ) -> EdgeworthBox:
         """Draw both consumers' indifference maps.
 
         Prefer *stroke_a* / *stroke_b*; *color_a*, *color_b*, and *linewidth*
@@ -295,13 +304,14 @@ class EdgeworthBox:
         label: str | Label = "e",
         color: str | None = None,
         marker: Marker | None = None,
-    ) -> "EdgeworthBox":
+    ) -> EdgeworthBox:
         """Mark the initial endowment point E.
 
         *label* is the text, or a :class:`Label` for its text, position,
         colour, and size (default ``theme.edgeworth_label``).
         """
         text, style = split_label(label, self.theme.edgeworth_label, "e")
+        assert text is not None
         with styled(self, {}, markers={"endowment": marker}, labels={"endowment_label": style}):
             if not (0.0 <= x_endowment <= self.total_x and 0.0 <= y_endowment <= self.total_y):
                 raise ValueError("Endowment must lie inside the Edgeworth box.")
@@ -329,7 +339,7 @@ class EdgeworthBox:
         res: int = 300,
         stroke_a: Stroke | None = None,
         stroke_b: Stroke | None = None,
-    ) -> "EdgeworthBox":
+    ) -> EdgeworthBox:
         """Draw each agent's indifference curve through the endowment point.
 
         Prefer *stroke_a* / *stroke_b*; *color_a*, *color_b*, and *linewidth*
@@ -408,7 +418,7 @@ class EdgeworthBox:
         stroke_a: Stroke | None = None,
         stroke_b: Stroke | None = None,
         contract_stroke: Stroke | None = None,
-    ) -> "EdgeworthBox":
+    ) -> EdgeworthBox:
         """Draw indifference curves around the Walrasian equilibrium utility levels.
 
         Prefer *stroke_a* / *stroke_b*; *color_a*, *color_b*, and *linewidth*
@@ -429,7 +439,9 @@ class EdgeworthBox:
             if self.walrasian_equilibrium is None:
                 self.add_walrasian_equilibrium(px=px, py=py)
 
-            x_star, y_star = self.walrasian_equilibrium
+            equilibrium = self.walrasian_equilibrium
+            assert equilibrium is not None
+            x_star, y_star = equilibrium
             ua_star = self._eval_ua(x_star, y_star)
             ub_star = self._eval_ub(x_star, y_star)
             levels_a = self._levels_around(anchor=ua_star, n=n_a, spread=spread)
@@ -457,7 +469,7 @@ class EdgeworthBox:
         stroke_a: Stroke | None = None,
         stroke_b: Stroke | None = None,
         contract_stroke: Stroke | None = None,
-    ) -> "EdgeworthBox":
+    ) -> EdgeworthBox:
         """Draw one indifference curve per agent through the Walrasian equilibrium.
 
         Prefer *stroke_a* / *stroke_b*; *color_a*, *color_b*, and *linewidth*
@@ -478,7 +490,9 @@ class EdgeworthBox:
             if self.walrasian_equilibrium is None:
                 self.add_walrasian_equilibrium(px=px, py=py)
 
-            x_star, y_star = self.walrasian_equilibrium
+            equilibrium = self.walrasian_equilibrium
+            assert equilibrium is not None
+            x_star, y_star = equilibrium
             u_a_star = self._eval_ua(x_star, y_star)
             u_b_star = self._eval_ub(x_star, y_star)
         return self.add_indifference_curves(
@@ -523,7 +537,7 @@ class EdgeworthBox:
         tolerance: float = 0.05,
         method: str = "auto",
         stroke: Stroke | None = None,
-    ) -> "EdgeworthBox":
+    ) -> EdgeworthBox:
         """Approximate and draw the contract curve.
 
         Prefer *stroke*; *color*, *linewidth*, and *linestyle* are shorthand
@@ -563,7 +577,7 @@ class EdgeworthBox:
         px: float,
         py: float,
         config: EquilibriumFocusConfig | None = None,
-    ) -> "EdgeworthBox":
+    ) -> EdgeworthBox:
         """Render only the most informative indifference curves around equilibrium.
 
         Draws a bounded number of ICs per agent around ``X*`` (default: 3-5).
@@ -656,7 +670,7 @@ class EdgeworthBox:
         tol: float = 1e-6,
         stroke: Stroke | None = None,
         marker: Marker | None = None,
-    ) -> "EdgeworthBox":
+    ) -> EdgeworthBox:
         """Draw the core segment (IR part of the contract curve).
 
         Prefer *stroke*; *color* and *linewidth* are shorthand that a
@@ -712,7 +726,7 @@ class EdgeworthBox:
         linestyle: str = "--",
         label: str = "Price line",
         stroke: Stroke | None = None,
-    ) -> "EdgeworthBox":
+    ) -> EdgeworthBox:
         """Draw the price line through endowment with slope -px/py.
 
         Prefer *stroke*; *color*, *linewidth*, and *linestyle* are shorthand
@@ -752,7 +766,7 @@ class EdgeworthBox:
         markersize: float = 10.0,
         label: str | Label = r"X^*",
         contract_stroke: Stroke | None = None,
-    ) -> "EdgeworthBox":
+    ) -> EdgeworthBox:
         """Approximate Walrasian equilibrium on the budget line and contract curve.
 
         Parameters
@@ -766,10 +780,19 @@ class EdgeworthBox:
             and size (default ``theme.edgeworth_label``).
         """
         text, label_style = split_label(label, self.theme.edgeworth_label, r"X^*")
+        assert text is not None
         marker_style = marker if isinstance(marker, Marker) else None
-        shape = marker_style.shape if marker_style and marker_style.shape else ("*" if marker_style else marker)
-        with styled(self, {"contract": contract_stroke}, markers={"walrasian": marker_style},
-                    labels={"walrasian_label": label_style}):
+        if marker_style is not None:
+            shape = marker_style.shape or "*"
+        else:
+            assert isinstance(marker, str)
+            shape = marker
+        with styled(
+            self,
+            {"contract": contract_stroke},
+            markers={"walrasian": marker_style},
+            labels={"walrasian_label": label_style},
+        ):
             if px <= 0 or py <= 0:
                 raise ValueError("px and py must be positive.")
             if self.endowment is None:
@@ -836,15 +859,11 @@ class EdgeworthBox:
         mrs_a = self._mrs(self.utility_a, x, y)
         mrs_b = self._mrs(self.utility_b, self.total_x - x, self.total_y - y)
         checks["mrs_equal"] = (
-            np.isfinite(mrs_a)
-            and np.isfinite(mrs_b)
-            and mrs_a > 0
-            and mrs_b > 0
-            and abs(np.log(mrs_a / mrs_b)) <= 0.08
+            np.isfinite(mrs_a) and np.isfinite(mrs_b) and mrs_a > 0 and mrs_b > 0 and abs(np.log(mrs_a / mrs_b)) <= 0.08
         )
         return checks
 
-    def show_legend(self, legend: Legend | None = None, **kwargs) -> "EdgeworthBox":
+    def show_legend(self, legend: Legend | None = None, **kwargs) -> EdgeworthBox:
         """Draw the legend.
 
         *legend* sets position, font size, frame, and columns (default
@@ -857,8 +876,12 @@ class EdgeworthBox:
             self.ax.legend(**kwargs)
             return self
         handles, labels = self.ax.get_legend_handles_labels()
-        place_legend(self.ax, handles, labels,
-                     (legend or Legend()).merged_over(Legend(fontsize=10).merged_over(self.theme.legend)))
+        place_legend(
+            self.ax,
+            handles,
+            labels,
+            (legend or Legend()).merged_over(Legend(fontsize=10).merged_over(self.theme.legend)),
+        )
         return self
 
     def save(self, path: str, **kwargs) -> None:

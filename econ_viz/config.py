@@ -110,8 +110,13 @@ class Config:
                 _set(base, name, override, fields, properties)
 
         if "legend" in data:
-            _set(base, "legend", _build(Legend, _table(data, "legend", source), f"{source}: [legend]"),
-                 fields, properties)
+            _set(
+                base,
+                "legend",
+                _build(Legend, _table(data, "legend", source), f"{source}: [legend]"),
+                fields,
+                properties,
+            )
 
         font = _table(data, "font", source)
         extra = set(font) - {"text", "math"}
@@ -148,6 +153,7 @@ def active_theme() -> Theme:
 # Helpers
 # ------------------------------------------------------------------
 
+
 def _base_theme(name: str, source: str) -> Theme:
     theme = getattr(themes, str(name), None)
     if not isinstance(theme, Theme):
@@ -171,7 +177,8 @@ def _require_field(theme: Theme, name: str, where: str) -> None:
 def _choices(theme: Theme, pattern: str) -> str:
     suffix = pattern.format("")
     names = sorted(
-        name[: -len(suffix)] for name in dir(theme)
+        name[: -len(suffix)]
+        for name in dir(theme)
         if name.endswith(suffix) and not name.startswith("_") and name != suffix.lstrip("_")
     )
     return "choose: " + ", ".join(names)
@@ -205,8 +212,11 @@ def _themed(base: Theme, fields: dict, properties: dict) -> Theme:
     parent = type(base)
     overrides = dict(getattr(base, _OVERRIDES, {}))
     overrides.update(properties.pop(_OVERRIDES, {}))
-    namespace = {
-        name: property(lambda self, _name=name, _value=value: _value.merged_over(getattr(super(cls, self), _name)))
+    cls: type[Theme]
+    namespace: dict[str, object] = {
+        name: property(
+            lambda self, _name=name, _value=value: _value.merged_over(getattr(super(cls, self), _name))  # type: ignore[misc]
+        )
         for name, value in properties.items()
     }
     # Only what the file set, so drawing code can apply it without overriding
@@ -226,7 +236,7 @@ def template() -> str:
         return _choices(theme, pattern).removeprefix("choose: ")
 
     colours = sorted(f.name[: -len("_color")] for f in dataclasses.fields(theme) if f.name.endswith("_color"))
-    return f'''# econ-viz settings. Load with:  Config.load("econ-viz.toml").use()
+    return f"""# econ-viz settings. Load with:  Config.load("econ-viz.toml").use()
 # or on the command line:          econ-viz plot --config econ-viz.toml ...
 # Anything left out keeps the built-in default; delete what you don't need.
 
@@ -263,4 +273,4 @@ base = "default"                 # built-in theme to start from: default, nord
 
 [legend]                         # position, fontsize, frame, columns, visible, opacity
 # position = "auto"              # auto, upper right, ..., top, bottom, left, right
-'''
+"""

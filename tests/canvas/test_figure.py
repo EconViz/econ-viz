@@ -18,14 +18,17 @@ from econ_viz.models import CES, CobbDouglas, Leontief, PerfectSubstitutes, Quas
 
 
 class TestFigure:
-    @pytest.mark.parametrize("layout,expected", [
-        (Layout.SINGLE, 1),
-        (Layout.SIDE_BY_SIDE, 2),
-        (Layout.TOP_TWO_BOTTOM_ONE, 3),
-        (Layout.TOP_ONE_BOTTOM_TWO, 3),
-        (Layout.GRID_2X2, 4),
-        (Layout.GRID_3X3, 9),
-    ])
+    @pytest.mark.parametrize(
+        "layout,expected",
+        [
+            (Layout.SINGLE, 1),
+            (Layout.SIDE_BY_SIDE, 2),
+            (Layout.TOP_TWO_BOTTOM_ONE, 3),
+            (Layout.TOP_ONE_BOTTOM_TWO, 3),
+            (Layout.GRID_2X2, 4),
+            (Layout.GRID_3X3, 9),
+        ],
+    )
     def test_all_required_layouts_create_expected_panel_count(self, layout, expected):
         fig = Figure(layout, x_max=12, y_max=10)
         assert len(fig) == expected
@@ -108,7 +111,7 @@ class TestConsumptionPaths:
     def test_cobb_douglas_price_path_matches_closed_form(self):
         budget = LinearBudget(px=2.0, py=2.0, income=40.0)
         path = PricePath(CobbDouglas(alpha=0.5, beta=0.5), budget=budget, price="px", price_range=(1.0, 4.0), n=4)
-        for px, eq in zip(path.px_values, path.equilibria):
+        for px, eq in zip(path.px_values, path.equilibria, strict=True):
             assert eq.x == pytest.approx(20.0 / px, rel=1e-3)
 
     def test_price_path_defaults_to_single_smooth_curve_without_markers(self):
@@ -137,13 +140,21 @@ class TestConsumptionPaths:
 
 
 class TestDemandDiagram:
-    @pytest.mark.parametrize("model,budget,price,price_range", [
-        (CobbDouglas(alpha=0.5, beta=0.5), LinearBudget(px=2.0, py=2.0, income=40.0), "px", (1.0, 4.0)),
-        (CES(alpha=0.5, beta=0.5, rho=0.25), LinearBudget(px=2.0, py=2.0, income=40.0), "px", (1.0, 4.0)),
-        (Leontief(a=1.0, b=1.0), LinearBudget(px=2.0, py=2.0, income=40.0), "px", (1.0, 4.0)),
-        (PerfectSubstitutes(a=1.0, b=2.0), LinearBudget(px=2.0, py=2.0, income=40.0), "py", (1.0, 4.0)),
-        (StoneGeary(alpha=0.5, beta=0.5, bar_x=1.0, bar_y=1.0), LinearBudget(px=2.0, py=2.0, income=20.0), "px", (1.0, 4.0)),
-    ])
+    @pytest.mark.parametrize(
+        "model,budget,price,price_range",
+        [
+            (CobbDouglas(alpha=0.5, beta=0.5), LinearBudget(px=2.0, py=2.0, income=40.0), "px", (1.0, 4.0)),
+            (CES(alpha=0.5, beta=0.5, rho=0.25), LinearBudget(px=2.0, py=2.0, income=40.0), "px", (1.0, 4.0)),
+            (Leontief(a=1.0, b=1.0), LinearBudget(px=2.0, py=2.0, income=40.0), "px", (1.0, 4.0)),
+            (PerfectSubstitutes(a=1.0, b=2.0), LinearBudget(px=2.0, py=2.0, income=40.0), "py", (1.0, 4.0)),
+            (
+                StoneGeary(alpha=0.5, beta=0.5, bar_x=1.0, bar_y=1.0),
+                LinearBudget(px=2.0, py=2.0, income=20.0),
+                "px",
+                (1.0, 4.0),
+            ),
+        ],
+    )
     def test_save_png_common_models(self, tmp_path, model, budget, price, price_range):
         out = tmp_path / f"demand_{price}.png"
         path = PricePath(
@@ -168,7 +179,7 @@ class TestDemandDiagram:
         fig = DemandDiagram(path)
         fig.add_marshallian_panel(price_markers=[2.0, 4.0])
         expected_x = [10.0, 5.0]
-        for px, x in zip([2.0, 4.0], expected_x):
+        for px, x in zip([2.0, 4.0], expected_x, strict=True):
             assert x == pytest.approx(20.0 / px, rel=1e-3)
 
     @pytest.mark.parametrize(
@@ -227,12 +238,14 @@ class TestDemandDiagram:
         fig = DemandDiagram(path)
         fig.add_marshallian_panel(price_markers=[1.2, 3.0])
         horizontal_segments = [
-            line for line in fig.demand_canvas.ax.lines
+            line
+            for line in fig.demand_canvas.ax.lines
             if len(line.get_xdata()) == 2 and len(set(line.get_ydata())) == 1
         ]
         assert horizontal_segments
         tie_markers = [
-            line for line in fig.demand_canvas.ax.lines
+            line
+            for line in fig.demand_canvas.ax.lines
             if len(line.get_xdata()) == 1
             and np.isclose(line.get_xdata()[0], 20.0)
             and np.isclose(line.get_ydata()[0], 2.0)
@@ -254,7 +267,8 @@ class TestDemandDiagram:
         fig = DemandDiagram(path)
         fig.add_marshallian_panel(price_markers=[3.0])
         point_markers = [
-            line for line in fig.demand_canvas.ax.lines
+            line
+            for line in fig.demand_canvas.ax.lines
             if len(line.get_xdata()) == 1
             and line.get_marker() == "o"
             and np.isclose(line.get_xdata()[0], 0.0)
@@ -262,10 +276,7 @@ class TestDemandDiagram:
         ]
         assert point_markers
         assert point_markers[0].get_clip_on() is False
-        curve_lines = [
-            line for line in fig.demand_canvas.ax.lines
-            if len(line.get_xdata()) > 1
-        ]
+        curve_lines = [line for line in fig.demand_canvas.ax.lines if len(line.get_xdata()) > 1]
         assert curve_lines
         assert point_markers[0].get_zorder() > curve_lines[0].get_zorder()
 

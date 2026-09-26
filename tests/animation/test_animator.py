@@ -10,10 +10,10 @@ import pytest
 from econ_viz import Canvas
 from econ_viz.models import CobbDouglas
 
-
 # ------------------------------------------------------------------
 # Animator initialisation
 # ------------------------------------------------------------------
+
 
 class TestAnimatorInit:
     """Animator constructor validation."""
@@ -43,6 +43,7 @@ class TestAnimatorInit:
 # ------------------------------------------------------------------
 # GIF export
 # ------------------------------------------------------------------
+
 
 class TestAnimatorSave:
     """Animator.save() produces a valid GIF file."""
@@ -103,11 +104,13 @@ class TestAnimatorSave:
 # Pillow guard
 # ------------------------------------------------------------------
 
+
 class TestRequirePillow:
     """_require_pillow() raises a helpful ImportError."""
 
     def test_import_error_message(self, monkeypatch):
         import builtins
+
         real_import = builtins.__import__
 
         def _mock_import(name, *args, **kwargs):

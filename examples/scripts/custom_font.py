@@ -20,7 +20,7 @@ fig = Figure(
     font=["Times New Roman", "DejaVu Serif", "serif"],
     math_font="stix",
 )
-for panel, title in zip(fig.canvases, ["Utility map", "With budget"]):
+for panel, title in zip(fig.canvases, ["Utility map", "With budget"], strict=True):
     panel.ax.set_title(title)
     panel.add_utility(model, levels=levels.around(eq.utility, n=3), label="IC")
 fig[1].add_budget(2.0, 3.0, 30.0, fill=True, label="BC").add_equilibrium(eq).show_legend()

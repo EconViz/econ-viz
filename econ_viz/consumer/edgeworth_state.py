@@ -17,4 +17,3 @@ class EdgeworthState:
     walrasian_equilibrium: tuple[float, float] | None = None
     equilibrium_focus_levels_a: list[float] = field(default_factory=list)
     equilibrium_focus_levels_b: list[float] = field(default_factory=list)
-

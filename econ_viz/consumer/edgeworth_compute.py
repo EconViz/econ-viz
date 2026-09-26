@@ -138,7 +138,7 @@ def contract_curve_pareto(
         best = None
         best_obj = np.inf
 
-        def obj(v: np.ndarray) -> float:
+        def obj(v: np.ndarray, lam: float = lam) -> float:
             x, y = float(v[0]), float(v[1])
             ua = eval_ua(x, y)
             ub = eval_ub(x, y)
@@ -159,7 +159,9 @@ def contract_curve_pareto(
     return unique_points(points)
 
 
-def line_box_intersections(*, px: float, py: float, income: float, total_x: float, total_y: float) -> list[tuple[float, float]]:
+def line_box_intersections(
+    *, px: float, py: float, income: float, total_x: float, total_y: float
+) -> list[tuple[float, float]]:
     """Return unique boundary intersections for a price line and box."""
     pts: list[tuple[float, float]] = []
     y0 = income / py
@@ -220,4 +222,3 @@ def walrasian_equilibrium_point(
 
     idx = int(np.argmin([score(p) for p in candidates]))
     return float(candidates[idx, 0]), float(candidates[idx, 1])
-

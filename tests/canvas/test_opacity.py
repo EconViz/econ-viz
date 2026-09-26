@@ -1,6 +1,7 @@
 """Opacity on every style object: Stroke, Marker, Label, Legend, Effect, Fill (#123)."""
 
 import matplotlib
+
 matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt
@@ -80,8 +81,11 @@ class TestApplied:
         assert _role(cvs.ax, "equilibrium_label")[0].get_alpha() == 0.5
 
     def test_axis_origin_and_title_labels(self):
-        cvs = Canvas(title=Label(text="T", opacity=0.4), origin_label=Label(opacity=0.3),
-                     x_axis=Axis(label=Label(text="q", opacity=0.2)))
+        cvs = Canvas(
+            title=Label(text="T", opacity=0.4),
+            origin_label=Label(opacity=0.3),
+            x_axis=Axis(label=Label(text="q", opacity=0.2)),
+        )
         assert cvs.ax.title.get_alpha() == 0.4
         assert _role(cvs.ax, "origin_label")[0].get_alpha() == 0.3
         x_label = next(a for a in cvs.ax.get_children() if getattr(a, "_ev_axis_label", None) == "x")
@@ -93,7 +97,8 @@ class TestApplied:
 
     def test_effect(self):
         cvs = Canvas(x_max=20, y_max=15).add_decomposition(
-            DEC, income=Effect(opacity=0.4, label="IE"), substitution=Effect(label="SE"))
+            DEC, income=Effect(opacity=0.4, label="IE"), substitution=Effect(label="SE")
+        )
         assert _role(cvs.ax, "income")[0].arrow_patch.get_alpha() == 0.4
         assert _role(cvs.ax, "substitution")[0].arrow_patch.get_alpha() is None
         assert _role(cvs.ax, "income_label")[0].get_alpha() == 0.4
@@ -102,13 +107,15 @@ class TestApplied:
 
     def test_effect_range_arrows(self):
         cvs = Canvas(x_max=20, y_max=15).add_decomposition(
-            DEC, show_x_projections=True, substitution=Effect(opacity=0.3))
+            DEC, show_x_projections=True, substitution=Effect(opacity=0.3)
+        )
         alphas = sorted((r.arrow_patch.get_alpha() or 1.0) for r in _role(cvs.ax, "range"))
         assert alphas == [0.3, 1.0]
 
     def test_label_opacity_beats_effect_opacity(self):
         cvs = Canvas(x_max=20, y_max=15).add_decomposition(
-            DEC, income=Effect(opacity=0.4, label=Label(text="IE", opacity=0.9)))
+            DEC, income=Effect(opacity=0.4, label=Label(text="IE", opacity=0.9))
+        )
         assert _role(cvs.ax, "income_label")[0].get_alpha() == 0.9
 
     def test_legend(self):
@@ -120,8 +127,13 @@ class TestApplied:
     def test_edgeworth(self):
         from econ_viz import Axis as A
 
-        box = EdgeworthBox(MODEL, MODEL, total_x=10.0, total_y=10.0,
-                           x_axis=A(stroke=Stroke(opacity=0.3), label=Label(text="f", opacity=0.6)))
+        box = EdgeworthBox(
+            MODEL,
+            MODEL,
+            total_x=10.0,
+            total_y=10.0,
+            x_axis=A(stroke=Stroke(opacity=0.3), label=Label(text="f", opacity=0.6)),
+        )
         assert box.ax.spines["bottom"].get_alpha() == 0.3
         assert box.ax.xaxis.label.get_alpha() == 0.6
 

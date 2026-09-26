@@ -27,13 +27,16 @@ class TestValues:
         grid = m(np.array([1.0, 3.0]), np.array([1.0, 1.0]))
         assert np.isnan(grid[0]) and np.isfinite(grid[1])
 
-    @pytest.mark.parametrize("kwargs", [
-        {"alpha_x": 2.0, "alpha_y": 1.0},
-        {"alpha_x": 1.0, "alpha_y": 1.0},
-        {"gamma_x": 0.0},
-        {"gamma_y": -1.0},
-        {"alpha_x": float("nan")},
-    ])
+    @pytest.mark.parametrize(
+        "kwargs",
+        [
+            {"alpha_x": 2.0, "alpha_y": 1.0},
+            {"alpha_x": 1.0, "alpha_y": 1.0},
+            {"gamma_x": 0.0},
+            {"gamma_y": -1.0},
+            {"alpha_x": float("nan")},
+        ],
+    )
     def test_rejects_invalid_parameters(self, kwargs):
         with pytest.raises(InvalidParameterError):
             Haagsma(**kwargs)

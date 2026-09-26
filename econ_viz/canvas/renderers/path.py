@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import matplotlib.lines as mlines
 
+from ...canvas.stroke import tag
+
 
 def render_path(
     *,
@@ -30,11 +32,11 @@ def render_path(
         curve_xs, curve_ys = smooth_fn(xs, ys)
         curve_xs, curve_ys = extend_fn(curve_xs, curve_ys)
     (line,) = canvas.ax.plot(curve_xs, curve_ys, color=color, linewidth=linewidth, clip_on=False)
-    line._ev_role = "path"
+    tag(line, "path")
 
     if label:
         handle = mlines.Line2D([], [], color=color, linewidth=linewidth, label=label)
-        handle._ev_role = "path"
+        tag(handle, "path")
         canvas._legend_handles.append(handle)
 
     for idx, eq in enumerate(path.equilibria):
@@ -54,5 +56,4 @@ def render_path(
         elif show_points:
             px, py = (eq.x, eq.y) if not invert_axes else (path.parameter_values[idx], eq.x)
             (point,) = canvas.ax.plot(px, py, "o", color=color, markersize=max(canvas.theme.eq_markersize - 1, 3))
-            point._ev_role = "path_point"
-
+            tag(point, "path_point")

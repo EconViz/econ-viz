@@ -1,13 +1,13 @@
 """Tests for econ_viz.analysis.homogeneity — HomogeneityAnalyzer."""
 
+import dataclasses
 import math
+
 import pytest
-import numpy as np
 
 from econ_viz.analysis import HomogeneityAnalyzer, HomogeneityResult
 from econ_viz.enums import ReturnsToScale
-from econ_viz.models import CobbDouglas, Leontief, PerfectSubstitutes, CES, StoneGeary
-
+from econ_viz.models import CES, CobbDouglas, Leontief, PerfectSubstitutes, StoneGeary
 
 pytestmark = pytest.mark.filterwarnings("ignore:invalid value encountered in scalar power:RuntimeWarning")
 
@@ -16,45 +16,51 @@ pytestmark = pytest.mark.filterwarnings("ignore:invalid value encountered in sca
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 class _ShiftedCD:
     """Stone-Geary-like shifted Cobb-Douglas — NOT homogeneous."""
+
     def __call__(self, x, y):
         return (x - 1) ** 0.5 * (y - 1) ** 0.5
 
 
 class _CRSProduction:
     """f(x,y) = x^0.3 * y^0.7 — homogeneous of degree 1."""
+
     def __call__(self, x, y):
-        return x ** 0.3 * y ** 0.7
+        return x**0.3 * y**0.7
 
 
 class _IRS:
     """f(x,y) = x^0.8 * y^0.8 — homogeneous of degree 1.6."""
+
     def __call__(self, x, y):
-        return x ** 0.8 * y ** 0.8
+        return x**0.8 * y**0.8
 
 
 class _DRS:
     """f(x,y) = x^0.2 * y^0.3 — homogeneous of degree 0.5."""
+
     def __call__(self, x, y):
-        return x ** 0.2 * y ** 0.3
+        return x**0.2 * y**0.3
 
 
 # ---------------------------------------------------------------------------
 # HomogeneityResult dataclass
 # ---------------------------------------------------------------------------
 
+
 class TestHomogeneityResult:
     def test_frozen(self):
-        r = HomogeneityResult(degree=1.0, is_homogeneous=True,
-                              returns_to_scale=ReturnsToScale.CONSTANT)
-        with pytest.raises(Exception):
+        r = HomogeneityResult(degree=1.0, is_homogeneous=True, returns_to_scale=ReturnsToScale.CONSTANT)
+        with pytest.raises(dataclasses.FrozenInstanceError):
             r.degree = 2.0
 
 
 # ---------------------------------------------------------------------------
 # ReturnsToScale.from_degree
 # ---------------------------------------------------------------------------
+
 
 class TestReturnsToScaleFromDegree:
     def test_none_returns_not_homogeneous(self):
@@ -76,6 +82,7 @@ class TestReturnsToScaleFromDegree:
 # ---------------------------------------------------------------------------
 # HomogeneityAnalyzer.degree()
 # ---------------------------------------------------------------------------
+
 
 class TestDegree:
     def test_cobb_douglas_degree(self):
@@ -133,6 +140,7 @@ class TestDegree:
 # HomogeneityAnalyzer.euler_check()
 # ---------------------------------------------------------------------------
 
+
 class TestEulerCheck:
     def test_cobb_douglas_euler_near_zero(self):
         cd = CobbDouglas(alpha=0.4, beta=0.6)
@@ -153,6 +161,7 @@ class TestEulerCheck:
 # HomogeneityAnalyzer.is_homothetic()
 # ---------------------------------------------------------------------------
 
+
 class TestIsHomothetic:
     def test_cobb_douglas_is_homothetic(self):
         assert HomogeneityAnalyzer(CobbDouglas()).is_homothetic()
@@ -172,6 +181,7 @@ class TestIsHomothetic:
 # HomogeneityAnalyzer.demand_degree_zero()
 # ---------------------------------------------------------------------------
 
+
 class TestDemandDegreeZero:
     def test_cobb_douglas(self):
         cd = CobbDouglas(alpha=0.5, beta=0.5)
@@ -188,6 +198,4 @@ class TestDemandDegreeZero:
     @pytest.mark.parametrize("scale", [0.5, 2.0, 5.0, 10.0])
     def test_scale_invariance(self, scale):
         cd = CobbDouglas(alpha=0.4, beta=0.6)
-        assert HomogeneityAnalyzer(cd).demand_degree_zero(
-            px=2.0, py=3.0, income=60.0, scales=(scale,)
-        )
+        assert HomogeneityAnalyzer(cd).demand_degree_zero(px=2.0, py=3.0, income=60.0, scales=(scale,))

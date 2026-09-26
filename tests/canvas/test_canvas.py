@@ -4,19 +4,18 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
-from econ_viz import ArrowStyle, Canvas, LabelPosition, LineStyle
-from econ_viz.consumer.paths import PricePath, LinearBudget
+from econ_viz import ArrowStyle, Canvas, LabelPosition, LineStyle, themes
 from econ_viz.canvas.layers import Layer
-from econ_viz.components import IndifferenceCurves, BudgetConstraint, EquilibriumPoint, draw_ray
+from econ_viz.components import BudgetConstraint, EquilibriumPoint, IndifferenceCurves, draw_ray
+from econ_viz.consumer.paths import LinearBudget, PricePath
 from econ_viz.exceptions import ExportError, InvalidParameterError
-from econ_viz.models import CobbDouglas, Leontief, Satiation, QuasiLinear
+from econ_viz.models import CobbDouglas, Leontief, QuasiLinear, Satiation
 from econ_viz.optimizer import (
     DecompositionMethod,
     Equilibrium,
     decompose_price_effect,
     solve,
 )
-from econ_viz import themes
 
 
 class TestCanvasInit:
@@ -117,11 +116,7 @@ class TestCanvasInit:
 
     @staticmethod
     def _axis_arrows(cvs):
-        return {
-            patch._ev_axis_arrow: patch
-            for patch in cvs.ax.patches
-            if getattr(patch, "_ev_axis_arrow", None)
-        }
+        return {patch._ev_axis_arrow: patch for patch in cvs.ax.patches if getattr(patch, "_ev_axis_arrow", None)}
 
     @pytest.mark.parametrize("style", list(ArrowStyle))
     def test_axis_arrow_matches_spine_linewidth(self, style):
@@ -188,9 +183,7 @@ class TestCanvasAddUtility:
         Canvas(x_max=10, y_max=10).add_utility(CobbDouglas(), levels=[1.0, 2.0, 3.0])
 
     def test_leontief_rays_and_kinks(self):
-        Canvas(x_max=10, y_max=10).add_utility(
-            Leontief(), levels=3, show_rays=True, show_kinks=True
-        )
+        Canvas(x_max=10, y_max=10).add_utility(Leontief(), levels=3, show_rays=True, show_kinks=True)
 
     def test_custom_color(self):
         Canvas().add_utility(CobbDouglas(), levels=3, color="green")
@@ -221,9 +214,7 @@ class TestCanvasAddBudget:
         Canvas(x_max=20, y_max=20).add_budget(px=2, py=3, income=30, label="BC")
 
     def test_custom_style(self):
-        Canvas(x_max=20, y_max=20).add_budget(
-            px=2, py=3, income=30, color="green", linewidth=2.0, linestyle="--"
-        )
+        Canvas(x_max=20, y_max=20).add_budget(px=2, py=3, income=30, color="green", linewidth=2.0, linestyle="--")
 
     def test_invalid_px_raises(self):
         with pytest.raises(InvalidParameterError):
@@ -386,11 +377,13 @@ class TestCanvasSave:
         """Full pipeline via method chaining must produce a file."""
         out = str(tmp_path / "chain.png")
         eq = solve(CobbDouglas(), 2.0, 3.0, 30.0)
-        (Canvas(x_max=20, y_max=15)
+        (
+            Canvas(x_max=20, y_max=15)
             .add_utility(CobbDouglas(), levels=3)
             .add_budget(2.0, 3.0, 30.0, fill=True)
             .add_equilibrium(eq, show_ray=True)
-            .save(out))
+            .save(out)
+        )
         assert (tmp_path / "chain.png").exists()
 
 
@@ -432,34 +425,34 @@ class TestComponents:
         BudgetConstraint(px=2, py=3, income=30, color="blue", linewidth=1.5).draw(self.ax)
 
     def test_budget_draw_with_fill(self):
-        BudgetConstraint(px=2, py=3, income=30, color="blue", linewidth=1.5,
-                         fill=True, fill_alpha=0.1).draw(self.ax)
+        BudgetConstraint(px=2, py=3, income=30, color="blue", linewidth=1.5, fill=True, fill_alpha=0.1).draw(self.ax)
 
     def test_budget_invalid_params(self):
         with pytest.raises(InvalidParameterError):
             BudgetConstraint(px=-1, py=1, income=10, color="blue", linewidth=1)
 
     def test_indifference_curves_int_levels(self):
-        IndifferenceCurves(CobbDouglas(), levels=3, color="black",
-                           linewidth=1.5).draw(self.ax, x_max=10, y_max=10)
+        IndifferenceCurves(CobbDouglas(), levels=3, color="black", linewidth=1.5).draw(self.ax, x_max=10, y_max=10)
 
     def test_indifference_curves_list_levels(self):
-        IndifferenceCurves(CobbDouglas(), levels=[1.0, 2.0, 3.0], color="black",
-                           linewidth=1.5).draw(self.ax, x_max=10, y_max=10)
+        IndifferenceCurves(CobbDouglas(), levels=[1.0, 2.0, 3.0], color="black", linewidth=1.5).draw(
+            self.ax, x_max=10, y_max=10
+        )
 
     def test_indifference_curves_kinked_rays_kinks(self):
-        IndifferenceCurves(Leontief(), levels=3, color="black", linewidth=1.5,
-                           show_rays=True, show_kinks=True).draw(self.ax, x_max=10, y_max=10)
+        IndifferenceCurves(Leontief(), levels=3, color="black", linewidth=1.5, show_rays=True, show_kinks=True).draw(
+            self.ax, x_max=10, y_max=10
+        )
 
     def test_equilibrium_point_full(self):
         eq = Equilibrium(x=4.0, y=3.0, utility=2.0, bundle_type="interior")
-        EquilibriumPoint(eq, color="red", drop_dashes=True,
-                         show_ray=True, label="x^*").draw(self.ax, x_max=10, y_max=10)
+        EquilibriumPoint(eq, color="red", drop_dashes=True, show_ray=True, label="x^*").draw(
+            self.ax, x_max=10, y_max=10
+        )
 
     def test_equilibrium_point_no_label_no_dashes(self):
         eq = Equilibrium(x=4.0, y=3.0, utility=2.0, bundle_type="interior")
-        EquilibriumPoint(eq, color="red", drop_dashes=False,
-                         label=None).draw(self.ax, x_max=10, y_max=10)
+        EquilibriumPoint(eq, color="red", drop_dashes=False, label=None).draw(self.ax, x_max=10, y_max=10)
 
     def test_equilibrium_point_x_near_zero_no_ray(self):
         """When x ≈ 0 the expansion-path ray must be suppressed even if show_ray=True."""
@@ -514,13 +507,8 @@ class TestLegendAndICLabels:
         self.cvs.add_utility(CobbDouglas(), levels=3, show_ic_labels=True)
 
     def test_show_ic_labels_custom_fmt(self):
-        self.cvs.add_utility(CobbDouglas(), levels=2, show_ic_labels=True,
-                              ic_label_fmt="{:.3f}")
+        self.cvs.add_utility(CobbDouglas(), levels=2, show_ic_labels=True, ic_label_fmt="{:.3f}")
 
     def test_chaining_with_legend(self):
-        result = (
-            self.cvs
-            .add_utility(CobbDouglas(), levels=2, label="$U_1$")
-            .show_legend()
-        )
+        result = self.cvs.add_utility(CobbDouglas(), levels=2, label="$U_1$").show_legend()
         assert result is self.cvs

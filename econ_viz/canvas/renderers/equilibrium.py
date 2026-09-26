@@ -31,4 +31,3 @@ def render_equilibrium(
         ray_linewidth=ray_linewidth,
     )
     ep.draw(ax, x_max, y_max)
-

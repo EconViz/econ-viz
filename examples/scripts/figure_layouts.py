@@ -1,6 +1,7 @@
 """Demonstrate multi-panel Figure layouts."""
 
 import matplotlib
+
 matplotlib.use("Agg")
 
 from pathlib import Path
@@ -25,10 +26,12 @@ fig = Figure(
     shared_y=True,
 )
 
-for idx, (model, (px, py, income), title) in enumerate([
-    (base, params[0], r"Before: $p_x=2$"),
-    (alt, params[1], r"After: $p_x=4$"),
-]):
+for idx, (model, (px, py, income), title) in enumerate(
+    [
+        (base, params[0], r"Before: $p_x=2$"),
+        (alt, params[1], r"After: $p_x=4$"),
+    ]
+):
     eq = solve(model, px=px, py=py, income=income)
     lvls = levels.around(eq.utility, n=5)
     panel = fig[idx]

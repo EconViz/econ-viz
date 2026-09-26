@@ -9,6 +9,7 @@ from matplotlib.font_manager import FontProperties, findfont
 from matplotlib.text import Text
 
 from ..exceptions import InvalidParameterError
+from .stroke import tag_attr
 
 GENERIC_FAMILIES = frozenset({"serif", "sans-serif", "monospace", "cursive", "fantasy"})
 MATH_FONTS = ("dejavusans", "dejavuserif", "cm", "stix", "stixsans")
@@ -67,7 +68,7 @@ class FontApplier(Artist):
         for text in self.figure.findobj(Text):
             if self.families:
                 text.set_fontfamily(self.families)
-                text._ev_font = self.families
+                tag_attr(text, "_ev_font", self.families)
             if self.math_font:
                 text.set_math_fontfamily(self.math_font)
         self.stale = False

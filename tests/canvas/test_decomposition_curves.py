@@ -1,6 +1,7 @@
 """add_decomposition draws the indifference curves through A, C, and (Slutsky) B."""
 
 import matplotlib
+
 matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt
@@ -64,7 +65,8 @@ def test_curves_use_the_ic_stroke_by_default():
 
 def test_curve_stroke():
     cvs = Canvas(x_max=40, y_max=27).add_decomposition(
-        _dec("hicks"), curve_stroke=Stroke(color="#123456", width=2.5, style="--"))
+        _dec("hicks"), curve_stroke=Stroke(color="#123456", width=2.5, style="--")
+    )
     for cs in _role(cvs.ax, "curve"):
         assert to_hex(cs.get_edgecolor()[0]) == "#123456"
         assert cs.get_linewidth()[0] == pytest.approx(2.5)
@@ -77,7 +79,8 @@ def test_no_curve_labels_by_default():
 
 def test_curve_labels():
     cvs = Canvas(x_max=40, y_max=27).add_decomposition(
-        _dec("slutsky"), curve_label=Label(position="top", color="#654321", text="ignored"))
+        _dec("slutsky"), curve_label=Label(position="top", color="#654321", text="ignored")
+    )
     texts = _role(cvs.ax, "ic_label")
     assert sorted(t.get_text() for t in texts) == ["$U_0$", "$U_1$", "$U_B$"]
     assert all(to_hex(t.get_color()) == "#654321" for t in texts)
@@ -108,8 +111,9 @@ def test_zero_effect_draws_no_range_arrow():
     from econ_viz.models import QuasiLinear
 
     # Quasi-linear in y: demand for x does not depend on income, so the income effect is zero.
-    dec = decompose_price_effect(QuasiLinear(v_func=lambda z: 4.0 * np.log(z), linear_in="y"),
-                                 px=(2.0, 1.0), py=1.0, income=28.0, method="hicks")
+    dec = decompose_price_effect(
+        QuasiLinear(v_func=lambda z: 4.0 * np.log(z), linear_in="y"), px=(2.0, 1.0), py=1.0, income=28.0, method="hicks"
+    )
     assert dec.income_effect[0] == pytest.approx(0.0, abs=1e-3)
     cvs = Canvas(x_max=30, y_max=35).add_decomposition(dec, show_x_projections=True)
     ranges = _role(cvs.ax, "range")
