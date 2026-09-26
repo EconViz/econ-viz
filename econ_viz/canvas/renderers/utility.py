@@ -31,6 +31,11 @@ def render_utility(
     subsistence_linewidth: float,
     x_max: float,
     y_max: float,
+    highlight_level: float | None = None,
+    secondary_color: str = "gray",
+    secondary_linewidth: float = 1.0,
+    secondary_opacity: float = 0.45,
+    label_style: str = "numeric",
     **kwargs,
 ):
     """Render utility contours and optional bliss marker."""
@@ -50,6 +55,11 @@ def render_utility(
         ic_label_fmt=ic_label_fmt,
         subsistence_color=subsistence_color,
         subsistence_linewidth=subsistence_linewidth,
+        highlight_level=highlight_level,
+        secondary_color=secondary_color,
+        secondary_linewidth=secondary_linewidth,
+        secondary_opacity=secondary_opacity,
+        label_style=label_style,
     )
     ic.draw(ax, x_max, y_max, **kwargs)
 

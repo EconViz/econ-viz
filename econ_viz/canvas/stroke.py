@@ -76,6 +76,7 @@ _ROLE_STROKES = {
     "budget": "budget_stroke",
     "original_budget": "budget_stroke",
     "curve": "ic_stroke",
+    "secondary_curve": "secondary_ic_stroke",
     "ray": "ray_stroke",
     "path": "path_stroke",
     "drop": "drop_stroke",

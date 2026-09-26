@@ -472,6 +472,9 @@ class Canvas:
         bliss_marker: Marker | None = None,
         ic_label: Label | None = None,
         bliss_label: str | Label | None = None,
+        highlight_level: float | None = None,
+        secondary_stroke: Stroke | None = None,
+        label_style: str = "numeric",
         **kwargs,
     ) -> Canvas:
         """Add indifference curves for a given utility function.
@@ -512,6 +515,14 @@ class Canvas:
             indifference curve showing its utility level.
         ic_label_fmt : str
             Python format string for the level value (default ``"{:.2g}"``).
+        highlight_level : float, optional
+            Utility level to draw at full weight; every other level is drawn
+            subdued using ``secondary_stroke`` (default ``theme.secondary_ic_stroke``).
+            ``None`` (default) draws every level with the same weight.
+        label_style : str
+            ``"numeric"`` (default) labels each curve with its formatted
+            utility value; ``"ordinal"`` labels them ``u_1, u_2, ...`` in
+            ascending order. Only takes effect when curve labels are shown.
         **kwargs
             Forwarded to :meth:`matplotlib.axes.Axes.contour`.
 
@@ -519,6 +530,9 @@ class Canvas:
             Line style for the indifference curves (default ``theme.ic_stroke``); ``arrow`` adds an arrowhead to each curve.
         ray_stroke : Stroke, optional
             Line style for kink-locus rays (default ``theme.ray_stroke``).
+        secondary_stroke : Stroke, optional
+            Line style for non-highlighted levels when *highlight_level* is
+            set (default ``theme.secondary_ic_stroke``).
 
         kink_marker : Marker, optional
             Colour, size, and shape of kink points (default ``theme.kink_marker``).
@@ -540,9 +554,19 @@ class Canvas:
         t = self.theme
         ic_fmt, ic_style = split_label(ic_label, t.ic_label, ic_label_fmt)
         bliss_text, bliss_style = split_label(bliss_label, t.bliss_label, t.bliss_label.text)
-        labels = {"ic_label": ic_style, "bliss_label": bliss_style}
+        labels = {
+            "ic_label": ic_style,
+            "secondary_ic_label": ic_style,
+            "bliss_label": bliss_style,
+        }
         markers = {"kink": kink_marker, "bliss": bliss_marker}
-        with styled(self, {"curve": stroke, "ray": ray_stroke}, markers=markers, labels=labels):
+        sec = (secondary_stroke or Stroke()).merged_over(t.secondary_ic_stroke)
+        with styled(
+            self,
+            {"curve": stroke, "ray": ray_stroke, "secondary_curve": secondary_stroke},
+            markers=markers,
+            labels=labels,
+        ):
             ic = render_utility(
                 self.ax,
                 func=func,
@@ -565,6 +589,11 @@ class Canvas:
                 subsistence_linewidth=t.subsistence_linewidth,
                 x_max=self.x_max,
                 y_max=self.y_max,
+                highlight_level=highlight_level,
+                secondary_color=sec.color or t.secondary_ic_color or t.ic_color,
+                secondary_linewidth=sec.width if sec.width is not None else t.secondary_ic_linewidth,
+                secondary_opacity=sec.opacity if sec.opacity is not None else t.secondary_ic_opacity,
+                label_style=label_style,
                 **kwargs,
             )
             if ic._proxy is not None:

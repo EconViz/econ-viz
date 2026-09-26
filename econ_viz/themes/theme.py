@@ -38,6 +38,13 @@ class Theme:
         Default colour for indifference curves.
     ic_linewidth : float
         Default stroke width for indifference curves.
+    secondary_ic_color : str, optional
+        Colour of subdued indifference curves drawn alongside a highlighted
+        focal level. ``None`` follows ``ic_color``.
+    secondary_ic_linewidth : float
+        Stroke width of subdued indifference curves.
+    secondary_ic_opacity : float
+        Opacity of subdued indifference curves.
     path_color : str
         Default colour for PCC / ICC path lines.
     path_linewidth : float
@@ -126,6 +133,11 @@ class Theme:
     # Indifference curves
     ic_color: str = "#377EB8"
     ic_linewidth: float = 1.8
+
+    # Secondary (subdued) indifference curves, used alongside a highlighted level
+    secondary_ic_color: str | None = None
+    secondary_ic_linewidth: float = 1.0
+    secondary_ic_opacity: float = 0.45
 
     # PCC / ICC paths
     path_color: str = "#4DAF4A"
@@ -265,6 +277,16 @@ class Theme:
     @property
     def ic_stroke(self) -> Stroke:
         return Stroke(width=self.ic_linewidth, style=LineStyle.SOLID, color=self.ic_color)
+
+    @property
+    def secondary_ic_stroke(self) -> Stroke:
+        """Subdued curves drawn alongside a highlighted focal level (``Canvas.add_utility(highlight_level=...)``)."""
+        return Stroke(
+            width=self.secondary_ic_linewidth,
+            style=LineStyle.SOLID,
+            color=self.secondary_ic_color or self.ic_color,
+            opacity=self.secondary_ic_opacity,
+        )
 
     @property
     def budget_stroke(self) -> Stroke:
