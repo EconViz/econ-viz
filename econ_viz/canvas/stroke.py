@@ -42,6 +42,7 @@ def styled(
     Lines created without a role get *default_role*. Legend entries follow.
     """
     ax = canvas.ax
+    strokes, markers = _with_config(canvas, strokes, markers)
     before = _children(ax)
     handles = getattr(canvas, "_legend_handles", [])
     handles_before = len(handles)
@@ -61,6 +62,35 @@ def styled(
         if stroke is not None and isinstance(handle, Line2D):
             _style_line(handle, stroke)
         apply_markers([handle], markers)
+
+
+# Drawing role -> Theme property that a config file may override.
+_ROLE_STROKES = {
+    "budget": "budget_stroke", "original_budget": "budget_stroke", "curve": "ic_stroke",
+    "ray": "ray_stroke", "path": "path_stroke", "drop": "drop_stroke",
+    "compensated_budget": "compensated_budget_stroke", "final_budget": "final_budget_stroke",
+    "substitution": "substitution_stroke", "income": "income_stroke",
+    "projection": "projection_stroke", "guide": "guide_stroke",
+}
+_ROLE_MARKERS = {
+    "equilibrium": "eq_marker", "bundle": "eq_marker", "point": "point_marker",
+    "kink": "kink_marker", "bliss": "bliss_marker", "path_point": "path_marker",
+}
+
+
+def _with_config(canvas, strokes, markers):
+    """Add the strokes and markers a config file set, under the explicit ones."""
+    overrides = getattr(getattr(canvas, "theme", None), "_ev_overrides", None)
+    if not overrides:
+        return strokes, markers
+    strokes, markers = dict(strokes), dict(markers or {})
+    for table, roles in ((strokes, _ROLE_STROKES), (markers, _ROLE_MARKERS)):
+        for role, name in roles.items():
+            configured = overrides.get(name)
+            if configured is not None:
+                explicit = table.get(role)
+                table[role] = explicit.merged_over(configured) if explicit is not None else configured
+    return strokes, markers
 
 
 def apply_strokes(ax, artists: Iterable, strokes: Mapping[str, Stroke | None]) -> None:
