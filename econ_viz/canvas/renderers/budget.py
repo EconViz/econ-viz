@@ -17,6 +17,7 @@ def render_budget(
     label: str | None,
     fill: bool,
     fill_alpha: float,
+    fill_color: str | None = None,
 ) -> None:
     """Render a budget constraint on the given axes."""
     bc = BudgetConstraint(
@@ -29,6 +30,7 @@ def render_budget(
         label=label,
         fill=fill,
         fill_alpha=fill_alpha,
+        fill_color=fill_color,
     )
     bc.draw(ax)
 
