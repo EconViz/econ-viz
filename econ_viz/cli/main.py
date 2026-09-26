@@ -9,6 +9,7 @@ from importlib.metadata import version
 from .errors import CliConfigError
 from .help import cmd_help
 from .models import cmd_models
+from .init import cmd_init
 from .plot import cmd_plot
 from .solve_tex import cmd_solve_tex
 
@@ -38,6 +39,7 @@ def build_parser() -> tuple[argparse.ArgumentParser, dict[str, argparse.Argument
     subparsers["plot"]   = _register_plot(sub)
     subparsers["solve-tex"] = _register_solve_tex(sub)
     subparsers["help"]   = _register_help(sub)
+    subparsers["init"]   = _register_init(sub)
 
     return parser, subparsers
 
@@ -101,8 +103,10 @@ def _register_plot(sub) -> argparse.ArgumentParser:
     p.add_argument("--y-label", dest="y_label", type=str,   default="y",  help="Vertical axis label (default 'y').")
     p.add_argument("--title",   type=str,   default=None, help="Figure title.")
     p.add_argument("--dpi",     type=int,   default=300,  help="Output DPI for raster images (default 300).")
-    p.add_argument("--theme",   type=str,   default="default", metavar="NAME",
-                   help="Theme name: default, nord (default: default).")
+    p.add_argument("--theme",   type=str,   default=None, metavar="NAME",
+                   help="Theme name: default, nord (default: default, or the config's base).")
+    p.add_argument("--config",  type=str,   default=None, metavar="FILE",
+                   help="TOML settings file (see 'econ-viz init').")
 
     p.add_argument("--n-curves",       dest="n_curves",       type=int, default=5,
                    help="Number of indifference curves (default 5).")
@@ -116,6 +120,14 @@ def _register_plot(sub) -> argparse.ArgumentParser:
     p.add_argument("--output", "-o", metavar="FILE",
                    help="Output file (.png, .pdf, .svg). Omit to display interactively.")
 
+    return p
+
+
+def _register_init(sub) -> argparse.ArgumentParser:
+    """Add the ``init`` sub-command to *sub* and return its parser."""
+    p = sub.add_parser("init", help="Write a commented econ-viz.toml settings template.")
+    p.add_argument("path", nargs="?", default="econ-viz.toml", help="File to write (default: econ-viz.toml).")
+    p.add_argument("--force", action="store_true", help="Overwrite an existing file.")
     return p
 
 
@@ -148,6 +160,8 @@ def main() -> None:
             cmd_plot(args)
         elif args.command == "solve-tex":
             cmd_solve_tex(args)
+        elif args.command == "init":
+            cmd_init(args)
     except CliConfigError as exc:
         print(f"error: {exc}", file=sys.stderr)
         raise SystemExit(1) from exc

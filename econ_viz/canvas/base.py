@@ -32,7 +32,7 @@ from ..constants.canvas import (
     SMOOTH_SAMPLES,
 )
 from ..utils.logging import get_logger
-from ..themes import default as _default_theme
+from ..config import Config
 from ..themes.theme import Theme
 from ..enums import ArrowStyle, LabelPosition, LineStyle
 from ..canvas.fonts import FontApplier, resolve_font, resolve_math_font
@@ -218,8 +218,9 @@ class Canvas:
         Position around the x-axis arrowhead: top, right, or bottom.
     y_label_pos : LabelPosition or str
         Position around the y-axis arrowhead: left, top, or right.
-    theme : Theme
-        Colour and style theme. Defaults to the built-in ``default`` theme.
+    theme : Theme, optional
+        Colour and style theme. Defaults to the active :class:`Config`'s theme
+        (the built-in ``default`` theme unless ``Config.use()`` was called).
     x_arrow_style, y_arrow_style : ArrowStyle or str
         Independently configurable arrowhead styles for each axis.
     font : str or sequence of str, optional
@@ -264,7 +265,7 @@ class Canvas:
         dpi: int = DEFAULT_DPI,
         x_label_pos: LabelPosition | str = LabelPosition.RIGHT,
         y_label_pos: LabelPosition | str = LabelPosition.TOP,
-        theme: Theme = _default_theme,
+        theme: Theme | None = None,
         fig=None,
         ax=None,
         x_arrow_style: ArrowStyle | str | None = None,
@@ -280,6 +281,10 @@ class Canvas:
         y_axis: Axis | None = None,
         origin_label: str | Label | None = None,
     ):
+        active = Config.active()
+        theme = theme if theme is not None else active.theme
+        font = font if font is not None else active.font
+        math_font = math_font if math_font is not None else active.math_font
         x_axis, y_axis = x_axis or Axis(), y_axis or Axis()
         x_text, self.x_label_style = split_label(x_axis.label, theme.axis_label)
         y_text, self.y_label_style = split_label(y_axis.label, theme.axis_label)

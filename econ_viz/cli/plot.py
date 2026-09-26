@@ -26,9 +26,16 @@ def cmd_plot(args: argparse.Namespace) -> None:
         raise CliConfigError("provide --model <name> or --latex <expr>")
 
     model = build_model(args)
-    theme = resolve_theme(args.theme)
+    font = math_font = None
+    if args.config:
+        config = _load_config(args.config, args.theme)
+        theme, font, math_font = config.theme, config.font, config.math_font
+    else:
+        theme = resolve_theme(args.theme or "default")
 
     cvs = Canvas(
+        font=font,
+        math_font=math_font,
         x_max=args.x_max,
         y_max=args.y_max,
         x_label=args.x_label,
@@ -55,6 +62,23 @@ def cmd_plot(args: argparse.Namespace) -> None:
         print(f"Saved to {args.output}")
     else:
         cvs.show()
+
+
+def _load_config(path: str, theme_name: str | None):
+    """Read *path*; an explicit ``--theme`` replaces the file's ``base``."""
+    from econ_viz.config import Config, tomllib
+    from econ_viz.exceptions import InvalidParameterError
+
+    try:
+        with open(path, "rb") as handle:
+            data = tomllib.load(handle)
+        if theme_name:
+            data["base"] = theme_name.lower()
+        return Config.from_dict(data, source=path)
+    except FileNotFoundError:
+        raise CliConfigError(f"config file not found: {path}") from None
+    except (tomllib.TOMLDecodeError, InvalidParameterError) as error:
+        raise CliConfigError(str(error)) from None
 
 
 def _has_prices(args: argparse.Namespace) -> bool:
