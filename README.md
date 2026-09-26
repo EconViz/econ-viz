@@ -126,6 +126,18 @@ canvas.add_utility(u, levels=3, ic_label=Label(text="U={:.1f}", position="top"))
 canvas.add_decomposition(dec, point_label=Label(visible=False))  # hide A, B, C
 ```
 
+The same `Label` styles every other piece of text: axis labels, the origin
+`0`, titles, effect labels, and the Edgeworth box's good names and origins:
+
+```python
+canvas = Canvas(
+    title=Label(text="Hicks decomposition", fontsize=13),
+    x_axis=Axis(label=Label(text="x_1", fontsize=16)),
+    origin_label=Label(visible=False),
+)
+canvas.add_decomposition(dec, substitution=Effect(label=Label(text="SE", fontsize=12)))
+```
+
 Shade the budget set with `fill=True`, or pass a `Fill` for a colour and
 opacity of its own (default `theme.budget_fill`, coloured like the line):
 
