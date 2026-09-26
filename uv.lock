@@ -437,6 +437,7 @@ dependencies = [
     { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*'" },
     { name = "scipy", version = "1.18.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
     { name = "sympy" },
+    { name = "tomli", marker = "python_full_version < '3.11'" },
 ]
 
 [package.optional-dependencies]
@@ -473,6 +474,7 @@ requires-dist = [
     { name = "pillow", marker = "extra == 'animation'", specifier = ">=9.0.0" },
     { name = "scipy", specifier = ">=1.13.0,<2.0.0" },
     { name = "sympy", specifier = ">=1.12.0,<2.0.0" },
+    { name = "tomli", marker = "python_full_version < '3.11'", specifier = ">=2.0.0" },
 ]
 provides-extras = ["animation", "interactive", "all"]
 

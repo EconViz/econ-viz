@@ -10,7 +10,7 @@ from ..constants.canvas import DEFAULT_DPI, MAX_DPI, MIN_DPI
 from ..canvas.stroke import styled
 from ..contours import around_anchor_levels, percentile_levels
 from ..io import save_figure
-from ..themes import default as _default_theme
+from ..config import Config
 from ..exceptions import InvalidParameterError
 from ..themes.axis import Axis
 from ..themes.label import Label, split_label
@@ -69,7 +69,7 @@ class EdgeworthBox:
         y_label: str = "y",
         title: str | Label | None = None,
         dpi: int = DEFAULT_DPI,
-        theme: Theme = _default_theme,
+        theme: Theme | None = None,
         utility_a_color: str | None = None,
         utility_b_color: str | None = None,
         box_stroke: Stroke | None = None,
@@ -88,6 +88,7 @@ class EdgeworthBox:
         """
         if total_x <= 0 or total_y <= 0:
             raise ValueError("total_x and total_y must be positive.")
+        theme = theme if theme is not None else Config.active().theme
         x_axis, y_axis = x_axis or Axis(), y_axis or Axis()
         for name, axis in (("x_axis", x_axis), ("y_axis", y_axis)):
             if axis.label_position is not None:

@@ -19,7 +19,7 @@ from ..themes.label import Label, split_label
 from ..themes.stroke import Stroke
 from ..enums import ArrowStyle, LabelPosition, Layout, LineStyle
 from ..io import save_figure
-from ..themes import default as _default_theme
+from ..config import Config
 from ..themes.theme import Theme
 
 
@@ -100,7 +100,7 @@ class Figure:
         dpi: int = DEFAULT_DPI,
         x_label_pos: LabelPosition | str = LabelPosition.RIGHT,
         y_label_pos: LabelPosition | str = LabelPosition.TOP,
-        theme: Theme = _default_theme,
+        theme: Theme | None = None,
         shared_x: bool = False,
         shared_y: bool = False,
         figsize: tuple[float, float] | None = None,
@@ -119,6 +119,10 @@ class Figure:
         y_axis: Axis | None = None,
     ):
         """Create a multi-panel figure composed of injected :class:`Canvas` instances."""
+        active = Config.active()
+        theme = theme if theme is not None else active.theme
+        font = font if font is not None else active.font
+        math_font = math_font if math_font is not None else active.math_font
         self.layout = layout
         self.shared_x = shared_x
         self.shared_y = shared_y

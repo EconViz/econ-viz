@@ -218,6 +218,36 @@ S = slutsky_matrix(CobbDouglas(alpha=0.4, beta=0.6), px=2.0, py=3.0, income=60.0
 # S.s_xx, S.s_xy, S.s_yx, S.s_yy
 ```
 
+## Settings file
+
+Keep your style in an `econ-viz.toml` and load it once. Section names match
+Theme properties (`[stroke.budget]` is `theme.budget_stroke`), fields match the
+style objects, and anything left out keeps the default:
+
+```toml
+[color]
+ic = "#2E86AB"
+
+[stroke.budget]
+width = 1.5
+
+[label.point]
+fontsize = 12
+
+[legend]
+position = "bottom"
+```
+
+```python
+from econ_viz import Config
+
+Config.load("econ-viz.toml").use()   # diagrams created from now on use it
+```
+
+`econ-viz init` writes a commented template, and `econ-viz plot --config
+econ-viz.toml ...` uses the same file. Arguments passed to a method still win
+over the file.
+
 ## CLI
 
 ```bash
