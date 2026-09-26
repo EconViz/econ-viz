@@ -2,10 +2,14 @@
 
 from __future__ import annotations
 
-from typing import Iterable
+from collections.abc import Iterable
+from dataclasses import dataclass
+from typing import cast
 
+from ...canvas.stroke import tag
 from ...constants.canvas import INCOME_RANGE_Y, SUBSTITUTION_RANGE_Y
 from ...enums import LabelPosition
+from ...optimizer.solver import Equilibrium
 from ...themes.label import Label
 from ..effect import Effect
 from ..labels import placement
@@ -146,10 +150,26 @@ def render_decomposition(
         opacity=_opacity(income_effect),
     )
     a, b, c = ((eq.x, eq.y) for eq in (decomposition.A, decomposition.B, decomposition.C))
-    _draw_effect_label(ax, start=a, end=b, effect=substitution_effect, color=substitution_color,
-                       transform=ax.transData, role="substitution_label", default=effect_label)
-    _draw_effect_label(ax, start=b, end=c, effect=income_effect, color=income_color,
-                       transform=ax.transData, role="income_label", default=effect_label)
+    _draw_effect_label(
+        ax,
+        start=a,
+        end=b,
+        effect=substitution_effect,
+        color=substitution_color,
+        transform=ax.transData,
+        role="substitution_label",
+        default=effect_label,
+    )
+    _draw_effect_label(
+        ax,
+        start=b,
+        end=c,
+        effect=income_effect,
+        color=income_color,
+        transform=ax.transData,
+        role="income_label",
+        default=effect_label,
+    )
 
 
 def _draw_effect_arrow(
@@ -176,7 +196,7 @@ def _draw_effect_arrow(
         },
         zorder=8,
     )
-    arrow._ev_role = role
+    tag(arrow, role)
 
 
 def _draw_x_projections(
@@ -212,7 +232,7 @@ def _draw_x_projections(
             linewidth=0.8,
             zorder=5,
         )
-        projection._ev_role = "projection"
+        tag(projection, "projection")
         (guide,) = ax.plot(
             [eq.x, eq.x],
             [0.0, projection_bottom],
@@ -223,7 +243,7 @@ def _draw_x_projections(
             zorder=6,
             clip_on=False,
         )
-        guide._ev_role = "guide"
+        tag(guide, "guide")
 
     x0, x1 = ax.get_xlim()
     # A zero effect has no range; an arrow there would be a bare head.
@@ -232,7 +252,7 @@ def _draw_x_projections(
         (a_x, b_x, sub_y, substitution_color, _opacity(substitution_effect)),
         (b_x, c_x, inc_y, income_color, _opacity(income_effect)),
     )
-    for (start_x, end_x, y, color, opacity) in ranges:
+    for start_x, end_x, y, color, opacity in ranges:
         if abs(end_x - start_x) <= min_length:
             continue
         effect_range = ax.annotate(
@@ -253,13 +273,29 @@ def _draw_x_projections(
             zorder=9,
             clip_on=False,
         )
-        effect_range._ev_role = "range"
-    _draw_effect_label(ax, start=(a_x, sub_y), end=(b_x, sub_y), effect=substitution_effect,
-                       color=substitution_color, transform=xaxis_t, role="substitution_label", beyond_ends=True,
-                       default=effect_label)
-    _draw_effect_label(ax, start=(b_x, inc_y), end=(c_x, inc_y), effect=income_effect,
-                       color=income_color, transform=xaxis_t, role="income_label", beyond_ends=True,
-                       default=effect_label)
+        tag(effect_range, "range")
+    _draw_effect_label(
+        ax,
+        start=(a_x, sub_y),
+        end=(b_x, sub_y),
+        effect=substitution_effect,
+        color=substitution_color,
+        transform=xaxis_t,
+        role="substitution_label",
+        beyond_ends=True,
+        default=effect_label,
+    )
+    _draw_effect_label(
+        ax,
+        start=(b_x, inc_y),
+        end=(c_x, inc_y),
+        effect=income_effect,
+        color=income_color,
+        transform=xaxis_t,
+        role="income_label",
+        beyond_ends=True,
+        default=effect_label,
+    )
 
 
 def _opacity(effect: Effect | None) -> float | None:
@@ -271,7 +307,15 @@ def _range_y(effect: Effect | None, default: float) -> float:
 
 
 def _draw_effect_label(
-    ax, *, start, end, effect: Effect | None, color: str, transform, role: str, beyond_ends: bool = False,
+    ax,
+    *,
+    start,
+    end,
+    effect: Effect | None,
+    color: str,
+    transform,
+    role: str,
+    beyond_ends: bool = False,
     default: Label | None = None,
 ) -> None:
     """Write ``effect.label`` beside the middle of an effect arrow.
@@ -284,10 +328,14 @@ def _draw_effect_label(
     text, style = effect.resolved_label(default or Label(fontsize=10))
     if not text:
         return
-    (dx, dy), ha, va = placement(style.position, style.offset)
-    if beyond_ends and style.position is LabelPosition.LEFT:
+    # resolved_label() always falls back to Effect.label_position / label_offset, neither
+    # of which can be None, so both fields are set here.
+    position = cast("LabelPosition", style.position)
+    offset = cast(float, style.offset)
+    (dx, dy), ha, va = placement(position, offset)
+    if beyond_ends and position is LabelPosition.LEFT:
         anchor = min(start, end, key=lambda p: p[0])
-    elif beyond_ends and style.position is LabelPosition.RIGHT:
+    elif beyond_ends and position is LabelPosition.RIGHT:
         anchor = max(start, end, key=lambda p: p[0])
     else:
         anchor = ((start[0] + end[0]) / 2, (start[1] + end[1]) / 2)
@@ -306,13 +354,13 @@ def _draw_effect_label(
     )
     label.set_visible(style.visible is not False)
     label.set_alpha(style.opacity if style.opacity is not None else effect.opacity)
-    label._ev_role = role
+    tag(label, role)
 
 
 def _retag_last_budget(ax, role: str) -> None:
     """Give the budget line just drawn its decomposition role."""
     line = next(line for line in reversed(ax.lines) if getattr(line, "_ev_role", None) == "budget")
-    line._ev_role = role
+    tag(line, role)
 
 
 def _label_overlap_tolerance(ax) -> float:
@@ -322,42 +370,41 @@ def _label_overlap_tolerance(ax) -> float:
     return 0.015 * scale
 
 
+@dataclass
+class _LabelGroup:
+    """Bundle labels (and their averaged position) that landed close enough to share one annotation."""
+
+    labels: list[str]
+    points: list[tuple[float, float]]
+    x: float
+    y: float
+
+
 def _group_overlapping_labels(
-    points: Iterable[tuple[str, object]],
+    points: Iterable[tuple[str, Equilibrium]],
     *,
     tol: float,
 ) -> list[tuple[list[str], float, float]]:
-    entries = [
-        (label, float(eq.x), float(eq.y))
-        for label, eq in points
-    ]
+    entries = [(label, float(eq.x), float(eq.y)) for label, eq in points]
     order = {"A": 0, "B": 1, "C": 2}
-    groups: list[dict[str, object]] = []
+    groups: list[_LabelGroup] = []
 
     for label, x, y in entries:
         attached = False
         for group in groups:
-            gx = group["x"]
-            gy = group["y"]
-            if abs(x - gx) <= tol and abs(y - gy) <= tol:
-                group["labels"].append(label)
-                pts = group["points"]
-                pts.append((x, y))
-                n = len(pts)
-                group["x"] = sum(px for px, _ in pts) / n
-                group["y"] = sum(py for _, py in pts) / n
+            if abs(x - group.x) <= tol and abs(y - group.y) <= tol:
+                group.labels.append(label)
+                group.points.append((x, y))
+                n = len(group.points)
+                group.x = sum(px for px, _ in group.points) / n
+                group.y = sum(py for _, py in group.points) / n
                 attached = True
                 break
         if not attached:
-            groups.append({
-                "labels": [label],
-                "points": [(x, y)],
-                "x": x,
-                "y": y,
-            })
+            groups.append(_LabelGroup(labels=[label], points=[(x, y)], x=x, y=y))
 
     merged: list[tuple[list[str], float, float]] = []
     for group in groups:
-        labels = sorted(group["labels"], key=lambda token: order.get(token, 99))
-        merged.append((labels, float(group["x"]), float(group["y"])))
+        labels = sorted(group.labels, key=lambda token: order.get(token, 99))
+        merged.append((labels, float(group.x), float(group.y)))
     return merged

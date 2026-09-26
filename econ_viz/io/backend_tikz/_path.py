@@ -14,7 +14,7 @@ def path_to_polylines(path: Path, transform, *, filled: bool) -> list[np.ndarray
     spines.  Fall back to ``iter_segments`` so those one-segment paths are
     still emitted.
     """
-    polys = [strip_closing_vertex(poly, filled=filled) for poly in path.to_polygons(transform)]
+    polys = [strip_closing_vertex(np.asarray(poly), filled=filled) for poly in path.to_polygons(transform)]
     if polys:
         return polys
     return _segment_polylines(path, transform)
@@ -71,8 +71,5 @@ def dash_spec(dashes) -> str:
             return "dotted"
         if abs(on - off) <= max(on, off) * 0.25:
             return "dashed"
-    parts = [
-        f"{'on' if i % 2 == 0 else 'off'} {d:.2f}pt"
-        for i, d in enumerate(values)
-    ]
+    parts = [f"{'on' if i % 2 == 0 else 'off'} {d:.2f}pt" for i, d in enumerate(values)]
     return "dash pattern=" + " ".join(parts)

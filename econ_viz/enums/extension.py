@@ -53,7 +53,4 @@ class ExportFormat(Enum):
             return cls(ext)
         except ValueError:
             supported = ", ".join(f".{m.value}" for m in cls)
-            raise ExportError(
-                f"Unsupported file extension '.{ext}'. "
-                f"Supported formats: {supported}"
-            ) from None
+            raise ExportError(f"Unsupported file extension '.{ext}'. Supported formats: {supported}") from None

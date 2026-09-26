@@ -24,18 +24,19 @@ from __future__ import annotations
 import argparse
 
 import matplotlib
+
 matplotlib.use("Agg")
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Callable
 
 import numpy as np
 
 from econ_viz import Canvas, levels, solve
 from econ_viz.animation import Animator
 from econ_viz.canvas.layers import Layer
-from econ_viz.models import CobbDouglas, CES, Leontief, PerfectSubstitutes
+from econ_viz.models import CES, CobbDouglas, Leontief, PerfectSubstitutes
 
 OUTPUT_DIR = "examples/output/animation"
 PARAMETER_DIR = f"{OUTPUT_DIR}/parameter_sweeps"
@@ -126,7 +127,7 @@ def _parameterized_progress(n: int, speed: float = DEFAULT_SPEED) -> np.ndarray:
     progress = np.linspace(0.0, 1.0, n)
     if speed == 1.0:
         return progress
-    return progress ** speed
+    return progress**speed
 
 
 def _parameterized_linear_frames(

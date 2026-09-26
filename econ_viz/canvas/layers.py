@@ -6,8 +6,9 @@ utility function into the mesh-grid arrays required by matplotlib's
 contouring routines.
 """
 
+from collections.abc import Callable
+
 import numpy as np
-from typing import Callable
 
 
 class Layer:
@@ -48,7 +49,7 @@ class Layer:
         y = np.linspace(y_range[0], y_range[1], res)
         X, Y = np.meshgrid(x, y)
 
-        with np.errstate(divide='ignore', invalid='ignore'):
+        with np.errstate(divide="ignore", invalid="ignore"):
             Z = func(X, Y)
 
         return X, Y, Z

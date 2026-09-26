@@ -1,6 +1,7 @@
 """Generate PCC / ICC path examples for common core models."""
 
 import matplotlib
+
 matplotlib.use("Agg")
 
 from pathlib import Path
@@ -23,6 +24,7 @@ def representative_levels(path, n: int = 3) -> list[float]:
     levels = [path.equilibria[idx].utility for idx in idxs]
     ordered_unique = list(dict.fromkeys(sorted(levels)))
     return ordered_unique
+
 
 cases = [
     (

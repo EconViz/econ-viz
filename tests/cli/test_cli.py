@@ -31,11 +31,16 @@ class TestSolveTexCLI:
         monkeypatch.setattr(
             "sys.argv",
             [
-                "econ-viz", "solve-tex",
-                "--model", "cobb-douglas",
-                "--px-symbol", "P_x",
-                "--py-symbol", "P_y",
-                "--income-symbol", "M",
+                "econ-viz",
+                "solve-tex",
+                "--model",
+                "cobb-douglas",
+                "--px-symbol",
+                "P_x",
+                "--py-symbol",
+                "P_y",
+                "--income-symbol",
+                "M",
             ],
         )
         main()
@@ -47,8 +52,10 @@ class TestSolveTexCLI:
         monkeypatch.setattr(
             "sys.argv",
             [
-                "econ-viz", "solve-tex",
-                "--model", "cobb-douglas",
+                "econ-viz",
+                "solve-tex",
+                "--model",
+                "cobb-douglas",
                 "--symbolic-params",
             ],
         )

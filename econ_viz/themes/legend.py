@@ -47,9 +47,7 @@ class Legend:
                 object.__setattr__(self, "position", LegendPosition(self.position))
             except ValueError:
                 choices = ", ".join(p.value for p in LegendPosition)
-                raise InvalidParameterError(
-                    f"invalid Legend position {self.position!r}; choose: {choices}"
-                ) from None
+                raise InvalidParameterError(f"invalid Legend position {self.position!r}; choose: {choices}") from None
         if self.fontsize is not None and not self.fontsize > 0:
             raise InvalidParameterError(f"Legend fontsize must be positive, got {self.fontsize!r}")
         if self.columns is not None and (int(self.columns) != self.columns or self.columns < 1):
@@ -60,7 +58,9 @@ class Legend:
         if base is None:
             return self
         fields = ("position", "fontsize", "frame", "columns", "visible", "opacity")
-        return Legend(**{
-            field: getattr(self, field) if getattr(self, field) is not None else getattr(base, field)
-            for field in fields
-        })
+        return Legend(
+            **{
+                field: getattr(self, field) if getattr(self, field) is not None else getattr(base, field)
+                for field in fields
+            }
+        )

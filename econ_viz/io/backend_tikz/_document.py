@@ -18,7 +18,7 @@ _STANDALONE_POSTAMBLE = r"""\end{document}
 """
 
 
-def assemble(renderer: "TikzRenderer", *, standalone: bool = True) -> str:
+def assemble(renderer: TikzRenderer, *, standalone: bool = True) -> str:
     """Serialise ``renderer``'s commands into a LaTeX string.
 
     Parameters

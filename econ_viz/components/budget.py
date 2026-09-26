@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from ..canvas.stroke import tag
 from ..exceptions import InvalidParameterError
 from ..utils.logging import get_logger
 
@@ -45,9 +46,7 @@ class BudgetConstraint:
         fill_color: str | None = None,
     ):
         if px <= 0 or py <= 0 or income <= 0:
-            raise InvalidParameterError(
-                f"Budget parameters must be positive (px={px}, py={py}, income={income})."
-            )
+            raise InvalidParameterError(f"Budget parameters must be positive (px={px}, py={py}, income={income}).")
         self.px = px
         self.py = py
         self.income = income
@@ -66,20 +65,29 @@ class BudgetConstraint:
 
         logger.debug(
             "Budget line: px=%.4f, py=%.4f, I=%.4f → x_int=%.4f, y_int=%.4f",
-            self.px, self.py, self.income, x_int, y_int,
+            self.px,
+            self.py,
+            self.income,
+            x_int,
+            y_int,
         )
 
         plot_label = rf"${self.label}$" if self.label else None
         (line,) = ax.plot(
-            [x_int, 0], [0, y_int],
-            color=self.color, linewidth=self.linewidth,
-            linestyle=self.linestyle, label=plot_label,
+            [x_int, 0],
+            [0, y_int],
+            color=self.color,
+            linewidth=self.linewidth,
+            linestyle=self.linestyle,
+            label=plot_label,
         )
-        line._ev_role = "budget"
+        tag(line, "budget")
 
         if self.fill:
             region = ax.fill_between(
-                [0, x_int], [y_int, 0],
-                alpha=self.fill_alpha, color=self.fill_color or self.color,
+                [0, x_int],
+                [y_int, 0],
+                alpha=self.fill_alpha,
+                color=self.fill_color or self.color,
             )
-            region._ev_role = "budget_fill"
+            tag(region, "budget_fill")

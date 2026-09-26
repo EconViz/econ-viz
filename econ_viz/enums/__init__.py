@@ -7,12 +7,12 @@ the qualitative shape of the underlying preference family, and to
 validate export formats at save time.
 """
 
-from .utility import UtilityType
 from .axis import ArrowStyle, LabelPosition, LineStyle
 from .extension import ExportFormat
 from .layout import Layout
 from .legend import LegendPosition
 from .returns import ReturnsToScale
+from .utility import UtilityType
 
 __all__ = [
     "ArrowStyle",

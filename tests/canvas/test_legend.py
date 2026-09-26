@@ -3,6 +3,7 @@
 import warnings
 
 import matplotlib
+
 matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt
@@ -52,15 +53,26 @@ class TestLegendValue:
     def test_defaults(self):
         legend = Legend()
         assert (legend.position, legend.fontsize, legend.frame, legend.columns, legend.visible) == (
-            None, None, None, None, None)
+            None,
+            None,
+            None,
+            None,
+            None,
+        )
 
     def test_position_accepts_strings(self):
         assert Legend(position="bottom").position is LegendPosition.BOTTOM
         assert Legend(position="upper left").position is LegendPosition.UPPER_LEFT
 
-    @pytest.mark.parametrize("kwargs", [
-        {"position": "middle"}, {"fontsize": 0}, {"columns": 0}, {"columns": 1.5},
-    ])
+    @pytest.mark.parametrize(
+        "kwargs",
+        [
+            {"position": "middle"},
+            {"fontsize": 0},
+            {"columns": 0},
+            {"columns": 1.5},
+        ],
+    )
     def test_rejects_invalid_values(self, kwargs):
         with pytest.raises(InvalidParameterError):
             Legend(**kwargs)
@@ -85,12 +97,19 @@ class TestPositions:
         assert (legend.y0 + legend.y1) / 2 > (axes.y0 + axes.y1) / 2 if vertical == "upper" else True
         assert (legend.x0 + legend.x1) / 2 < (axes.x0 + axes.x1) / 2 if horizontal == "left" else True
 
-    @pytest.mark.parametrize("position, side", [
-        ("top", "above"), ("bottom", "below"), ("left", "left"), ("right", "right"),
-    ])
+    @pytest.mark.parametrize(
+        "position, side",
+        [
+            ("top", "above"),
+            ("bottom", "below"),
+            ("left", "left"),
+            ("right", "right"),
+        ],
+    )
     def test_outside_positions_clear_the_axes(self, position, side):
         cvs = Canvas(x_max=20, y_max=15, title="T").add_decomposition(
-            DEC, show_x_projections=True, legend=Legend(position=position))
+            DEC, show_x_projections=True, legend=Legend(position=position)
+        )
         legend = _legend_box(cvs)
         tight = _tight_without_legend(cvs.ax, _renderer(cvs))
         if side == "above":
@@ -143,7 +162,6 @@ class TestAutomaticPlacement:
         cvs = Canvas(x_max=16, y_max=32).add_decomposition(self._haagsma())
         legend = cvs.ax.get_legend()
         box = legend.get_window_extent(_renderer(cvs))
-        renderer = _renderer(cvs)
         for cs in [a for a in cvs.ax.get_children() if getattr(a, "_ev_role", None) == "curve"]:
             for path in cs.get_paths():
                 assert not cs.get_transform().transform_path(path).intersects_bbox(box, filled=False)
@@ -187,16 +205,18 @@ class TestLookAndVisibility:
 
 class TestOtherDiagrams:
     def test_demand_diagram(self):
-        path = PricePath(MODEL, budget=LinearBudget(px=2.0, py=2.0, income=40.0), price="px",
-                         price_range=(0.8, 6.0), n=20)
+        path = PricePath(
+            MODEL, budget=LinearBudget(px=2.0, py=2.0, income=40.0), price="px", price_range=(0.8, 6.0), n=20
+        )
         fig = DemandDiagram(path).add_marshallian_panel(price_markers=[1.5, 4.0], legend=Legend(position="bottom"))
         for cvs in (fig.utility_canvas, fig.demand_canvas):
             box = cvs.ax.get_legend().get_window_extent(_renderer(cvs))
             assert box.y1 <= _tight_without_legend(cvs.ax, _renderer(cvs)).y0
 
     def test_demand_diagram_hidden(self):
-        path = PricePath(MODEL, budget=LinearBudget(px=2.0, py=2.0, income=40.0), price="px",
-                         price_range=(0.8, 6.0), n=20)
+        path = PricePath(
+            MODEL, budget=LinearBudget(px=2.0, py=2.0, income=40.0), price="px", price_range=(0.8, 6.0), n=20
+        )
         fig = DemandDiagram(path).add_marshallian_panel(legend=Legend(visible=False))
         assert fig.utility_canvas.ax.get_legend() is None
         assert fig.demand_canvas.ax.get_legend() is None

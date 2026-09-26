@@ -25,9 +25,10 @@ Class order
 9. Haagsma          — inferior good x, Giffen at high enough income
 """
 
-import numpy as np
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Callable
+
+import numpy as np
 
 from ..enums import UtilityType
 from ..exceptions import InvalidParameterError
@@ -67,7 +68,7 @@ class CobbDouglas:
         return UtilityType.SMOOTH
 
     def __call__(self, x, y):
-        return (x ** self.alpha) * (y ** self.beta)
+        return (x**self.alpha) * (y**self.beta)
 
     def ray_slopes(self) -> list[float]:
         """Return the expansion-path slope beta/alpha (equal-price case)."""
@@ -109,14 +110,9 @@ class CES:
     def __post_init__(self) -> None:
         _require_positive("CES", alpha=self.alpha, beta=self.beta)
         if not np.isfinite(self.rho) or self.rho >= 1.0:
-            raise InvalidParameterError(
-                "CES: rho must be finite and less than 1; "
-                "use PerfectSubstitutes for rho=1."
-            )
+            raise InvalidParameterError("CES: rho must be finite and less than 1; use PerfectSubstitutes for rho=1.")
         if abs(self.rho) < 1e-9 and not np.isclose(self.alpha + self.beta, 1.0):
-            raise InvalidParameterError(
-                "CES: alpha and beta must sum to 1 when rho=0."
-            )
+            raise InvalidParameterError("CES: alpha and beta must sum to 1 when rho=0.")
 
     @property
     def utility_type(self) -> UtilityType:
@@ -124,8 +120,8 @@ class CES:
 
     def __call__(self, x, y):
         if abs(self.rho) < 1e-9:
-            return x ** self.alpha * y ** self.beta
-        return (self.alpha * x ** self.rho + self.beta * y ** self.rho) ** (1 / self.rho)
+            return x**self.alpha * y**self.beta
+        return (self.alpha * x**self.rho + self.beta * y**self.rho) ** (1 / self.rho)
 
     def ray_slopes(self) -> list[float]:
         """Return the expansion-path slope (beta/alpha)^{1/(1-rho)}.
@@ -256,9 +252,7 @@ class Translog:
 
     def __post_init__(self) -> None:
         if self.alpha_x <= 0 or self.alpha_y <= 0:
-            raise InvalidParameterError(
-                "Translog: alpha_x and alpha_y must be positive."
-            )
+            raise InvalidParameterError("Translog: alpha_x and alpha_y must be positive.")
 
     @property
     def utility_type(self) -> UtilityType:
@@ -271,8 +265,8 @@ class Translog:
             self.alpha_0
             + self.alpha_x * lx
             + self.alpha_y * ly
-            + 0.5 * self.beta_xx * lx ** 2
-            + 0.5 * self.beta_yy * ly ** 2
+            + 0.5 * self.beta_xx * lx**2
+            + 0.5 * self.beta_yy * ly**2
             + self.beta_xy * lx * ly
         )
         return np.exp(ln_u)
@@ -295,16 +289,12 @@ def _validate_v_func(v_func: Callable, name: str = "v_func") -> None:
         f_plus = np.asarray(v_func(z + h), dtype=float)
 
     fprime = (f_plus - f_minus) / (2 * h)
-    fdouble = (f_plus - 2 * f_center + f_minus) / (h ** 2)
+    fdouble = (f_plus - 2 * f_center + f_minus) / (h**2)
 
     if np.any(fprime <= -1e-8):
-        raise ValueError(
-            f"{name}: monotonicity violated -- f'(z) <= 0 detected."
-        )
+        raise ValueError(f"{name}: monotonicity violated -- f'(z) <= 0 detected.")
     if np.any(fdouble >= 1e-8):
-        raise ValueError(
-            f"{name}: diminishing marginal utility violated -- f''(z) >= 0 detected."
-        )
+        raise ValueError(f"{name}: diminishing marginal utility violated -- f''(z) >= 0 detected.")
 
 
 @dataclass
@@ -399,7 +389,7 @@ class StoneGeary:
         with np.errstate(invalid="ignore"):
             result = np.where(
                 (dx > 0) & (dy > 0),
-                dx ** self.alpha * dy ** self.beta,
+                dx**self.alpha * dy**self.beta,
                 np.nan,
             )
         return float(result) if result.ndim == 0 else result
@@ -446,15 +436,8 @@ class Satiation:
 
     def __post_init__(self) -> None:
         _require_positive("Satiation", a=self.a, b=self.b)
-        if (
-            not np.isfinite(self.bliss_x)
-            or not np.isfinite(self.bliss_y)
-            or self.bliss_x < 0
-            or self.bliss_y < 0
-        ):
-            raise InvalidParameterError(
-                "Satiation: bliss_x and bliss_y must be finite and non-negative."
-            )
+        if not np.isfinite(self.bliss_x) or not np.isfinite(self.bliss_y) or self.bliss_x < 0 or self.bliss_y < 0:
+            raise InvalidParameterError("Satiation: bliss_x and bliss_y must be finite and non-negative.")
 
     @property
     def budget_may_be_slack(self) -> bool:

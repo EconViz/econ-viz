@@ -29,7 +29,7 @@ import re
 
 from ..exceptions import ParseError
 from ..utils.logging import get_logger
-from .core import CobbDouglas, Leontief, PerfectSubstitutes, CES
+from .core import CES, CobbDouglas, Leontief, PerfectSubstitutes
 
 logger = get_logger(__name__)
 
@@ -67,9 +67,9 @@ def _coeff(raw: str | None) -> float:
 
 # Cobb-Douglas: x^{a} y^{b}  or  x^a y^b  (with optional * between)
 _CD_RE = re.compile(
-    r"^x\s*\^\{?" + _NUM + r"\}?"   # x^{alpha}
+    r"^x\s*\^\{?" + _NUM + r"\}?"  # x^{alpha}
     r"\s*\*?\s*"
-    r"y\s*\^\{?" + _NUM + r"\}?"    # y^{beta}
+    r"y\s*\^\{?" + _NUM + r"\}?"  # y^{beta}
     r"\s*$",
     re.IGNORECASE,
 )
@@ -86,15 +86,11 @@ def _try_cobb_douglas(s: str) -> CobbDouglas | None:
 
 # Leontief: \min(ax, by)  or  min(ax, by)  (order of x/y args can swap)
 _MIN_RE = re.compile(
-    r"^\\?min\s*\(\s*"
-    + _COEFF_X + r"\s*,\s*" + _COEFF_Y +
-    r"\s*\)\s*$",
+    r"^\\?min\s*\(\s*" + _COEFF_X + r"\s*,\s*" + _COEFF_Y + r"\s*\)\s*$",
     re.IGNORECASE,
 )
 _MIN_RE_YX = re.compile(  # y before x
-    r"^\\?min\s*\(\s*"
-    + _COEFF_Y + r"\s*,\s*" + _COEFF_X +
-    r"\s*\)\s*$",
+    r"^\\?min\s*\(\s*" + _COEFF_Y + r"\s*,\s*" + _COEFF_X + r"\s*\)\s*$",
     re.IGNORECASE,
 )
 
@@ -134,9 +130,15 @@ def _try_perfect_substitutes(s: str) -> PerfectSubstitutes | None:
 #   outer form 2 — fraction: ^{1/rho}  where denominator = rho
 _CES_INNER = (
     r"^\(\s*"
-    + _SNUM + r"\s*x\s*\^\{?" + _SNUM + r"\}?"   # alpha x^{rho}
+    + _SNUM
+    + r"\s*x\s*\^\{?"
+    + _SNUM
+    + r"\}?"  # alpha x^{rho}
     + r"\s*\+\s*"
-    + _SNUM + r"\s*y\s*\^\{?" + _SNUM + r"\}?"   # beta y^{rho}
+    + _SNUM
+    + r"\s*y\s*\^\{?"
+    + _SNUM
+    + r"\}?"  # beta y^{rho}
     + r"\s*\)\s*"
 )
 # outer as a single signed decimal/integer
@@ -182,6 +184,7 @@ def _try_ces(s: str) -> CES | None:
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
+
 
 def parse_latex(latex: str) -> CobbDouglas | Leontief | PerfectSubstitutes | CES:
     """Parse a LaTeX utility-function string into a concrete model instance.

@@ -82,6 +82,4 @@ def solution_tex(
             r"\end{cases}"
         )
 
-    raise NotImplementedError(
-        f"Closed-form TeX solution is not implemented for {func.__class__.__name__}."
-    )
+    raise NotImplementedError(f"Closed-form TeX solution is not implemented for {func.__class__.__name__}.")

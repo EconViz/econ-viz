@@ -30,9 +30,7 @@ def build_model(args: argparse.Namespace):
     name = (args.model or "").lower()
     registry = get_model_registry()
     if name not in registry:
-        raise CliConfigError(
-            f"unknown model '{args.model}'. Run `econ-viz models` to see available models."
-        )
+        raise CliConfigError(f"unknown model '{args.model}'. Run `econ-viz models` to see available models.")
     try:
         return build_registered_model(name, args)
     except ValueError as exc:
@@ -47,9 +45,10 @@ def _themes_map() -> dict[str, object]:
     global _THEMES
     if _THEMES is None:
         from econ_viz import themes
+
         _THEMES = {
             "default": themes.default,
-            "nord":    themes.nord,
+            "nord": themes.nord,
         }
     return _THEMES
 

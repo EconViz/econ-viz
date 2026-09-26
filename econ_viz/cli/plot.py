@@ -20,7 +20,8 @@ def cmd_plot(args: argparse.Namespace) -> None:
     args : argparse.Namespace
         Parsed CLI arguments produced by :func:`~econ_viz.cli.main.build_parser`.
     """
-    from econ_viz import Canvas, levels as lvl_mod, solve
+    from econ_viz import Canvas, solve
+    from econ_viz import levels as lvl_mod
 
     if args.model is None and args.latex is None:
         raise CliConfigError("provide --model <name> or --latex <expr>")

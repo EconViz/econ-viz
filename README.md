@@ -27,11 +27,10 @@ from econ_viz import Canvas, levels, solve
 from econ_viz.models import CobbDouglas
 
 model = CobbDouglas(alpha=0.5, beta=0.5)
-eq    = solve(model, px=2.0, py=3.0, income=30.0)
-lvls  = levels.around(eq.utility, n=5)
+eq = solve(model, px=2.0, py=3.0, income=30.0)
+lvls = levels.around(eq.utility, n=5)
 
-cvs = Canvas(x_max=20, y_max=15, x_label="x", y_label="y",
-             title="Cobb-Douglas  $x^{0.5} y^{0.5}$")
+cvs = Canvas(x_max=20, y_max=15, x_label="x", y_label="y", title="Cobb-Douglas  $x^{0.5} y^{0.5}$")
 cvs.add_utility(model, levels=lvls)
 cvs.add_budget(2.0, 3.0, 30.0, fill=True)
 cvs.add_equilibrium(eq, show_ray=True)
@@ -241,7 +240,7 @@ position = "bottom"
 ```python
 from econ_viz import Config
 
-Config.load("econ-viz.toml").use()   # diagrams created from now on use it
+Config.load("econ-viz.toml").use()  # diagrams created from now on use it
 ```
 
 `econ-viz init` writes a commented template, and `econ-viz plot --config
