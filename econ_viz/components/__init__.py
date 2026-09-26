@@ -1,8 +1,9 @@
 """Reusable drawing components for economic diagrams."""
 
-from .indifference import IndifferenceCurves
+from ..canvas.stroke import tag
 from .budget import BudgetConstraint
 from .equilibrium import EquilibriumPoint
+from .indifference import IndifferenceCurves
 
 __all__ = ["IndifferenceCurves", "BudgetConstraint", "EquilibriumPoint"]
 
@@ -14,7 +15,6 @@ def draw_ray(ax, slope, x_max, y_max, color, linewidth):
     if y_end > y_max:
         y_end = y_max
         x_end = y_end / slope
-    (line,) = ax.plot([0, x_end], [0, y_end],
-                      color=color, linestyle="--", linewidth=linewidth)
-    line._ev_role = "ray"
+    (line,) = ax.plot([0, x_end], [0, y_end], color=color, linestyle="--", linewidth=linewidth)
+    tag(line, "ray")
     return line

@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Literal
+from typing import Any, Literal
 
 import numpy as np
 
@@ -22,7 +23,7 @@ class LinearBudget:
     py: float
     income: float
 
-    def with_update(self, **kwargs: float) -> "LinearBudget":
+    def with_update(self, **kwargs: float) -> LinearBudget:
         """Return a copy with one or more fields replaced."""
         return LinearBudget(
             px=kwargs.get("px", self.px),
@@ -35,7 +36,7 @@ class LinearBudget:
 class ConsumptionPath:
     """A solved sequence of equilibrium bundles under a one-parameter sweep."""
 
-    func: object
+    func: Callable[..., Any]
     base_budget: LinearBudget
     parameter_name: SweepParameter
     parameter_values: tuple[float, ...]
@@ -91,7 +92,7 @@ class PricePath(ConsumptionPath):
 
     def __init__(
         self,
-        func,
+        func: Callable[..., Any],
         budget: LinearBudget,
         price: PriceParameter,
         price_range: tuple[float, float],
@@ -99,10 +100,7 @@ class PricePath(ConsumptionPath):
     ):
         parameter_values = _linspace(price_range, n)
         budgets = tuple(budget.with_update(**{price: value}) for value in parameter_values)
-        equilibria = tuple(
-            solve(func, px=item.px, py=item.py, income=item.income)
-            for item in budgets
-        )
+        equilibria = tuple(solve(func, px=item.px, py=item.py, income=item.income) for item in budgets)
         object.__setattr__(self, "func", func)
         object.__setattr__(self, "base_budget", budget)
         object.__setattr__(self, "parameter_name", price)
@@ -116,17 +114,14 @@ class IncomePath(ConsumptionPath):
 
     def __init__(
         self,
-        func,
+        func: Callable[..., Any],
         budget: LinearBudget,
         income_range: tuple[float, float],
         n: int = 30,
     ):
         parameter_values = _linspace(income_range, n)
         budgets = tuple(budget.with_update(income=value) for value in parameter_values)
-        equilibria = tuple(
-            solve(func, px=item.px, py=item.py, income=item.income)
-            for item in budgets
-        )
+        equilibria = tuple(solve(func, px=item.px, py=item.py, income=item.income) for item in budgets)
         object.__setattr__(self, "func", func)
         object.__setattr__(self, "base_budget", budget)
         object.__setattr__(self, "parameter_name", "income")

@@ -1,6 +1,7 @@
 """Tests for Config: TOML settings mapped onto Theme properties (#112)."""
 
 import matplotlib
+
 matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt
@@ -14,7 +15,7 @@ from econ_viz.enums import LabelPosition, LegendPosition, LineStyle
 from econ_viz.exceptions import InvalidParameterError
 from econ_viz.models import CobbDouglas
 
-EXAMPLE = '''
+EXAMPLE = """
 base = "default"
 
 [font]
@@ -47,7 +48,7 @@ opacity = 0.3
 
 [legend]
 position = "bottom"
-'''
+"""
 
 
 @pytest.fixture(autouse=True)
@@ -93,17 +94,20 @@ class TestLoad:
         assert t.name == "nord" and t.ic_color == themes.nord.ic_color
         assert t.budget_stroke.width == 2.5
 
-    @pytest.mark.parametrize("data, message", [
-        ({"colour": {}}, "unknown section"),
-        ({"base": "neon"}, "unknown base theme"),
-        ({"color": {"sky": "#000000"}}, "no such colour"),
-        ({"stroke": {"cloud": {"width": 1}}}, "no such setting"),
-        ({"stroke": {"budget": {"thickness": 1}}}, "fields"),
-        ({"stroke": {"budget": {"width": -1}}}, "must be positive"),
-        ({"label": {"point": {"position": "middle"}}}, "invalid"),
-        ({"font": {"size": 12}}, "text and math"),
-        ({"legend": 3}, "must be a table"),
-    ])
+    @pytest.mark.parametrize(
+        "data, message",
+        [
+            ({"colour": {}}, "unknown section"),
+            ({"base": "neon"}, "unknown base theme"),
+            ({"color": {"sky": "#000000"}}, "no such colour"),
+            ({"stroke": {"cloud": {"width": 1}}}, "no such setting"),
+            ({"stroke": {"budget": {"thickness": 1}}}, "fields"),
+            ({"stroke": {"budget": {"width": -1}}}, "must be positive"),
+            ({"label": {"point": {"position": "middle"}}}, "invalid"),
+            ({"font": {"size": 12}}, "text and math"),
+            ({"legend": 3}, "must be a table"),
+        ],
+    )
     def test_errors_name_the_problem(self, data, message):
         with pytest.raises(InvalidParameterError, match=message):
             Config.from_dict(data)
@@ -199,14 +203,40 @@ class TestCli:
 
     def test_plot_with_config(self, tmp_path, monkeypatch, example):
         out = tmp_path / "plot.png"
-        self._run(monkeypatch, "plot", "--model", "cobb-douglas", "--px", "2", "--py", "3", "--income", "30",
-                  "--x-max", "20", "--y-max", "15", "--config", str(example), "--output", str(out))
+        self._run(
+            monkeypatch,
+            "plot",
+            "--model",
+            "cobb-douglas",
+            "--px",
+            "2",
+            "--py",
+            "3",
+            "--income",
+            "30",
+            "--x-max",
+            "20",
+            "--y-max",
+            "15",
+            "--config",
+            str(example),
+            "--output",
+            str(out),
+        )
         assert out.exists() and out.stat().st_size > 0
 
     def test_plot_with_bad_config(self, tmp_path, monkeypatch, capsys):
         bad = tmp_path / "bad.toml"
-        bad.write_text('[stroke.cloud]\nwidth = 1\n', encoding="utf-8")
+        bad.write_text("[stroke.cloud]\nwidth = 1\n", encoding="utf-8")
         with pytest.raises(SystemExit):
-            self._run(monkeypatch, "plot", "--model", "cobb-douglas", "--config", str(bad), "--output",
-                      str(tmp_path / "x.png"))
+            self._run(
+                monkeypatch,
+                "plot",
+                "--model",
+                "cobb-douglas",
+                "--config",
+                str(bad),
+                "--output",
+                str(tmp_path / "x.png"),
+            )
         assert "no such setting" in capsys.readouterr().err

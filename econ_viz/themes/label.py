@@ -64,10 +64,12 @@ class Label:
         if base is None:
             return self
         fields = ("text", "position", "offset", "color", "fontsize", "visible", "opacity")
-        return Label(**{
-            field: getattr(self, field) if getattr(self, field) is not None else getattr(base, field)
-            for field in fields
-        })
+        return Label(
+            **{
+                field: getattr(self, field) if getattr(self, field) is not None else getattr(base, field)
+                for field in fields
+            }
+        )
 
 
 def as_label(value) -> Label | None:

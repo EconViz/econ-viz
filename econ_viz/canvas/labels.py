@@ -2,10 +2,15 @@
 
 from __future__ import annotations
 
+from typing import Literal
+
 from ..enums import LabelPosition
 
+HAlign = Literal["left", "center", "right"]
+VAlign = Literal["bottom", "baseline", "center", "center_baseline", "top"]
+
 # Unit direction from the point to the text, then horizontal / vertical alignment.
-LAYOUT = {
+LAYOUT: dict[LabelPosition, tuple[tuple[float, float], HAlign, VAlign]] = {
     LabelPosition.TOP: ((0, 1), "center", "bottom"),
     LabelPosition.BOTTOM: ((0, -1), "center", "top"),
     LabelPosition.LEFT: ((-1, 0), "right", "center"),
@@ -17,7 +22,7 @@ LAYOUT = {
 }
 
 
-def placement(position: LabelPosition, offset: float) -> tuple[tuple[float, float], str, str]:
+def placement(position: LabelPosition, offset: float) -> tuple[tuple[float, float], HAlign, VAlign]:
     """Return ``(xytext in points, ha, va)`` for a label *offset* points away on *position*'s side.
 
     Corners move *offset* along each axis, matching the ``(5, 5)`` default of point labels.

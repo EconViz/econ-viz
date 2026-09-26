@@ -91,13 +91,33 @@ def build_examples() -> None:
     )
 
     cases = [
-        ("cobb_douglas", "Cobb-Douglas", CobbDouglas(alpha=0.5, beta=0.5), [DecompositionMethod.SLUTSKY, DecompositionMethod.HICKS]),
+        (
+            "cobb_douglas",
+            "Cobb-Douglas",
+            CobbDouglas(alpha=0.5, beta=0.5),
+            [DecompositionMethod.SLUTSKY, DecompositionMethod.HICKS],
+        ),
         ("ces", "CES", CES(alpha=0.5, beta=0.5, rho=0.5), [DecompositionMethod.SLUTSKY, DecompositionMethod.HICKS]),
-        ("quasi_linear", "Quasi-linear", QuasiLinear(v_func=np.log, linear_in="y"), [DecompositionMethod.SLUTSKY, DecompositionMethod.HICKS]),
-        ("stone_geary", "Stone-Geary", StoneGeary(alpha=0.5, beta=0.5, bar_x=1.0, bar_y=1.0), [DecompositionMethod.SLUTSKY, DecompositionMethod.HICKS]),
+        (
+            "quasi_linear",
+            "Quasi-linear",
+            QuasiLinear(v_func=np.log, linear_in="y"),
+            [DecompositionMethod.SLUTSKY, DecompositionMethod.HICKS],
+        ),
+        (
+            "stone_geary",
+            "Stone-Geary",
+            StoneGeary(alpha=0.5, beta=0.5, bar_x=1.0, bar_y=1.0),
+            [DecompositionMethod.SLUTSKY, DecompositionMethod.HICKS],
+        ),
         ("leontief", "Leontief", Leontief(a=1.0, b=1.0), [DecompositionMethod.SLUTSKY]),
         ("perfect_substitutes", "Perfect Substitutes", PerfectSubstitutes(a=1.0, b=2.0), [DecompositionMethod.SLUTSKY]),
-        ("translog", "Translog", Translog(alpha_x=0.45, alpha_y=0.55, beta_xx=-0.03, beta_yy=-0.02, beta_xy=0.01), [DecompositionMethod.SLUTSKY]),
+        (
+            "translog",
+            "Translog",
+            Translog(alpha_x=0.45, alpha_y=0.55, beta_xx=-0.03, beta_yy=-0.02, beta_xy=0.01),
+            [DecompositionMethod.SLUTSKY],
+        ),
         ("min_2x_plus_y_x_plus_3y", "min(2x+y, x+3y)", min_piecewise, [DecompositionMethod.SLUTSKY]),
     ]
 

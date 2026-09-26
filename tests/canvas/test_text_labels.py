@@ -1,6 +1,7 @@
 """Every text element takes a Label: axis labels, origin, titles, effect labels, Edgeworth text (#122)."""
 
 import matplotlib
+
 matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt
@@ -107,7 +108,8 @@ class TestCanvasText:
 class TestEffectLabel:
     def test_label_object(self):
         cvs = Canvas(x_max=20, y_max=15).add_decomposition(
-            DEC, substitution=Effect(label=Label(text="SE", fontsize=13, color="#123456")))
+            DEC, substitution=Effect(label=Label(text="SE", fontsize=13, color="#123456"))
+        )
         text = _role(cvs.ax, "substitution_label")[0]
         assert text.get_text() == "SE" and text.get_fontsize() == 13
         assert to_hex(text.get_color()) == "#123456"
@@ -122,8 +124,7 @@ class TestEffectLabel:
         assert (text, style.position, style.offset) == ("IE", LabelPosition.LEFT, 7)
 
     def test_hidden(self):
-        cvs = Canvas(x_max=20, y_max=15).add_decomposition(
-            DEC, income=Effect(label=Label(text="IE", visible=False)))
+        cvs = Canvas(x_max=20, y_max=15).add_decomposition(DEC, income=Effect(label=Label(text="IE", visible=False)))
         assert not _role(cvs.ax, "income_label")[0].get_visible()
 
 

@@ -33,9 +33,7 @@ class DecompositionMethod(str, Enum):
                 return cls.HICKS
             if token in {"slutsky", "s"}:
                 return cls.SLUTSKY
-        raise InvalidParameterError(
-            "method must be DecompositionMethod.HICKS or DecompositionMethod.SLUTSKY."
-        )
+        raise InvalidParameterError("method must be DecompositionMethod.HICKS or DecompositionMethod.SLUTSKY.")
 
 
 @dataclass(frozen=True)
@@ -90,9 +88,7 @@ def decompose_price_effect(
     """
     px_before, px_after = _validate_px_pair(px)
     if py <= 0 or income <= 0:
-        raise InvalidParameterError(
-            f"Prices and income must be positive (py={py}, income={income})."
-        )
+        raise InvalidParameterError(f"Prices and income must be positive (py={py}, income={income}).")
 
     method_enum = DecompositionMethod.coerce(method)
 
@@ -132,9 +128,7 @@ def decompose_price_effect(
     )
 
     if not decomposition.vector_identity_holds():
-        raise OptimizationError(
-            "Price decomposition identity failed: (A->B)+(B->C) != (A->C)."
-        )
+        raise OptimizationError("Price decomposition identity failed: (A->B)+(B->C) != (A->C).")
     return decomposition
 
 
@@ -143,13 +137,9 @@ def _validate_px_pair(px: tuple[float, float]) -> tuple[float, float]:
         px_before_raw, px_after_raw = px
         px_before, px_after = float(px_before_raw), float(px_after_raw)
     except Exception as exc:  # pragma: no cover - defensive branch
-        raise InvalidParameterError(
-            "px must be a tuple (px_before, px_after) with two positive values."
-        ) from exc
+        raise InvalidParameterError("px must be a tuple (px_before, px_after) with two positive values.") from exc
     if px_before <= 0 or px_after <= 0:
-        raise InvalidParameterError(
-            f"Both px values must be positive (px_before={px_before}, px_after={px_after})."
-        )
+        raise InvalidParameterError(f"Both px values must be positive (px_before={px_before}, px_after={px_after}).")
     return px_before, px_after
 
 
@@ -186,14 +176,9 @@ def _solve_hicks_compensated_bundle(
     x_b, y_b = float(result.x[0]), float(result.x[1])
     utility_b = float(func(x_b, y_b))
     if utility_b + 1e-6 < u_target:
-        raise OptimizationError(
-            "Hicks compensation failed: compensated bundle utility below target utility."
-        )
+        raise OptimizationError("Hicks compensation failed: compensated bundle utility below target utility.")
 
-    is_boundary = (
-        abs(x_b - x_floor) <= _BOUNDARY_TOL
-        or abs(y_b - y_floor) <= _BOUNDARY_TOL
-    )
+    is_boundary = abs(x_b - x_floor) <= _BOUNDARY_TOL or abs(y_b - y_floor) <= _BOUNDARY_TOL
     bundle_type = "boundary" if is_boundary else "interior"
     compensated_income = px_after * x_b + py * y_b
     return (

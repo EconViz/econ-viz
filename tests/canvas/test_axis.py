@@ -1,6 +1,7 @@
 """Tests for Axis: one axis's label, label position, and stroke."""
 
 import matplotlib
+
 matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt
@@ -47,15 +48,22 @@ class TestCanvasAxis:
         plain = Canvas(x_label="q", x_label_pos="bottom", x_axis_stroke=Stroke(width=2))
         same = Canvas(x_axis=Axis(label="q", label_position="bottom", stroke=Stroke(width=2)))
         assert (plain.x_label, plain.x_label_pos, plain.x_axis_stroke) == (
-            same.x_label, same.x_label_pos, same.x_axis_stroke)
+            same.x_label,
+            same.x_label_pos,
+            same.x_axis_stroke,
+        )
         assert _axis_label(plain, "x").get_text() == _axis_label(same, "x").get_text()
 
     def test_one_axis_sets_label_position_and_stroke(self):
-        cvs = Canvas(y_axis=Axis(label="x_2", label_position="right",
-                                 stroke=Stroke(width=1.7, style="--", arrow="-|>")))
+        cvs = Canvas(
+            y_axis=Axis(label="x_2", label_position="right", stroke=Stroke(width=1.7, style="--", arrow="-|>"))
+        )
         assert cvs.y_label == "x_2" and cvs.y_label_pos is LabelPosition.RIGHT
         assert (cvs.y_axis_stroke.width, cvs.y_axis_stroke.style, cvs.y_axis_stroke.arrow) == (
-            1.7, LineStyle.DASHED, ArrowStyle("-|>"))
+            1.7,
+            LineStyle.DASHED,
+            ArrowStyle("-|>"),
+        )
         assert cvs.x_label == "X" and cvs.x_axis_stroke == Canvas().x_axis_stroke
         assert cvs.ax.spines["left"].get_linewidth() == pytest.approx(1.7)
 
@@ -76,8 +84,8 @@ class TestCanvasAxis:
             x_axis=Axis(stroke=Stroke(width=3.0)),
         )
         stroke = cvs.x_axis_stroke
-        assert stroke.width == 3.0               # Axis.stroke
-        assert stroke.color == "#222222"         # x_axis_stroke
+        assert stroke.width == 3.0  # Axis.stroke
+        assert stroke.color == "#222222"  # x_axis_stroke
         assert stroke.style is LineStyle.DASHED  # axis_stroke
         assert stroke.arrow is ArrowStyle("-|>")  # x_arrow_style
         assert to_hex(cvs.ax.spines["bottom"].get_edgecolor()) == "#222222"
@@ -90,16 +98,18 @@ class TestOtherDiagrams:
             assert cvs.x_label == "q" and cvs.x_axis_stroke.width == 2.5
 
     def test_demand_diagram(self):
-        path = PricePath(MODEL, budget=LinearBudget(px=2.0, py=2.0, income=40.0), price="px",
-                         price_range=(0.8, 6.0), n=10)
+        path = PricePath(
+            MODEL, budget=LinearBudget(px=2.0, py=2.0, income=40.0), price="px", price_range=(0.8, 6.0), n=10
+        )
         fig = DemandDiagram(path, x_axis=Axis(label="x_1", stroke=Stroke(width=2.5)))
         assert fig.utility_canvas.x_label == "x_1"
         assert fig.demand_canvas.x_label == "x"
         assert fig.demand_canvas.x_axis_stroke.width == 2.5
 
     def test_edgeworth(self):
-        box = EdgeworthBox(MODEL, MODEL, total_x=10.0, total_y=10.0,
-                           x_axis=Axis(label="f", stroke=Stroke(width=3.0, color="#123456")))
+        box = EdgeworthBox(
+            MODEL, MODEL, total_x=10.0, total_y=10.0, x_axis=Axis(label="f", stroke=Stroke(width=3.0, color="#123456"))
+        )
         assert box.x_label == "f"
         assert box.ax.get_xlabel() == "$f_A$"
         for side in ("bottom", "top"):

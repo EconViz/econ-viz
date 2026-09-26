@@ -8,12 +8,11 @@ not available.
 import pytest
 
 from econ_viz import Canvas
-from econ_viz.models import CobbDouglas
-
 
 # ------------------------------------------------------------------
 # WidgetViewer initialisation
 # ------------------------------------------------------------------
+
 
 class TestWidgetViewerInit:
     """WidgetViewer constructor validation."""
@@ -49,12 +48,14 @@ class TestWidgetViewerInit:
 # Slider builder
 # ------------------------------------------------------------------
 
+
 class TestBuildSliders:
     """_build_sliders() logic — requires ipywidgets at runtime."""
 
     @pytest.fixture()
     def viewer(self):
         from econ_viz.interactive import WidgetViewer
+
         return WidgetViewer(lambda p1: Canvas(), p1=(2.0, 10.0, 2.0))
 
     def test_slider_count(self, viewer):
@@ -83,6 +84,7 @@ class TestValueInputs:
     @pytest.fixture()
     def viewer(self):
         from econ_viz.interactive import WidgetViewer
+
         return WidgetViewer(lambda p1: Canvas(), p1=(2.0, 10.0, 2.0))
 
     def test_build_value_inputs(self, viewer):
@@ -111,11 +113,13 @@ class TestValueInputs:
 # Dependency guard
 # ------------------------------------------------------------------
 
+
 class TestRequireWidgets:
     """_require_widgets() yields clear ImportError messages."""
 
     def test_missing_ipywidgets(self, monkeypatch):
         import builtins
+
         real_import = builtins.__import__
 
         def _mock_import(name, *args, **kwargs):
@@ -132,6 +136,7 @@ class TestRequireWidgets:
 
     def test_missing_ipython(self, monkeypatch):
         import builtins
+
         real_import = builtins.__import__
 
         def _mock_import(name, *args, **kwargs):
@@ -151,11 +156,13 @@ class TestRequireWidgets:
 # show() guard
 # ------------------------------------------------------------------
 
+
 class TestWidgetViewerShow:
     """WidgetViewer.show() raises ImportError when deps are missing."""
 
     def test_show_raises_without_deps(self, monkeypatch):
         import builtins
+
         real_import = builtins.__import__
 
         def _mock_import(name, *args, **kwargs):
@@ -166,6 +173,7 @@ class TestWidgetViewerShow:
         monkeypatch.setattr(builtins, "__import__", _mock_import)
 
         from econ_viz.interactive import WidgetViewer
+
         viewer = WidgetViewer(lambda p1: Canvas(), p1=(1.0, 5.0, 1.0))
 
         with pytest.raises(ImportError):

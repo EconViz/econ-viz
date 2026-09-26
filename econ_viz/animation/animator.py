@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import io
+from collections.abc import Callable, Sequence
 from pathlib import Path
-from typing import TYPE_CHECKING, Callable, Sequence, Union
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -14,7 +15,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from econ_viz.canvas.base import Canvas
     from econ_viz.canvas.figure import Figure
 
-    AnyFigure = Union[Canvas, Figure]
+    AnyFigure = Canvas | Figure
 
 
 def _require_pillow() -> None:

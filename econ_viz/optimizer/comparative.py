@@ -13,9 +13,9 @@ import math
 import warnings
 from dataclasses import dataclass
 
-from .solver import solve
 from ..exceptions import InvalidParameterError
 from ..utils.logging import get_logger
+from .solver import solve
 
 logger = get_logger(__name__)
 
@@ -108,13 +108,9 @@ def comparative_statics(
         If sign consistency checks fail (e.g. ∂x*/∂p_x > 0, ∂x*/∂I < 0).
     """
     if px <= 0 or py <= 0 or income <= 0:
-        raise InvalidParameterError(
-            f"Prices and income must be positive (px={px}, py={py}, income={income})."
-        )
+        raise InvalidParameterError(f"Prices and income must be positive (px={px}, py={py}, income={income}).")
     if not math.isfinite(h) or h <= 0:
-        raise InvalidParameterError(
-            f"Finite-difference step h must be finite and positive (h={h})."
-        )
+        raise InvalidParameterError(f"Finite-difference step h must be finite and positive (h={h}).")
 
     base = {"px": px, "py": py, "income": income}
     eq_base = solve(func, **base)
@@ -155,8 +151,7 @@ def comparative_statics(
             return dx, dy
 
         raise InvalidParameterError(
-            f"Cannot estimate derivative with respect to {param}: "
-            "both perturbations are outside the feasible domain."
+            f"Cannot estimate derivative with respect to {param}: both perturbations are outside the feasible domain."
         )
 
     dx_dpx, dy_dpx = _deriv("px")

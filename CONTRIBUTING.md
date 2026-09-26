@@ -10,14 +10,18 @@ cd econ-viz
 uv sync --all-extras
 ```
 
-Run the test suite:
+Run the complete local quality gate:
 
 ```bash
 uv run pytest
+uv run ruff check .
+uv run ruff format --check .
+uv run mypy econ_viz
 ```
 
 Tests are grouped by package domain under `tests/`. The default command
 measures statement and branch coverage and enforces the project coverage floor.
+Use `uv run ruff format .` to apply formatting before rerunning the check.
 
 ## How to contribute
 
@@ -46,7 +50,8 @@ Issues labelled [`good first issue`](https://github.com/EconViz/econ-viz/issues?
 ## Code style
 
 - Python 3.10+
-- Follow the existing style (no linter is enforced, but keep it clean)
+- Ruff enforces lint rules and formatting
+- Mypy checks the `econ_viz` package
 - Add tests for any new behaviour
 
 ## Releasing

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import numpy as np
 
+from ..canvas.stroke import tag, tag_attr
 from ..constants.canvas import CONTOUR_DOMAIN_MIN
 from ..contours import percentile_levels
 from ..enums import LabelPosition, UtilityType
@@ -72,36 +73,34 @@ class IndifferenceCurves:
         from . import draw_ray
 
         res = int(kwargs.pop("res", 400))
-        X, Y, Z = Layer.compute_contour(
-            self.func, (CONTOUR_DOMAIN_MIN, x_max), (CONTOUR_DOMAIN_MIN, y_max), res=res
-        )
+        X, Y, Z = Layer.compute_contour(self.func, (CONTOUR_DOMAIN_MIN, x_max), (CONTOUR_DOMAIN_MIN, y_max), res=res)
 
-        if isinstance(self.levels, int):
-            computed = percentile_levels(Z, n=self.levels)
-        else:
-            computed = list(self.levels)
+        computed = percentile_levels(Z, n=self.levels) if isinstance(self.levels, int) else list(self.levels)
 
         logger.debug("Drawing contours at levels: %s", computed)
 
         # Matplotlib dashes negative contour levels by default; utility levels are just levels.
         kwargs.setdefault("linestyles", "solid")
         cs = ax.contour(
-            X, Y, Z, levels=computed,
-            colors=self.color, linewidths=self.linewidth, **kwargs,
+            X,
+            Y,
+            Z,
+            levels=computed,
+            colors=self.color,
+            linewidths=self.linewidth,
+            **kwargs,
         )
-        cs._ev_role = "curve"
+        tag(cs, "curve")
 
+        import matplotlib.lines as mlines
+
+        self._proxy: mlines.Line2D | None = None
         if self.label is not None:
-            import matplotlib.lines as mlines
-            self._proxy = mlines.Line2D(
-                [], [], color=self.color, linewidth=self.linewidth, label=self.label
-            )
-            self._proxy._ev_role = "curve"
-        else:
-            self._proxy = None
+            self._proxy = mlines.Line2D([], [], color=self.color, linewidth=self.linewidth, label=self.label)
+            tag(self._proxy, "curve")
 
         if self.show_ic_labels:
-            for level, segs in zip(computed, cs.allsegs):
+            for level, segs in zip(computed, cs.allsegs, strict=True):
                 best_x, best_y = -1.0, None
                 for seg in segs:
                     if len(seg) == 0:
@@ -115,28 +114,34 @@ class IndifferenceCurves:
                         best_x, best_y = seg[idx, 0], seg[idx, 1]
                 if best_y is not None:
                     text = ax.annotate(
-                        self.ic_label_fmt.format(level), (best_x, best_y),
-                        textcoords="offset points", xytext=(4, 0),
-                        color=self.color, fontsize=9, ha="left", va="center",
+                        self.ic_label_fmt.format(level),
+                        (best_x, best_y),
+                        textcoords="offset points",
+                        xytext=(4, 0),
+                        color=self.color,
+                        fontsize=9,
+                        ha="left",
+                        va="center",
                         annotation_clip=True,
                     )
-                    text._ev_role = "ic_label"
-                    text._ev_label_default = Label(position=LabelPosition.RIGHT, offset=4)
+                    tag(text, "ic_label")
+                    tag_attr(text, "_ev_label_default", Label(position=LabelPosition.RIGHT, offset=4))
 
-        if self.show_rays and hasattr(self.func, "utility_type"):
-            if self.func.utility_type is UtilityType.KINKED:
-                for slope in self.func.ray_slopes():
-                    draw_ray(ax, slope, x_max, y_max,
-                             color=self.ray_color, linewidth=self.ray_linewidth)
+        if self.show_rays and hasattr(self.func, "utility_type") and self.func.utility_type is UtilityType.KINKED:
+            for slope in self.func.ray_slopes():
+                draw_ray(ax, slope, x_max, y_max, color=self.ray_color, linewidth=self.ray_linewidth)
 
-        if self.show_kinks and hasattr(self.func, "utility_type"):
-            if self.func.utility_type is UtilityType.KINKED:
-                for x, y in self.func.kink_points(computed):
-                    (kink,) = ax.plot(x, y, "o",
-                                      markersize=self.kink_radius * 4,
-                                      markerfacecolor=self.kink_color,
-                                      markeredgecolor=self.kink_color)
-                    kink._ev_role = "kink"
+        if self.show_kinks and hasattr(self.func, "utility_type") and self.func.utility_type is UtilityType.KINKED:
+            for x, y in self.func.kink_points(computed):
+                (kink,) = ax.plot(
+                    x,
+                    y,
+                    "o",
+                    markersize=self.kink_radius * 4,
+                    markerfacecolor=self.kink_color,
+                    markeredgecolor=self.kink_color,
+                )
+                tag(kink, "kink")
 
         if hasattr(self.func, "subsistence_lines"):
             sub_x, sub_y = self.func.subsistence_lines()

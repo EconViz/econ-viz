@@ -5,12 +5,13 @@ The levels module ensures the equilibrium IC is always one of the drawn curves.
 """
 
 import matplotlib
+
 matplotlib.use("Agg")
 
 from pathlib import Path
 
 from econ_viz import Canvas, levels, solve
-from econ_viz.models import CobbDouglas, Leontief, PerfectSubstitutes, CES
+from econ_viz.models import CES, CobbDouglas, Leontief, PerfectSubstitutes
 
 OUTPUT_DIR = "examples/output/equilibrium"
 Path(OUTPUT_DIR).mkdir(parents=True, exist_ok=True)

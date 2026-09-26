@@ -17,7 +17,7 @@ settings = [
     (ArrowStyle.WEDGE, LineStyle.DASHDOT, LabelPosition.RIGHT, LabelPosition.RIGHT),
 ]
 
-for ax, (arrow, line, x_position, y_position) in zip(axes.flat, settings):
+for ax, (arrow, line, x_position, y_position) in zip(axes.flat, settings, strict=True):
     Canvas(
         title=f"{arrow.name.title()} · {line.name.title()}",
         x_label_pos=x_position,

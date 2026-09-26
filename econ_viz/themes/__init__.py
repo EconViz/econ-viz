@@ -8,18 +8,20 @@ References
 - https://www.tandfonline.com/doi/abs/10.1080/00220485.1996.10844911
 """
 
+from typing import TypedDict
+
 from .theme import Theme
 
 COLORBLIND_CYCLE_RGB: tuple[tuple[int, int, int], ...] = (
-    (55, 126, 184),   # blue
-    (255, 127, 0),    # orange
-    (77, 175, 74),    # green
+    (55, 126, 184),  # blue
+    (255, 127, 0),  # orange
+    (77, 175, 74),  # green
     (247, 129, 191),  # pink
-    (166, 86, 40),    # brown
-    (152, 78, 163),   # purple
+    (166, 86, 40),  # brown
+    (152, 78, 163),  # purple
     (153, 153, 153),  # gray
-    (228, 26, 28),    # red
-    (222, 222, 0),    # yellow
+    (228, 26, 28),  # red
+    (222, 222, 0),  # yellow
 )
 
 
@@ -42,20 +44,36 @@ COLORBLIND_CYCLE_HEX: tuple[str, ...] = tuple(_rgb_to_hex(rgb) for rgb in COLORB
     _CB_YELLOW,
 ) = COLORBLIND_CYCLE_HEX
 
-_COLORBLIND_BASE = dict(
-    axis_color="#222222",
-    label_color="#222222",
-    ic_color=_CB_BLUE,
-    ic_linewidth=1.8,
-    path_color=_CB_GREEN,
-    budget_color=_CB_PURPLE,
-    eq_color=_CB_RED,
-    ray_color=_CB_GRAY,
-    kink_color=_CB_BROWN,
-    sub_effect_color=_CB_ORANGE,
-    inc_effect_color=_CB_GREEN,
-    compensated_budget_color="#777777",
-)
+
+class _ColorblindBase(TypedDict):
+    axis_color: str
+    label_color: str
+    ic_color: str
+    ic_linewidth: float
+    path_color: str
+    budget_color: str
+    eq_color: str
+    ray_color: str
+    kink_color: str
+    sub_effect_color: str
+    inc_effect_color: str
+    compensated_budget_color: str
+
+
+_COLORBLIND_BASE: _ColorblindBase = {
+    "axis_color": "#222222",
+    "label_color": "#222222",
+    "ic_color": _CB_BLUE,
+    "ic_linewidth": 1.8,
+    "path_color": _CB_GREEN,
+    "budget_color": _CB_PURPLE,
+    "eq_color": _CB_RED,
+    "ray_color": _CB_GRAY,
+    "kink_color": _CB_BROWN,
+    "sub_effect_color": _CB_ORANGE,
+    "inc_effect_color": _CB_GREEN,
+    "compensated_budget_color": "#777777",
+}
 
 default = Theme(name="default", **_COLORBLIND_BASE)
 colorblind = Theme(name="colorblind", **_COLORBLIND_BASE)

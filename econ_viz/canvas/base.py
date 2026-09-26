@@ -12,15 +12,27 @@ defaults and forwards calls.
 
 from __future__ import annotations
 
-import numpy as np
-import matplotlib.pyplot as plt
+from collections.abc import Callable, Sequence
+from dataclasses import replace
+from typing import Any, cast
+
 import matplotlib.lines as mlines
+import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib.patches import FancyArrowPatch
 
-from collections.abc import Sequence
-from dataclasses import replace
-from typing import Callable
-
+from ..canvas.effect import Effect
+from ..canvas.fonts import FontApplier, resolve_font, resolve_math_font
+from ..canvas.legend import place_legend
+from ..canvas.primitives import annotate_math, plot_point
+from ..canvas.renderers import (
+    render_budget,
+    render_decomposition,
+    render_equilibrium,
+    render_path,
+    render_utility,
+)
+from ..config import Config
 from ..constants.canvas import (
     ARROW_HEAD_ONLY_FRAC,
     ARROW_WEDGE_FRAC,
@@ -31,38 +43,27 @@ from ..constants.canvas import (
     MIN_DPI,
     SMOOTH_SAMPLES,
 )
-from ..utils.logging import get_logger
-from ..config import Config
-from ..themes.theme import Theme
 from ..enums import ArrowStyle, LabelPosition, LineStyle
-from ..canvas.fonts import FontApplier, resolve_font, resolve_math_font
-from ..canvas.effect import Effect
-from ..canvas.stroke import styled
+from ..io import save_figure
 from ..themes.axis import Axis
 from ..themes.fill import Fill
 from ..themes.label import Label, split_label
 from ..themes.legend import Legend
-from ..canvas.legend import place_legend
 from ..themes.marker import Marker
 from ..themes.stroke import Stroke
-from ..canvas.primitives import annotate_math, plot_point
-from ..canvas.renderers import (
-    render_budget,
-    render_decomposition,
-    render_equilibrium,
-    render_path,
-    render_utility,
-)
-from ..io import save_figure
+from ..themes.theme import Theme
+from ..utils.logging import get_logger
+from .labels import HAlign, VAlign
+from .stroke import styled, tag, tag_attr
 
 logger = get_logger(__name__)
 
-_X_LABEL_POSITIONS = {
+_X_LABEL_POSITIONS: dict[LabelPosition, tuple[tuple[float, float], HAlign, VAlign]] = {
     LabelPosition.TOP: ((0, 8), "center", "bottom"),
     LabelPosition.RIGHT: ((8, 0), "left", "center"),
     LabelPosition.BOTTOM: ((0, -8), "center", "top"),
 }
-_Y_LABEL_POSITIONS = {
+_Y_LABEL_POSITIONS: dict[LabelPosition, tuple[tuple[float, float], HAlign, VAlign]] = {
     LabelPosition.LEFT: ((-8, 0), "right", "center"),
     LabelPosition.TOP: ((0, 8), "center", "bottom"),
     LabelPosition.RIGHT: ((8, 0), "left", "center"),
@@ -129,6 +130,7 @@ def _math_wrap(text: str) -> str:
     that matplotlib renders them via its mathtext engine.
     """
     import re
+
     parts = re.split(r"(\$[^$]+\$)", text)
     out = []
     for part in parts:
@@ -151,7 +153,7 @@ def _smooth_xy(xs: list[float], ys: list[float], n_samples: int = SMOOTH_SAMPLES
 
         points = np.column_stack((xs, ys))
         diffs = np.diff(points, axis=0)
-        chord = np.sqrt((diffs ** 2).sum(axis=1))
+        chord = np.sqrt((diffs**2).sum(axis=1))
         t = np.concatenate(([0.0], np.cumsum(chord)))
         if np.isclose(t[-1], 0.0):
             return np.asarray(xs, dtype=float), np.asarray(ys, dtype=float)
@@ -290,16 +292,18 @@ class Canvas:
         y_text, self.y_label_style = split_label(y_axis.label, theme.axis_label)
         self.title, self.title_style = split_label(title, theme.title_label)
         origin_text, self.origin_style = split_label(origin_label, theme.origin_label, theme.origin_label.text)
-        self.origin_text = origin_text if origin_text is not None else theme.origin_label.text
+        self.origin_text = origin_text or theme.origin_label.text or "0"
         self.x_max = x_max
         self.y_max = y_max
         self.x_label = x_text if x_text is not None else x_label
         self.y_label = y_text if y_text is not None else y_label
         self.dpi = max(MIN_DPI, min(dpi, MAX_DPI))
         self.x_label_pos = _label_position(
-            x_axis.label_position or self.x_label_style.position or x_label_pos, axis="x")
+            x_axis.label_position or self.x_label_style.position or x_label_pos, axis="x"
+        )
         self.y_label_pos = _label_position(
-            y_axis.label_position or self.y_label_style.position or y_label_pos, axis="y")
+            y_axis.label_position or self.y_label_style.position or y_label_pos, axis="y"
+        )
         self.theme = theme
         # Precedence: Axis.stroke > per-axis stroke > shared stroke > x/y_*_style arguments > theme.axis_stroke.
         self.x_axis_stroke = _axis_stroke(theme, x_line_style, x_arrow_style, axis_stroke, x_axis_stroke, x_axis.stroke)
@@ -320,8 +324,7 @@ class Canvas:
             self.fig.add_artist(FontApplier(self.font, self.math_font))
         self._legend_handles: list = []
         self._apply_base_style()
-        logger.debug("Canvas created: x_max=%s, y_max=%s, dpi=%s, theme=%s",
-                     x_max, y_max, self.dpi, theme.name)
+        logger.debug("Canvas created: x_max=%s, y_max=%s, dpi=%s, theme=%s", x_max, y_max, self.dpi, theme.name)
 
     # ------------------------------------------------------------------
     # Base styling
@@ -359,21 +362,28 @@ class Canvas:
             )
             axis_text.set_visible(style.visible is not False)
             axis_text.set_alpha(style.opacity)
-            axis_text._ev_axis_label = axis
+            tag_attr(axis_text, "_ev_axis_label", axis)
 
         origin = self.ax.text(
-            -self.x_max * 0.03, -self.y_max * 0.03,
-            _label_math(self.origin_text), ha="right", va="top",
-            fontsize=self.origin_style.fontsize, color=self.origin_style.color or t.label_color,
+            -self.x_max * 0.03,
+            -self.y_max * 0.03,
+            _label_math(self.origin_text),
+            ha="right",
+            va="top",
+            fontsize=self.origin_style.fontsize,
+            color=self.origin_style.color or t.label_color,
         )
         origin.set_visible(self.origin_style.visible is not False)
         origin.set_alpha(self.origin_style.opacity)
-        origin._ev_role = "origin_label"
+        tag(origin, "origin_label")
 
         if self.title:
+            title_kwargs: dict[str, Any] = {"fontsize": self.title_style.fontsize} if self.title_style.fontsize else {}
             title = self.ax.set_title(
-                _math_wrap(self.title), color=self.title_style.color or t.label_color, pad=18,
-                **({"fontsize": self.title_style.fontsize} if self.title_style.fontsize else {}),
+                _math_wrap(self.title),
+                color=self.title_style.color or t.label_color,
+                pad=18,
+                **title_kwargs,
             )
             title.set_visible(self.title_style.visible is not False)
             title.set_alpha(self.title_style.opacity)
@@ -384,7 +394,8 @@ class Canvas:
         for spine, stroke in (("bottom", self.x_axis_stroke), ("left", self.y_axis_stroke)):
             self.ax.spines[spine].set_color(stroke.color)
             self.ax.spines[spine].set_linewidth(stroke.width)
-            self.ax.spines[spine].set_linestyle(stroke.style.value)
+            # Theme.__post_init__ / Stroke.__post_init__ always normalise style to a LineStyle.
+            self.ax.spines[spine].set_linestyle(cast(LineStyle, stroke.style).value)
             self.ax.spines[spine].set_alpha(stroke.opacity)
 
         # Arrow terminators at axis tips
@@ -397,12 +408,13 @@ class Canvas:
         ):
             if stroke.arrow is None:
                 continue
-            frac = arrow_frac(stroke.arrow)
+            arrow_style = cast(ArrowStyle, stroke.arrow)
+            frac = arrow_frac(arrow_style)
             start = (self.x_max * (1 - frac), 0) if axis == "x" else (0, self.y_max * (1 - frac))
             arrow = FancyArrowPatch(
                 start,
                 tip,
-                arrowstyle=stroke.arrow.value,
+                arrowstyle=arrow_style.value,
                 mutation_scale=12,
                 linewidth=stroke.width,
                 color=stroke.color,
@@ -411,8 +423,8 @@ class Canvas:
                 clip_on=False,
                 alpha=stroke.opacity,
             )
-            arrow._ev_axis_arrow = axis
-            arrow._ev_arrow_style = stroke.arrow
+            tag_attr(arrow, "_ev_axis_arrow", axis)
+            tag_attr(arrow, "_ev_arrow_style", stroke.arrow)
             self.ax.add_patch(arrow)
 
         # Transparent background
@@ -541,7 +553,7 @@ class Canvas:
                 show_ic_labels=show_ic_labels or ic_label is not None,
                 ic_label_fmt=ic_fmt or ic_label_fmt,
                 show_bliss=show_bliss,
-                bliss_text=bliss_text or t.bliss_label.text,
+                bliss_text=bliss_text or t.bliss_label.text or "x^*",
                 x_max=self.x_max,
                 y_max=self.y_max,
                 **kwargs,
@@ -603,7 +615,8 @@ class Canvas:
         """
         t = self.theme
         shade = (fill if isinstance(fill, Fill) else Fill()).merged_over(
-            Fill(alpha=fill_alpha).merged_over(t.budget_fill))
+            Fill(alpha=fill_alpha).merged_over(t.budget_fill)
+        )
         line_color = color or t.budget_color
         with styled(self, {"budget": stroke}):
             render_budget(
@@ -616,7 +629,7 @@ class Canvas:
                 linestyle=linestyle,
                 label=label,
                 fill=fill is not False,
-                fill_alpha=shade.opacity,
+                fill_alpha=shade.opacity if shade.opacity is not None else t.budget_fill_alpha,
                 # Unset, the fill follows the line, including a Stroke colour.
                 fill_color=shade.color or (stroke.color if stroke is not None and stroke.color else None),
             )
@@ -671,8 +684,12 @@ class Canvas:
         """
         t = self.theme
         text, style = split_label(label, t.point_label, "x^*")
-        with styled(self, {"drop": drop_stroke, "ray": ray_stroke}, markers={"equilibrium": marker},
-                    labels={"equilibrium_label": style}):
+        with styled(
+            self,
+            {"drop": drop_stroke, "ray": ray_stroke},
+            markers={"equilibrium": marker},
+            labels={"equilibrium_label": style},
+        ):
             render_equilibrium(
                 self.ax,
                 eq=eq,
@@ -788,7 +805,21 @@ class Canvas:
         if show_curves and decomposition.func is not None:
             self._add_decomposition_curves(decomposition, curve_stroke, curve_label)
         _, bundle_style = split_label(point_label, self.theme.bundle_label)
-        with styled(self, {"original_budget": original_budget_stroke, "compensated_budget": compensated_budget_stroke, "final_budget": final_budget_stroke, "substitution": substitution_stroke, "income": income_stroke, "projection": projection_stroke, "guide": guide_stroke, "range": range_stroke}, markers={"bundle": point_marker}, labels={"bundle_label": bundle_style}):
+        with styled(
+            self,
+            {
+                "original_budget": original_budget_stroke,
+                "compensated_budget": compensated_budget_stroke,
+                "final_budget": final_budget_stroke,
+                "substitution": substitution_stroke,
+                "income": income_stroke,
+                "projection": projection_stroke,
+                "guide": guide_stroke,
+                "range": range_stroke,
+            },
+            markers={"bundle": point_marker},
+            labels={"bundle_label": bundle_style},
+        ):
             if substitution is not None and substitution.color is not None:
                 substitution_color = substitution.color
             if income is not None and income.color is not None:
@@ -798,19 +829,13 @@ class Canvas:
                 self.ax,
                 decomposition=decomposition,
                 point_color=point_color or t.eq_color,
-                point_markersize=(
-                    point_markersize if point_markersize is not None else t.eq_markersize
-                ),
+                point_markersize=(point_markersize if point_markersize is not None else t.eq_markersize),
                 original_budget_color=original_budget_color or t.budget_color,
                 original_budget_linewidth=(
-                    original_budget_linewidth
-                    if original_budget_linewidth is not None
-                    else t.budget_linewidth
+                    original_budget_linewidth if original_budget_linewidth is not None else t.budget_linewidth
                 ),
                 original_budget_linestyle=original_budget_linestyle,
-                compensated_budget_color=(
-                    compensated_budget_color or t.compensated_budget_color
-                ),
+                compensated_budget_color=(compensated_budget_color or t.compensated_budget_color),
                 compensated_budget_linewidth=(
                     compensated_budget_linewidth
                     if compensated_budget_linewidth is not None
@@ -823,9 +848,7 @@ class Canvas:
                 ),
                 final_budget_color=final_budget_color or t.budget_color,
                 final_budget_linewidth=(
-                    final_budget_linewidth
-                    if final_budget_linewidth is not None
-                    else t.budget_linewidth
+                    final_budget_linewidth if final_budget_linewidth is not None else t.budget_linewidth
                 ),
                 final_budget_linestyle=final_budget_linestyle,
                 show_arrows=show_arrows,
@@ -833,9 +856,7 @@ class Canvas:
                 substitution_color=substitution_color or t.sub_effect_color,
                 income_color=income_color or t.inc_effect_color,
                 effect_arrow_linewidth=(
-                    effect_arrow_linewidth
-                    if effect_arrow_linewidth is not None
-                    else t.effect_arrow_linewidth
+                    effect_arrow_linewidth if effect_arrow_linewidth is not None else t.effect_arrow_linewidth
                 ),
                 show_x_projections=show_x_projections,
                 substitution_effect=substitution,
@@ -845,57 +866,63 @@ class Canvas:
             if label_effects:
                 sub_dx, sub_dy = decomposition.substitution_effect
                 inc_dx, inc_dy = decomposition.income_effect
-                self._legend_handles.extend([
-                    mlines.Line2D(
-                        [],
-                        [],
-                        color=point_color or t.eq_color,
-                        marker="o",
-                        linestyle="None",
-                        markersize=point_markersize if point_markersize is not None else t.eq_markersize,
-                        label=rf"$A=({decomposition.A.x:.2f},{decomposition.A.y:.2f})$",
-                    ),
-                    mlines.Line2D(
-                        [],
-                        [],
-                        color=point_color or t.eq_color,
-                        marker="o",
-                        linestyle="None",
-                        markersize=point_markersize if point_markersize is not None else t.eq_markersize,
-                        label=rf"$B=({decomposition.B.x:.2f},{decomposition.B.y:.2f})$",
-                    ),
-                    mlines.Line2D(
-                        [],
-                        [],
-                        color=point_color or t.eq_color,
-                        marker="o",
-                        linestyle="None",
-                        markersize=point_markersize if point_markersize is not None else t.eq_markersize,
-                        label=rf"$C=({decomposition.C.x:.2f},{decomposition.C.y:.2f})$",
-                    ),
-                    mlines.Line2D(
-                        [],
-                        [],
-                        color=substitution_color or t.sub_effect_color,
-                        linestyle="--",
-                        linewidth=effect_arrow_linewidth if effect_arrow_linewidth is not None else t.effect_arrow_linewidth,
-                        label=rf"$Sub:\ \Delta x={sub_dx:+.2f},\ \Delta y={sub_dy:+.2f}$",
-                        alpha=substitution.opacity if substitution is not None else None,
-                    ),
-                    mlines.Line2D(
-                        [],
-                        [],
-                        color=income_color or t.inc_effect_color,
-                        linestyle="--",
-                        linewidth=effect_arrow_linewidth if effect_arrow_linewidth is not None else t.effect_arrow_linewidth,
-                        label=rf"$Inc:\ \Delta x={inc_dx:+.2f},\ \Delta y={inc_dy:+.2f}$",
-                        alpha=income.opacity if income is not None else None,
-                    ),
-                ])
+                self._legend_handles.extend(
+                    [
+                        mlines.Line2D(
+                            [],
+                            [],
+                            color=point_color or t.eq_color,
+                            marker="o",
+                            linestyle="None",
+                            markersize=point_markersize if point_markersize is not None else t.eq_markersize,
+                            label=rf"$A=({decomposition.A.x:.2f},{decomposition.A.y:.2f})$",
+                        ),
+                        mlines.Line2D(
+                            [],
+                            [],
+                            color=point_color or t.eq_color,
+                            marker="o",
+                            linestyle="None",
+                            markersize=point_markersize if point_markersize is not None else t.eq_markersize,
+                            label=rf"$B=({decomposition.B.x:.2f},{decomposition.B.y:.2f})$",
+                        ),
+                        mlines.Line2D(
+                            [],
+                            [],
+                            color=point_color or t.eq_color,
+                            marker="o",
+                            linestyle="None",
+                            markersize=point_markersize if point_markersize is not None else t.eq_markersize,
+                            label=rf"$C=({decomposition.C.x:.2f},{decomposition.C.y:.2f})$",
+                        ),
+                        mlines.Line2D(
+                            [],
+                            [],
+                            color=substitution_color or t.sub_effect_color,
+                            linestyle="--",
+                            linewidth=effect_arrow_linewidth
+                            if effect_arrow_linewidth is not None
+                            else t.effect_arrow_linewidth,
+                            label=rf"$Sub:\ \Delta x={sub_dx:+.2f},\ \Delta y={sub_dy:+.2f}$",
+                            alpha=substitution.opacity if substitution is not None else None,
+                        ),
+                        mlines.Line2D(
+                            [],
+                            [],
+                            color=income_color or t.inc_effect_color,
+                            linestyle="--",
+                            linewidth=effect_arrow_linewidth
+                            if effect_arrow_linewidth is not None
+                            else t.effect_arrow_linewidth,
+                            label=rf"$Inc:\ \Delta x={inc_dx:+.2f},\ \Delta y={inc_dy:+.2f}$",
+                            alpha=income.opacity if income is not None else None,
+                        ),
+                    ]
+                )
                 for handle in self._legend_handles[-5:-2]:
-                    handle._ev_role = "bundle"
-                self._legend_handles[-2]._ev_role = "substitution"
-                self._legend_handles[-1]._ev_role = "income"
+                    tag(handle, "bundle")
+                tag(self._legend_handles[-2], "substitution")
+                tag(self._legend_handles[-1], "income")
                 self.show_legend(legend=legend)
         return self
 
@@ -950,7 +977,10 @@ class Canvas:
 
             t = self.theme
             draw_ray(
-                self.ax, slope, self.x_max, self.y_max,
+                self.ax,
+                slope,
+                self.x_max,
+                self.y_max,
                 color=color or t.ray_color,
                 linewidth=linewidth if linewidth is not None else t.ray_linewidth,
             )
@@ -1004,7 +1034,9 @@ class Canvas:
                 x=x,
                 y=y,
                 color=c,
-                markersize=markersize if markersize is not None else self.theme.point_marker.size,
+                markersize=(
+                    markersize if markersize is not None else (self.theme.point_marker.size or self.theme.eq_markersize)
+                ),
                 marker="o",
                 linestyle="None",
                 zorder=6,
@@ -1062,7 +1094,11 @@ class Canvas:
         equilibrium_marker : Marker, optional
             Colour, size, and shape of points drawn with ``show_equilibria``.
         """
-        with styled(self, {"path": stroke, "budget": budget_stroke, "curve": curve_stroke}, markers={"path_point": point_marker, "equilibrium": equilibrium_marker}):
+        with styled(
+            self,
+            {"path": stroke, "budget": budget_stroke, "curve": curve_stroke},
+            markers={"path_point": point_marker, "equilibrium": equilibrium_marker},
+        ):
             c = color or self.theme.path_color
             lw = linewidth if linewidth is not None else self.theme.path_linewidth
             show_points = path.default_show_points if show_points is None else show_points

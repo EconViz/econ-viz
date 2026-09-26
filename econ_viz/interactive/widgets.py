@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Callable, Union
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:  # pragma: no cover
     from econ_viz.canvas.base import Canvas
     from econ_viz.canvas.figure import Figure
 
-    AnyFigure = Union[Canvas, Figure]
+    AnyFigure = Canvas | Figure
 
 # Slider spec: (min, max, step)
 SliderSpec = tuple[float, float, float]
@@ -76,9 +77,7 @@ class WidgetViewer:
         **slider_specs: SliderSpec,
     ) -> None:
         if not slider_specs:
-            raise ValueError(
-                "Provide at least one slider spec, e.g. p1=(1.0, 8.0, 0.5)."
-            )
+            raise ValueError("Provide at least one slider spec, e.g. p1=(1.0, 8.0, 0.5).")
         self._draw_func = draw_func
         self._slider_specs: dict[str, SliderSpec] = slider_specs
         self._links: list[Any] = []
@@ -180,10 +179,7 @@ class WidgetViewer:
         value_inputs: dict[str, Any],
     ) -> list[Any]:
         """Two-way link each slider with its numeric input box."""
-        return [
-            widgets.link((sliders[name], "value"), (value_inputs[name], "value"))
-            for name in sliders
-        ]
+        return [widgets.link((sliders[name], "value"), (value_inputs[name], "value")) for name in sliders]
 
     @staticmethod
     def _build_control_rows(

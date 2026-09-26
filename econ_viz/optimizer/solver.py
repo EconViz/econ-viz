@@ -20,7 +20,7 @@ import numpy as np
 from scipy.optimize import minimize
 
 from ..enums import UtilityType
-from ..exceptions import OptimizationError, InvalidParameterError
+from ..exceptions import InvalidParameterError, OptimizationError
 from ..utils.logging import get_logger
 
 _SLSQP_FTOL = 1e-12
@@ -78,9 +78,7 @@ def solve(func, px: float, py: float, income: float) -> Equilibrium:
         If the numerical solver fails to converge.
     """
     if px <= 0 or py <= 0 or income <= 0:
-        raise InvalidParameterError(
-            f"Prices and income must be positive (px={px}, py={py}, income={income})."
-        )
+        raise InvalidParameterError(f"Prices and income must be positive (px={px}, py={py}, income={income}).")
 
     validate_budget = getattr(func, "validate_budget", None)
     if validate_budget is not None:
@@ -98,6 +96,7 @@ def solve(func, px: float, py: float, income: float) -> Equilibrium:
 # ------------------------------------------------------------------
 # Strategy implementations
 # ------------------------------------------------------------------
+
 
 def _solve_interior(func, px: float, py: float, income: float) -> Equilibrium:
     """Smooth preferences — constrained optimisation via SLSQP.
@@ -119,10 +118,12 @@ def _solve_interior(func, px: float, py: float, income: float) -> Equilibrium:
     x_cap, y_cap = getattr(func, "upper_bounds", lambda: (np.inf, np.inf))()
     x_max = min(income / px, x_cap - _DOMAIN_MARGIN)
     y_max = min(income / py, y_cap - _DOMAIN_MARGIN)
-    x0 = np.array([
-        x_floor + (x_max - x_floor) / 2,
-        y_floor + (y_max - y_floor) / 2,
-    ])
+    x0 = np.array(
+        [
+            x_floor + (x_max - x_floor) / 2,
+            y_floor + (y_max - y_floor) / 2,
+        ]
+    )
 
     budget_may_be_slack = bool(getattr(func, "budget_may_be_slack", False))
     budget_constraint = (

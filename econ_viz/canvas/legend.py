@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import math
+from typing import cast
 
+import numpy as np
 from matplotlib.collections import Collection
 from matplotlib.legend import Legend as MplLegend
 from matplotlib.lines import Line2D
@@ -38,7 +40,8 @@ def place_legend(ax, handles: list, labels: list[str], legend: Legend) -> MplLeg
         old.remove()
     if legend.visible is False or not handles:
         return None
-    position = legend.position or LegendPosition.AUTO
+    # Legend.__post_init__ always normalises position to a LegendPosition (or None).
+    position = cast("LegendPosition | None", legend.position) or LegendPosition.AUTO
     if position is LegendPosition.AUTO:
         position = _best_position(ax, handles, labels, legend)
     drawn = _draw(ax, handles, labels, legend, position)
@@ -87,7 +90,11 @@ def _best_position(ax, handles, labels, legend: Legend) -> LegendPosition:
     """Inside corner covering the fewest diagram elements; outside right when all cover some."""
     renderer = _renderer(ax.figure)
     obstacles = _obstacles(ax, renderer)
-    best, best_score = None, math.inf
+    # The loop below always improves on math.inf on its first pass, so best is
+    # never actually None by the time we return it; seed it with a real corner
+    # so mypy (and any zero-corner edge case) sees a LegendPosition either way.
+    best: LegendPosition = _CORNERS[0]
+    best_score = math.inf
     for corner in _CORNERS:
         trial = _draw(ax, handles, labels, legend, corner)
         box = trial.get_window_extent(renderer).padded(2.0)
@@ -108,7 +115,7 @@ def _obstacles(ax, renderer) -> list:
             continue
         if isinstance(artist, Line2D):
             display = artist.get_transform().transform_path(artist.get_path())
-            if artist.get_linestyle() in ("None", "", " ") or len(display.vertices) == 1:
+            if artist.get_linestyle() in ("None", "", " ") or len(np.asarray(display.vertices)) == 1:
                 tests.append(_points_test(display.vertices))
             else:
                 tests.append(_path_test(display))
@@ -116,7 +123,7 @@ def _obstacles(ax, renderer) -> list:
             tests.extend(
                 _path_test(artist.get_transform().transform_path(path))
                 for path in artist.get_paths()
-                if len(path.vertices)
+                if len(np.asarray(path.vertices))
             )
         elif isinstance(artist, Text):
             if not artist.get_text():
@@ -137,6 +144,7 @@ def _path_test(display_path):
 def _points_test(points):
     def hits(box: Bbox) -> bool:
         return any(box.contains(float(x), float(y)) for x, y in points)
+
     return hits
 
 

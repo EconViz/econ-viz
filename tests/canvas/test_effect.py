@@ -1,6 +1,7 @@
 """Tests for Effect: colour, position, and labels of decomposition effect arrows."""
 
 import matplotlib
+
 matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt
@@ -88,12 +89,15 @@ class TestLabels:
         assert [t.get_text() for t in inc] == ["Income"]
         assert to_hex(sub[0].get_color()) == "#123456"
 
-    @pytest.mark.parametrize("position, ha, va", [
-        ("top", "center", "bottom"),
-        ("bottom", "center", "top"),
-        ("left", "right", "center"),
-        ("right", "left", "center"),
-    ])
+    @pytest.mark.parametrize(
+        "position, ha, va",
+        [
+            ("top", "center", "bottom"),
+            ("bottom", "center", "top"),
+            ("left", "right", "center"),
+            ("right", "left", "center"),
+        ],
+    )
     def test_label_alignment_follows_position(self, position, ha, va):
         cvs = _canvas(substitution=Effect(label="S", label_position=position))
         label = _role(cvs.ax, "substitution_label")[0]
@@ -111,8 +115,12 @@ class TestLabels:
         assert right.xy[0] == pytest.approx(max(DEC.B.x, DEC.C.x))
 
     def test_label_offset_moves_text(self):
-        near = _role(_canvas(substitution=Effect(label="S", label_position="top", label_offset=2)).ax, "substitution_label")[0]
-        far = _role(_canvas(substitution=Effect(label="S", label_position="top", label_offset=20)).ax, "substitution_label")[0]
+        near = _role(
+            _canvas(substitution=Effect(label="S", label_position="top", label_offset=2)).ax, "substitution_label"
+        )[0]
+        far = _role(
+            _canvas(substitution=Effect(label="S", label_position="top", label_offset=20)).ax, "substitution_label"
+        )[0]
         assert near.xyann[1] == pytest.approx(2)
         assert far.xyann[1] == pytest.approx(20)
 

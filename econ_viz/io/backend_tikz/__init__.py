@@ -20,7 +20,6 @@ Public entry points
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Optional, Union
 
 from matplotlib.figure import Figure as MplFigure
 
@@ -30,9 +29,9 @@ from .renderer import TikzRenderer
 
 def save_tikz(
     fig: MplFigure,
-    path: Union[str, Path],
+    path: str | Path,
     *,
-    scale: Optional[float] = None,
+    scale: float | None = None,
     standalone: bool = True,
 ) -> None:
     """Export ``fig`` to a TikZ ``.tex`` file.
@@ -59,7 +58,7 @@ def save_tikz(
 def figure_to_tikz(
     fig: MplFigure,
     *,
-    scale: Optional[float] = None,
+    scale: float | None = None,
     standalone: bool = True,
 ) -> str:
     """Render ``fig`` to TikZ source and return it as a string."""

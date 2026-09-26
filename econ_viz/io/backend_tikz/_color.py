@@ -28,10 +28,7 @@ class ColorRegistry:
         return name
 
     def definitions(self) -> list[str]:
-        return [
-            rf"\definecolor{{{name}}}{{RGB}}{{{r},{g},{b}}}"
-            for (r, g, b), name in self._names.items()
-        ]
+        return [rf"\definecolor{{{name}}}{{RGB}}{{{r},{g},{b}}}" for (r, g, b), name in self._names.items()]
 
 
 def _byte(c: float) -> int:

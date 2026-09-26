@@ -14,8 +14,8 @@ from .decomposition import (
     PriceEffectDecomposition,
     decompose_price_effect,
 )
-from .solver import Equilibrium, solve
 from .slutsky import SlutskyMatrix, slutsky_matrix
+from .solver import Equilibrium, solve
 
 __all__ = [
     "Equilibrium",

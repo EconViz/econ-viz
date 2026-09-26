@@ -1,6 +1,7 @@
 """Tests for Label: text, position, offset, colour, size, and visibility of point labels."""
 
 import matplotlib
+
 matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt
@@ -41,7 +42,13 @@ class TestLabelValue:
     def test_defaults(self):
         label = Label()
         assert (label.text, label.position, label.offset, label.color, label.fontsize, label.visible) == (
-            None, None, None, None, None, None)
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        )
 
     def test_position_accepts_strings_and_aliases(self):
         assert Label(position="top-left").position is LabelPosition.TOP_LEFT
@@ -141,7 +148,9 @@ class TestCanvasLabels:
         assert all(tuple(t.xyann) == (6, 6) for t in _role(cvs.ax, "bundle_label"))
 
     def test_ic_labels(self):
-        cvs = Canvas(x_max=20, y_max=15).add_utility(MODEL, levels=[3, 5], ic_label=Label(text="{:.1f}", position="top"))
+        cvs = Canvas(x_max=20, y_max=15).add_utility(
+            MODEL, levels=[3, 5], ic_label=Label(text="{:.1f}", position="top")
+        )
         texts = _role(cvs.ax, "ic_label")
         assert [t.get_text() for t in texts] == ["3.0", "5.0"]
         _placed(texts[0], "top", 4)
@@ -168,8 +177,9 @@ class TestCanvasLabels:
 
 class TestOtherDiagrams:
     def test_demand_diagram(self):
-        path = PricePath(MODEL, budget=LinearBudget(px=2.0, py=2.0, income=40.0), price="px",
-                         price_range=(0.8, 6.0), n=20)
+        path = PricePath(
+            MODEL, budget=LinearBudget(px=2.0, py=2.0, income=40.0), price="px", price_range=(0.8, 6.0), n=20
+        )
         fig = DemandDiagram(path).add_marshallian_panel(price_markers=[1.5, 4.0], point_label=Label(visible=False))
         texts = _role(fig.utility_canvas.ax, "equilibrium_label") + _role(fig.demand_canvas.ax, "point_label")
         assert len(texts) == 4 and not any(t.get_visible() for t in texts)

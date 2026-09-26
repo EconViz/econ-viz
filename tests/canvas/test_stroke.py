@@ -3,9 +3,10 @@
 import numpy as np
 import pytest
 from matplotlib.colors import to_hex
-from matplotlib.patches import ArrowStyle as MplArrowStyle, FancyArrowPatch
+from matplotlib.patches import ArrowStyle as MplArrowStyle
+from matplotlib.patches import FancyArrowPatch
 
-from econ_viz import ArrowStyle, Canvas, Figure, Layout, LineStyle, Stroke, levels, solve
+from econ_viz import ArrowStyle, Canvas, Figure, Layout, LineStyle, Stroke, solve
 from econ_viz.exceptions import InvalidParameterError
 from econ_viz.models import CobbDouglas, Leontief
 from econ_viz.optimizer import decompose_price_effect
@@ -94,7 +95,9 @@ class TestLayerStrokes:
         assert to_hex(line.get_color()) == to_hex("red")
 
     def test_equilibrium_drop_lines_and_ray(self):
-        cvs = Canvas(x_max=20, y_max=15).add_equilibrium(EQ, show_ray=True, drop_stroke=DASHED, ray_stroke=Stroke(width=1.1))
+        cvs = Canvas(x_max=20, y_max=15).add_equilibrium(
+            EQ, show_ray=True, drop_stroke=DASHED, ray_stroke=Stroke(width=1.1)
+        )
         _assert_stroked(_role(cvs.ax, "drop"))
         assert _role(cvs.ax, "ray")[0].get_linewidth() == pytest.approx(1.1)
 
@@ -117,7 +120,11 @@ class TestLayerStrokes:
     def test_decomposition_projection_mode(self):
         dec = decompose_price_effect(MODEL, px=(2.0, 4.0), py=3.0, income=30.0)
         cvs = Canvas(x_max=20, y_max=15).add_decomposition(
-            dec, show_x_projections=True, projection_stroke=DASHED, guide_stroke=DASHED, range_stroke=DASHED,
+            dec,
+            show_x_projections=True,
+            projection_stroke=DASHED,
+            guide_stroke=DASHED,
+            range_stroke=DASHED,
         )
         for role in ("projection", "guide"):
             _assert_stroked(_role(cvs.ax, role))
@@ -193,6 +200,7 @@ class TestThemeDefaults:
 
     def test_custom_theme_changes_axis_default(self):
         from dataclasses import replace
+
         from econ_viz import themes
 
         theme = replace(themes.default, axis_stroke=Stroke(width=1.4, style="dashed", arrow="->"))
@@ -206,11 +214,15 @@ class TestOtherDiagrams:
     def test_demand_diagram_panels(self):
         from econ_viz import DemandDiagram, LinearBudget, PricePath
 
-        path = PricePath(MODEL, budget=LinearBudget(px=2.0, py=2.0, income=40.0), price="px",
-                         price_range=(0.8, 6.0), n=20)
+        path = PricePath(
+            MODEL, budget=LinearBudget(px=2.0, py=2.0, income=40.0), price="px", price_range=(0.8, 6.0), n=20
+        )
         fig = DemandDiagram(path).add_marshallian_panel(
-            price_markers=[1.5, 4.0], budget_stroke=DASHED, curve_stroke=DASHED,
-            demand_stroke=DASHED, guide_stroke=DASHED,
+            price_markers=[1.5, 4.0],
+            budget_stroke=DASHED,
+            curve_stroke=DASHED,
+            demand_stroke=DASHED,
+            guide_stroke=DASHED,
         )
         _assert_stroked(_role(fig.utility_canvas.ax, "budget"))
         _assert_stroked(_role(fig.utility_canvas.ax, "curve"))

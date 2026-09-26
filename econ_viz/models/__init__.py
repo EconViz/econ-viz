@@ -9,8 +9,8 @@ and exposes ``utility_type``, ``ray_slopes``, and ``kink_points`` for
 rendering support.
 """
 
-from .core import CobbDouglas, Leontief, PerfectSubstitutes, CES, Satiation, QuasiLinear, StoneGeary, Translog, Haagsma
 from .advanced import CustomUtility, MultiGoodCD
+from .core import CES, CobbDouglas, Haagsma, Leontief, PerfectSubstitutes, QuasiLinear, Satiation, StoneGeary, Translog
 from .parser import parse_latex
 from .protocol import UtilityFunction
 from .registry import build_registered_model, get_model_registry

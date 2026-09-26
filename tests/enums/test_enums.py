@@ -56,8 +56,14 @@ class TestLayout:
 class TestAxisEnums:
     def test_label_position_has_sides_and_corners(self):
         assert {member.value for member in LabelPosition} == {
-            "top", "left", "bottom", "right",
-            "top-right", "top-left", "bottom-right", "bottom-left",
+            "top",
+            "left",
+            "bottom",
+            "right",
+            "top-right",
+            "top-left",
+            "bottom-right",
+            "bottom-left",
         }
 
     def test_arrow_styles_are_matplotlib_compatible(self):

@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable
 
 import numpy as np
 
@@ -67,6 +67,7 @@ def _build_satiation(args) -> Satiation:
 
 def _build_quasi_linear(args) -> QuasiLinear:
     v_func_name = args.v_func
+    v_func: Callable[[np.ndarray], np.ndarray]
     if v_func_name in (None, "log"):
         v_func = np.log
     elif v_func_name == "sqrt":
@@ -123,4 +124,3 @@ def build_registered_model(name: str, args):
     if spec is None:
         raise KeyError(name)
     return spec.builder(args)
-

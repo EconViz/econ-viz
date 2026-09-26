@@ -84,7 +84,7 @@ class HomogeneityAnalyzer:
         lambdas = [0.5, 2.0, 4.0]
 
         estimates: list[float] = []
-        for x0, y0 in zip(xs, ys):
+        for x0, y0 in zip(xs, ys, strict=True):
             f0 = float(self._func(x0, y0))
             if f0 <= 0:
                 continue
@@ -182,7 +182,7 @@ class HomogeneityAnalyzer:
                 return float("nan")
             return df_dx / df_dy
 
-        for x0, y0 in zip(xs, ys):
+        for x0, y0 in zip(xs, ys, strict=True):
             mrs0 = _mrs(x0, y0)
             if np.isnan(mrs0):
                 continue

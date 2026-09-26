@@ -33,4 +33,3 @@ def render_budget(
         fill_color=fill_color,
     )
     bc.draw(ax)
-

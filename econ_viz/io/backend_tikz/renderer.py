@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Optional
-
 import numpy as np
 from matplotlib.backend_bases import RendererBase
 
@@ -46,7 +44,7 @@ class TikzRenderer(RendererBase):
         height: float,
         *,
         dpi: float = 100.0,
-        scale: Optional[float] = None,
+        scale: float | None = None,
     ):
         super().__init__()
         self.width = float(width)
@@ -130,9 +128,7 @@ class TikzRenderer(RendererBase):
         return y * self.scale
 
     def _emit_path(self, gc, poly: np.ndarray, rgbFace) -> None:
-        pts = " -- ".join(
-            f"({self._tx(x):.4f},{self._ty(y):.4f})" for x, y in poly
-        )
+        pts = " -- ".join(f"({self._tx(x):.4f},{self._ty(y):.4f})" for x, y in poly)
         stroke_name = self.colors.register(gc.get_rgb()[:3])
         lw_pt = gc.get_linewidth()
         alpha = gc.get_alpha()

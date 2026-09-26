@@ -2,10 +2,9 @@
 
 import types
 
-from matplotlib.colors import to_hex
-
 import numpy as np
 import pytest
+from matplotlib.colors import to_hex
 
 from econ_viz import EdgeworthBox, EquilibriumFocusConfig
 from econ_viz.consumer.edgeworth_plotter import plot_indifference_pair

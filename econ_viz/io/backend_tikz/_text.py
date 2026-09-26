@@ -10,16 +10,16 @@ from __future__ import annotations
 
 _UNICODE_FIXES = str.maketrans(
     {
-        "\u2212": "-",     # MINUS SIGN
-        "\u2013": "--",    # EN DASH
-        "\u2014": "---",   # EM DASH
-        "\u00a0": "~",     # NO-BREAK SPACE
-        "\u2018": "`",     # LEFT SINGLE QUOTATION MARK
-        "\u2019": "'",     # RIGHT SINGLE QUOTATION MARK
-        "\u201c": "``",    # LEFT DOUBLE QUOTATION MARK
-        "\u201d": "''",    # RIGHT DOUBLE QUOTATION MARK
-        "\u2032": "'",     # PRIME
-        "\u2033": "''",    # DOUBLE PRIME
+        "\u2212": "-",  # MINUS SIGN
+        "\u2013": "--",  # EN DASH
+        "\u2014": "---",  # EM DASH
+        "\u00a0": "~",  # NO-BREAK SPACE
+        "\u2018": "`",  # LEFT SINGLE QUOTATION MARK
+        "\u2019": "'",  # RIGHT SINGLE QUOTATION MARK
+        "\u201c": "``",  # LEFT DOUBLE QUOTATION MARK
+        "\u201d": "''",  # RIGHT DOUBLE QUOTATION MARK
+        "\u2032": "'",  # PRIME
+        "\u2033": "''",  # DOUBLE PRIME
     }
 )
 

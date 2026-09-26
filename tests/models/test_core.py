@@ -6,12 +6,12 @@ import pytest
 from econ_viz.enums import UtilityType
 from econ_viz.exceptions import InvalidParameterError
 from econ_viz.models import (
+    CES,
     CobbDouglas,
     Leontief,
     PerfectSubstitutes,
-    CES,
-    Satiation,
     QuasiLinear,
+    Satiation,
     StoneGeary,
     Translog,
 )
@@ -144,7 +144,7 @@ class TestCES:
 
     def test_rho_zero_uses_cobb_douglas_limit(self):
         ces = CES(alpha=0.4, beta=0.6, rho=0.0)
-        assert ces(4.0, 9.0) == pytest.approx(4.0 ** 0.4 * 9.0 ** 0.6)
+        assert ces(4.0, 9.0) == pytest.approx(4.0**0.4 * 9.0**0.6)
         assert ces.ray_slopes() == pytest.approx([0.6 / 0.4])
 
     def test_rho_one_rejected_at_construction(self):
@@ -258,7 +258,7 @@ class TestStoneGeary:
         sg = StoneGeary(bar_x=1.0, bar_y=1.0)
         assert np.isnan(sg(0.5, 5.0))
         assert np.isnan(sg(5.0, 0.5))
-        assert np.isnan(sg(1.0, 5.0))   # x exactly at bar_x
+        assert np.isnan(sg(1.0, 5.0))  # x exactly at bar_x
 
     def test_defaults(self):
         sg = StoneGeary()
@@ -319,7 +319,7 @@ class TestQuasiLinear:
     def test_convex_v_func_raises(self):
         """z**2 has f'' > 0 — must be rejected as non-concave."""
         with pytest.raises(ValueError, match="diminishing marginal utility violated"):
-            QuasiLinear(v_func=lambda z: z ** 2)
+            QuasiLinear(v_func=lambda z: z**2)
 
     def test_decreasing_v_func_raises(self):
         """A decreasing function violates the monotonicity assumption."""

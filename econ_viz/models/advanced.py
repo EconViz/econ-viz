@@ -12,8 +12,8 @@ protocol:
 from __future__ import annotations
 
 import functools
-from dataclasses import dataclass, field
-from typing import Callable
+from collections.abc import Callable
+from dataclasses import dataclass
 
 import numpy as np
 
@@ -51,16 +51,10 @@ def _probe(func: Callable, label: str) -> None:
             result = func(X, Y)
         result = np.asarray(result, dtype=float)
     except Exception as exc:
-        raise ValueError(
-            f"{label}: 自訂函數無法處理 NumPy 陣列運算。"
-            f" 原始錯誤：{exc}"
-        ) from exc
+        raise ValueError(f"{label}: custom function cannot process NumPy array inputs. Original error: {exc}") from exc
 
     if result.shape != X.shape and result.shape != ():
-        raise ValueError(
-            f"{label}: 自訂函數回傳形狀 {result.shape}，"
-            f"預期 {X.shape} 或純量。"
-        )
+        raise ValueError(f"{label}: custom function returned shape {result.shape}; expected {X.shape} or a scalar.")
 
 
 @dataclass
@@ -142,13 +136,9 @@ class MultiGoodCD:
 
     def __init__(self, alphas: dict[str, float]) -> None:
         if len(alphas) < 2:
-            raise InvalidParameterError(
-                "MultiGoodCD requires at least 2 goods."
-            )
+            raise InvalidParameterError("MultiGoodCD requires at least 2 goods.")
         if any(a <= 0 for a in alphas.values()):
-            raise InvalidParameterError(
-                "All exponents in MultiGoodCD must be positive."
-            )
+            raise InvalidParameterError("All exponents in MultiGoodCD must be positive.")
         self._alphas: dict[str, float] = dict(alphas)
         logger.debug(
             "MultiGoodCD created: %s",
@@ -219,16 +209,12 @@ class MultiGoodCD:
         """
         unknown = set(fixed) - set(self._alphas)
         if unknown:
-            raise InvalidParameterError(
-                f"Unknown goods in freeze(): {unknown}. "
-                f"Valid goods: {set(self._alphas)}"
-            )
+            raise InvalidParameterError(f"Unknown goods in freeze(): {unknown}. Valid goods: {set(self._alphas)}")
 
         active = [k for k in self._alphas if k not in fixed]
         if len(active) != 2:
             raise ValueError(
-                "繪製 2D 圖表前，必須凍結變數直到只剩下 2 個活動變數。"
-                f" 目前活動變數：{active}"
+                f"Exactly two active variables must remain before drawing a 2D diagram; current variables: {active}."
             )
 
         x_name, y_name = active[0], active[1]
@@ -240,18 +226,12 @@ class MultiGoodCD:
         ax = self._alphas[x_name]
         ay = self._alphas[y_name]
 
-        label = (
-            f"MultiGoodCD({x_name}^{ax} {y_name}^{ay}"
-            + "".join(f" {k}={v}" for k, v in fixed.items())
-            + ")"
-        )
+        label = f"MultiGoodCD({x_name}^{ax} {y_name}^{ay}" + "".join(f" {k}={v}" for k, v in fixed.items()) + ")"
 
         def _projected(x, y, _k=frozen_contribution, _ax=ax, _ay=ay):
-            return _k * (x ** _ax) * (y ** _ay)
+            return _k * (x**_ax) * (y**_ay)
 
-        logger.info(
-            "freeze() → active=(%s, %s), fixed=%s", x_name, y_name, fixed
-        )
+        logger.info("freeze() → active=(%s, %s), fixed=%s", x_name, y_name, fixed)
         return CustomUtility(func=_projected, name=label)
 
     def ray_slopes(self) -> list[float]:

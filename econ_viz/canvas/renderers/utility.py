@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+from ...canvas.stroke import tag, tag_attr
+from ...components.indifference import IndifferenceCurves
 from ...enums import LabelPosition
 from ...themes.label import Label
-from ...components.indifference import IndifferenceCurves
 
 
 def render_utility(
@@ -56,7 +57,7 @@ def render_utility(
             markersize=12,
             zorder=5,
         )
-        bliss._ev_role = "bliss"
+        tag(bliss, "bliss")
         text = ax.annotate(
             rf"${bliss_text}$",
             (func.bliss_x, func.bliss_y),
@@ -65,7 +66,6 @@ def render_utility(
             fontsize=12,
             color=color,
         )
-        text._ev_role = "bliss_label"
-        text._ev_label_default = Label(position=LabelPosition.TOP_RIGHT, offset=5)
+        tag(text, "bliss_label")
+        tag_attr(text, "_ev_label_default", Label(position=LabelPosition.TOP_RIGHT, offset=5))
     return ic
-

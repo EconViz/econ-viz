@@ -1,21 +1,23 @@
 """Tests for econ_viz.optimizer.solver — equilibrium solver."""
 
+import dataclasses
+
 import numpy as np
 import pytest
 
 from econ_viz.exceptions import InvalidParameterError, OptimizationError
-from econ_viz.models import CobbDouglas, Leontief, PerfectSubstitutes, CES, QuasiLinear, Satiation, StoneGeary
+from econ_viz.models import CES, CobbDouglas, Leontief, PerfectSubstitutes, QuasiLinear, Satiation, StoneGeary
 from econ_viz.optimizer import (
-    Equilibrium,
-    solve,
-    solution_tex,
     ComparativeStatics,
     DecompositionMethod,
+    Equilibrium,
     PriceEffectDecomposition,
     SlutskyMatrix,
     comparative_statics,
     decompose_price_effect,
     slutsky_matrix,
+    solution_tex,
+    solve,
 )
 
 
@@ -54,7 +56,7 @@ class TestSolveCobbDouglas:
     def test_equilibrium_is_frozen(self):
         """Equilibrium is a frozen dataclass; mutation must raise."""
         eq = solve(self.model, self.px, self.py, self.income)
-        with pytest.raises(Exception):
+        with pytest.raises(dataclasses.FrozenInstanceError):
             eq.x = 99.0
 
 
@@ -231,6 +233,7 @@ class TestSolveEdgeCases:
     def test_slsqp_failure_raises(self, monkeypatch):
         """A non-converging SLSQP result must raise OptimizationError."""
         from unittest.mock import MagicMock
+
         import econ_viz.optimizer.solver as solver_mod
 
         fake_result = MagicMock()
@@ -245,6 +248,7 @@ class TestSolveEdgeCases:
         """Ensure solve() passes args to minimize correctly (regression guard)."""
         calls = []
         import econ_viz.optimizer.solver as solver_mod
+
         original = solver_mod.minimize
 
         def recording_minimize(*args, **kwargs):
@@ -257,8 +261,10 @@ class TestSolveEdgeCases:
 
     def test_kinked_no_slopes_falls_back_to_interior(self):
         """A KINKED model with no ray slopes must fall back to the interior solver."""
+
         class NoSlopeKinked:
             from econ_viz.enums import UtilityType as _UT
+
             utility_type = _UT.KINKED
 
             def __call__(self, x, y):
@@ -283,26 +289,32 @@ class TestSolveCobbDouglasAnalytic:
     relative terms, so we use rel=1e-3 to stay robust across scipy versions.
     """
 
-    @pytest.mark.parametrize("alpha,beta,px,py,income", [
-        (0.5, 0.5, 2.0, 3.0, 30.0),
-        (0.4, 0.6, 2.0, 3.0, 30.0),
-        (0.3, 0.7, 1.0, 2.0, 20.0),
-        (0.8, 0.2, 5.0, 1.0, 50.0),
-        (0.5, 0.5, 1.0, 1.0, 100.0),
-    ])
+    @pytest.mark.parametrize(
+        "alpha,beta,px,py,income",
+        [
+            (0.5, 0.5, 2.0, 3.0, 30.0),
+            (0.4, 0.6, 2.0, 3.0, 30.0),
+            (0.3, 0.7, 1.0, 2.0, 20.0),
+            (0.8, 0.2, 5.0, 1.0, 50.0),
+            (0.5, 0.5, 1.0, 1.0, 100.0),
+        ],
+    )
     def test_marshallian_demands(self, alpha, beta, px, py, income):
         """x* = α/(α+β)·I/pₓ and y* = β/(α+β)·I/p_y."""
         eq = solve(CobbDouglas(alpha=alpha, beta=beta), px=px, py=py, income=income)
         x_star = alpha / (alpha + beta) * income / px
-        y_star = beta  / (alpha + beta) * income / py
+        y_star = beta / (alpha + beta) * income / py
         assert eq.x == pytest.approx(x_star, rel=1e-3)
         assert eq.y == pytest.approx(y_star, rel=1e-3)
 
-    @pytest.mark.parametrize("alpha,beta,px,py,income", [
-        (0.5, 0.5, 2.0, 3.0, 30.0),
-        (0.4, 0.6, 2.0, 3.0, 30.0),
-        (0.3, 0.7, 1.0, 2.0, 20.0),
-    ])
+    @pytest.mark.parametrize(
+        "alpha,beta,px,py,income",
+        [
+            (0.5, 0.5, 2.0, 3.0, 30.0),
+            (0.4, 0.6, 2.0, 3.0, 30.0),
+            (0.3, 0.7, 1.0, 2.0, 20.0),
+        ],
+    )
     def test_budget_exhausted(self, alpha, beta, px, py, income):
         """The optimal bundle must exhaust the budget within relative tolerance."""
         eq = solve(CobbDouglas(alpha=alpha, beta=beta), px=px, py=py, income=income)
@@ -332,11 +344,14 @@ class TestSolveQuasiLinear:
 class TestSolveLeontiefAnalytic:
     """Verify analytic kink-solution demands."""
 
-    @pytest.mark.parametrize("a,b,px,py,income", [
-        (1.0, 1.0, 2.0, 3.0, 30.0),
-        (1.0, 2.0, 2.0, 3.0, 30.0),
-        (2.0, 3.0, 1.0, 1.0, 10.0),
-    ])
+    @pytest.mark.parametrize(
+        "a,b,px,py,income",
+        [
+            (1.0, 1.0, 2.0, 3.0, 30.0),
+            (1.0, 2.0, 2.0, 3.0, 30.0),
+            (2.0, 3.0, 1.0, 1.0, 10.0),
+        ],
+    )
     def test_marshallian_demands(self, a, b, px, py, income):
         """x* = I/(pₓ + a/b·p_y),  y* = a/b·x*.
 
@@ -349,10 +364,13 @@ class TestSolveLeontiefAnalytic:
         assert eq.x == pytest.approx(x_star, rel=1e-6)
         assert eq.y == pytest.approx(y_star, rel=1e-6)
 
-    @pytest.mark.parametrize("a,b,px,py,income", [
-        (1.0, 1.0, 2.0, 3.0, 30.0),
-        (1.0, 2.0, 2.0, 3.0, 30.0),
-    ])
+    @pytest.mark.parametrize(
+        "a,b,px,py,income",
+        [
+            (1.0, 1.0, 2.0, 3.0, 30.0),
+            (1.0, 2.0, 2.0, 3.0, 30.0),
+        ],
+    )
     def test_budget_exhausted(self, a, b, px, py, income):
         eq = solve(Leontief(a=a, b=b), px=px, py=py, income=income)
         assert _on_budget(eq, px, py, income)
@@ -392,24 +410,30 @@ class TestSolveStoneGearyAnalytic:
         y* = γ_y + beta  * m / py
     """
 
-    @pytest.mark.parametrize("alpha,beta,bx,by,px,py,income", [
-        (0.5, 0.5, 1.0, 1.0, 2.0, 3.0, 30.0),
-        (0.4, 0.6, 2.0, 1.0, 1.0, 2.0, 20.0),
-        (0.3, 0.7, 0.5, 0.5, 3.0, 1.0, 25.0),
-    ])
+    @pytest.mark.parametrize(
+        "alpha,beta,bx,by,px,py,income",
+        [
+            (0.5, 0.5, 1.0, 1.0, 2.0, 3.0, 30.0),
+            (0.4, 0.6, 2.0, 1.0, 1.0, 2.0, 20.0),
+            (0.3, 0.7, 0.5, 0.5, 3.0, 1.0, 25.0),
+        ],
+    )
     def test_marshallian_demands(self, alpha, beta, bx, by, px, py, income):
         sg = StoneGeary(alpha=alpha, beta=beta, bar_x=bx, bar_y=by)
         eq = solve(sg, px=px, py=py, income=income)
         m = income - px * bx - py * by
         x_star = bx + alpha * m / px
-        y_star = by + beta  * m / py
+        y_star = by + beta * m / py
         assert eq.x == pytest.approx(x_star, rel=1e-3)
         assert eq.y == pytest.approx(y_star, rel=1e-3)
 
-    @pytest.mark.parametrize("alpha,beta,bx,by,px,py,income", [
-        (0.5, 0.5, 1.0, 1.0, 2.0, 3.0, 30.0),
-        (0.4, 0.6, 2.0, 1.0, 1.0, 2.0, 20.0),
-    ])
+    @pytest.mark.parametrize(
+        "alpha,beta,bx,by,px,py,income",
+        [
+            (0.5, 0.5, 1.0, 1.0, 2.0, 3.0, 30.0),
+            (0.4, 0.6, 2.0, 1.0, 1.0, 2.0, 20.0),
+        ],
+    )
     def test_budget_exhausted(self, alpha, beta, bx, by, px, py, income):
         sg = StoneGeary(alpha=alpha, beta=beta, bar_x=bx, bar_y=by)
         eq = solve(sg, px=px, py=py, income=income)
@@ -418,8 +442,7 @@ class TestSolveStoneGearyAnalytic:
     def test_zero_subsistence_matches_cobb_douglas(self):
         """Stone-Geary with bar=0 must match Cobb-Douglas Marshallian demands exactly."""
         alpha, beta, px, py, income = 0.5, 0.5, 2.0, 3.0, 30.0
-        eq_sg = solve(StoneGeary(alpha=alpha, beta=beta, bar_x=0.0, bar_y=0.0),
-                      px=px, py=py, income=income)
+        eq_sg = solve(StoneGeary(alpha=alpha, beta=beta, bar_x=0.0, bar_y=0.0), px=px, py=py, income=income)
         eq_cd = solve(CobbDouglas(alpha=alpha, beta=beta), px=px, py=py, income=income)
         assert eq_sg.x == pytest.approx(eq_cd.x, rel=1e-3)
         assert eq_sg.y == pytest.approx(eq_cd.y, rel=1e-3)
@@ -428,11 +451,14 @@ class TestSolveStoneGearyAnalytic:
 class TestSolvePerfectSubstitutesAnalytic:
     """Verify corner-solution demands."""
 
-    @pytest.mark.parametrize("a,b,px,py,income,expect_x", [
-        (1.0, 2.0, 2.0, 1.0, 10.0, False),   # b/py > a/px → all on y
-        (3.0, 1.0, 1.0, 3.0, 9.0,  True),    # a/px > b/py → all on x
-        (1.0, 1.0, 1.0, 2.0, 10.0, True),    # a/px > b/py → all on x
-    ])
+    @pytest.mark.parametrize(
+        "a,b,px,py,income,expect_x",
+        [
+            (1.0, 2.0, 2.0, 1.0, 10.0, False),  # b/py > a/px → all on y
+            (3.0, 1.0, 1.0, 3.0, 9.0, True),  # a/px > b/py → all on x
+            (1.0, 1.0, 1.0, 2.0, 10.0, True),  # a/px > b/py → all on x
+        ],
+    )
     def test_corner_demand(self, a, b, px, py, income, expect_x):
         eq = solve(PerfectSubstitutes(a=a, b=b), px=px, py=py, income=income)
         if expect_x:
@@ -461,12 +487,12 @@ class TestComparativeStaticsCobbDouglas:
         self.px, self.py, self.income = 2.0, 3.0, 60.0
         self.cs = comparative_statics(self.model, self.px, self.py, self.income)
         s = self.alpha + self.beta
-        self._dx_dpx = -(self.alpha / s) * self.income / self.px ** 2
+        self._dx_dpx = -(self.alpha / s) * self.income / self.px**2
         self._dx_dpy = 0.0
-        self._dx_dI  = (self.alpha / s) / self.px
+        self._dx_dI = (self.alpha / s) / self.px
         self._dy_dpx = 0.0
-        self._dy_dpy = -(self.beta  / s) * self.income / self.py ** 2
-        self._dy_dI  = (self.beta  / s) / self.py
+        self._dy_dpy = -(self.beta / s) * self.income / self.py**2
+        self._dy_dI = (self.beta / s) / self.py
 
     def test_dx_dpx(self):
         assert self.cs.dx_dpx == pytest.approx(self._dx_dpx, rel=2e-2)
@@ -490,7 +516,7 @@ class TestComparativeStaticsCobbDouglas:
         assert isinstance(self.cs, ComparativeStatics)
 
     def test_frozen(self):
-        with pytest.raises(Exception):
+        with pytest.raises(dataclasses.FrozenInstanceError):
             self.cs.dx_dpx = 0.0
 
 
@@ -508,7 +534,7 @@ class TestComparativeStaticsPerfectSubstitutes:
         self.cs = comparative_statics(self.model, self.px, self.py, self.income)
 
     def test_dx_dpx_negative(self):
-        expected = -self.income / self.px ** 2
+        expected = -self.income / self.px**2
         assert self.cs.dx_dpx == pytest.approx(expected, rel=1e-3)
 
     def test_dx_dI_positive(self):
@@ -534,8 +560,8 @@ class TestComparativeStaticsLeontief:
         self.px, self.py, self.income = 2.0, 3.0, 30.0
         self.cs = comparative_statics(self.model, self.px, self.py, self.income)
         denom = self.px + self.py
-        self._dx_dpx = -self.income / denom ** 2
-        self._dx_dI  =  1.0 / denom
+        self._dx_dpx = -self.income / denom**2
+        self._dx_dI = 1.0 / denom
 
     def test_dx_dpx(self):
         assert self.cs.dx_dpx == pytest.approx(self._dx_dpx, rel=2e-2)
@@ -602,10 +628,10 @@ class TestSlutskyMatrixCobbDouglas:
         s = self.alpha + self.beta
         ax = self.alpha / s
         by = self.beta / s
-        self._s_xx = -ax * (1 - ax) * self.income / self.px ** 2
+        self._s_xx = -ax * (1 - ax) * self.income / self.px**2
         self._s_xy = ax * by * self.income / (self.px * self.py)
         self._s_yx = ax * by * self.income / (self.px * self.py)
-        self._s_yy = -by * (1 - by) * self.income / self.py ** 2
+        self._s_yy = -by * (1 - by) * self.income / self.py**2
 
     def test_returns_slutsky_matrix_instance(self):
         assert isinstance(self.sm, SlutskyMatrix)
@@ -789,9 +815,12 @@ class TestComparativeStaticsSignWarnings:
 
     def test_giffen_good_warns(self):
         """A model with upward-sloping demand must trigger a UserWarning."""
+
         class GiffenX:
             """Toy model where x* rises with pₓ (pathological)."""
+
             from econ_viz.enums import UtilityType as _UT
+
             utility_type = _UT.SMOOTH
 
             def __call__(self, x, y):
@@ -809,6 +838,7 @@ class TestComparativeStaticsSignWarnings:
 
         # Patch solve to return a Giffen-like pattern
         import econ_viz.optimizer.comparative as comparative_mod
+
         original_solve = comparative_mod.solve
 
         call_count = [0]

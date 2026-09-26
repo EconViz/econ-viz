@@ -2,27 +2,36 @@
 
 from __future__ import annotations
 
+from typing import Any, TypedDict, cast
+
 import matplotlib.lines as mlines
 import numpy as np
 
 from ..canvas.figure import Figure
-from ..canvas.stroke import apply_strokes, styled
-from ..enums import Layout
-from ..enums import UtilityType
+from ..canvas.legend import place_legend
+from ..canvas.stroke import apply_strokes, styled, tag
+from ..enums import Layout, UtilityType
+from ..models import PerfectSubstitutes
 from ..optimizer import solve
+from ..optimizer.solver import Equilibrium
 from ..themes.axis import Axis
 from ..themes.label import Label, split_label
 from ..themes.legend import Legend
-from ..canvas.legend import place_legend
 from ..themes.marker import Marker
 from ..themes.stroke import Stroke
-from .paths import PricePath
+from .paths import LinearBudget, PricePath, QuantityAxis
 
 _GOODS_SPACE_PADDING = 1.18
 _PRICE_SYMBOL = {
     "px": r"p_{x}",
     "py": r"p_{y}",
 }
+
+
+class _UtilityDrawOptions(TypedDict, total=False):
+    show_kinks: bool
+    kink_radius: float
+    res: int
 
 
 class DemandDiagram(Figure):
@@ -88,7 +97,7 @@ class DemandDiagram(Figure):
         point_marker: Marker | None = None,
         point_label: Label | None = None,
         legend: Legend | None = None,
-    ) -> "DemandDiagram":
+    ) -> DemandDiagram:
         """Draw the goods-space panel and the linked Marshallian demand panel.
 
         The ``*_stroke`` arguments restyle one kind of line each: indifference
@@ -107,10 +116,18 @@ class DemandDiagram(Figure):
         bottom = {"demand": demand_stroke, "guide": guide_stroke}
         # Style before the legends are built: a legend copies line styles when created.
         with (
-            styled(self.utility_canvas, top, markers={"equilibrium": point_marker},
-                   labels={"equilibrium_label": split_label(point_label, self.utility_canvas.theme.point_label)[1]}),
-            styled(self.demand_canvas, bottom, markers={"point": point_marker, "tie": point_marker},
-                   labels={"point_label": split_label(point_label, self.demand_canvas.theme.point_label)[1]}),
+            styled(
+                self.utility_canvas,
+                top,
+                markers={"equilibrium": point_marker},
+                labels={"equilibrium_label": split_label(point_label, self.utility_canvas.theme.point_label)[1]},
+            ),
+            styled(
+                self.demand_canvas,
+                bottom,
+                markers={"point": point_marker, "tie": point_marker},
+                labels={"point_label": split_label(point_label, self.demand_canvas.theme.point_label)[1]},
+            ),
         ):
             selected_levels = sorted(dict.fromkeys(eq.utility for _, eq in selected_equilibria))
             self.utility_canvas.add_utility(
@@ -120,12 +137,12 @@ class DemandDiagram(Figure):
                 **self._utility_draw_options(),
             )
 
-            for idx, (price, solved) in enumerate(zip(price_markers, selected_equilibria)):
+            for idx, (price, solved) in enumerate(zip(price_markers, selected_equilibria, strict=True)):
                 budget, eq = solved
                 line_style = "-" if idx == 0 else "--"
-                point_label = self._marker_label(idx)
+                point_text = self._marker_label(idx)
                 price_symbol = _PRICE_SYMBOL[self.path.parameter_name]
-                line_label = f"{point_label}: {price_symbol}={price:.2g}"
+                line_label = f"{point_text}: {price_symbol}={price:.2g}"
                 self.utility_canvas.add_budget(
                     px=budget.px,
                     py=budget.py,
@@ -133,9 +150,9 @@ class DemandDiagram(Figure):
                     linestyle=line_style,
                     label=line_label,
                 )
-                self.utility_canvas.add_equilibrium(eq, label=point_label)
+                self.utility_canvas.add_equilibrium(eq, label=point_text)
                 quantity = eq.x if quantity_axis == "x" else eq.y
-                self.demand_canvas.add_point(quantity, price, label=point_label)
+                self.demand_canvas.add_point(quantity, price, label=point_text)
                 if show_demand_guides:
                     self._add_demand_guides(quantity=quantity, price=price)
 
@@ -146,14 +163,18 @@ class DemandDiagram(Figure):
             self.utility_canvas.show_legend(legend=legend)
             handles = [
                 mlines.Line2D([], [], color=self.demand_canvas.theme.ic_color, label="Marshallian demand"),
-                mlines.Line2D([], [], color=self.demand_canvas.theme.ic_color, linestyle="--", label="corner / boundary"),
+                mlines.Line2D(
+                    [], [], color=self.demand_canvas.theme.ic_color, linestyle="--", label="corner / boundary"
+                ),
             ]
             if demand_stroke is not None:
                 for handle in handles:
-                    handle._ev_role = "demand"
+                    tag(handle, "demand")
                 apply_strokes(self.demand_canvas.ax, handles, bottom)
             place_legend(
-                self.demand_canvas.ax, handles, [h.get_label() for h in handles],
+                self.demand_canvas.ax,
+                handles,
+                [str(h.get_label()) for h in handles],
                 (legend or Legend()).merged_over(self.demand_canvas.theme.legend),
             )
         else:
@@ -163,14 +184,14 @@ class DemandDiagram(Figure):
                     existing.remove()
         return self
 
-    def _quantity_axis(self) -> str:
+    def _quantity_axis(self) -> QuantityAxis:
         return "x" if self.path.parameter_name == "px" else "y"
 
     def _marker_label(self, idx: int) -> str:
         return chr(ord("A") + idx)
 
-    def _utility_draw_options(self) -> dict:
-        options: dict = {}
+    def _utility_draw_options(self) -> _UtilityDrawOptions:
+        options: _UtilityDrawOptions = {}
         utility_type = getattr(self.func, "utility_type", None)
         if utility_type is UtilityType.KINKED:
             options["show_kinks"] = True
@@ -199,7 +220,7 @@ class DemandDiagram(Figure):
         resolved_y_max = y_max or max_y * _GOODS_SPACE_PADDING
         return resolved_x_max, resolved_y_max
 
-    def _reset_goods_canvas(self, solved_points: list[tuple]) -> None:
+    def _reset_goods_canvas(self, solved_points: list[tuple[LinearBudget, Equilibrium]]) -> None:
         x_intercepts = [budget.income / budget.px for budget, _ in solved_points]
         y_intercepts = [budget.income / budget.py for budget, _ in solved_points]
         eq_xs = [eq.x for _, eq in solved_points]
@@ -211,7 +232,7 @@ class DemandDiagram(Figure):
         self.utility_canvas._legend_handles.clear()
         self.utility_canvas._apply_base_style()
 
-    def _solve_at_parameter(self, value: float):
+    def _solve_at_parameter(self, value: float) -> tuple[LinearBudget, Equilibrium]:
         budget = self.path.base_budget.with_update(**{self.path.parameter_name: value})
         eq = solve(self.func, px=budget.px, py=budget.py, income=budget.income)
         return budget, eq
@@ -222,8 +243,8 @@ class DemandDiagram(Figure):
             return
 
         quantity_axis = self._quantity_axis()
-        xs = np.asarray(self.path.quantity_values(quantity_axis), dtype=float)
-        ys = np.asarray(self.path.parameter_values, dtype=float)
+        xs = np.array(self.path.quantity_values(quantity_axis), dtype=float)
+        ys = np.array(self.path.parameter_values, dtype=float)
         bundle_types = [eq.bundle_type for eq in self.path.equilibria]
         connected = self._connected_mask(quantity_axis)
 
@@ -247,17 +268,18 @@ class DemandDiagram(Figure):
 
     def _add_linear_demand_curve(self, label: str) -> None:
         quantity_axis = self._quantity_axis()
-        xs = np.asarray(self.path.quantity_values(quantity_axis), dtype=float)
-        ys = np.asarray(self.path.parameter_values, dtype=float)
+        xs = np.array(self.path.quantity_values(quantity_axis), dtype=float)
+        ys = np.array(self.path.parameter_values, dtype=float)
         preferred = [self._preferred_corner(budget) for budget in self.path.budgets]
+        func = cast(PerfectSubstitutes, self.func)
 
         if quantity_axis == "x":
             chosen = np.array([side == "x" for side in preferred], dtype=bool)
-            tie_price = self.func.a * self.path.base_budget.py / self.func.b
+            tie_price = func.a * self.path.base_budget.py / func.b
             tie_quantity = self.path.base_budget.income / tie_price
         else:
             chosen = np.array([side == "y" for side in preferred], dtype=bool)
-            tie_price = self.func.b * self.path.base_budget.px / self.func.a
+            tie_price = func.b * self.path.base_budget.px / func.a
             tie_quantity = self.path.base_budget.income / tie_price
 
         if np.any(chosen):
@@ -272,7 +294,7 @@ class DemandDiagram(Figure):
                 color=self.demand_canvas.theme.ic_color,
                 linewidth=self.demand_canvas.theme.ic_linewidth,
             )
-            line._ev_role = "demand"
+            tag(line, "demand")
 
         if ys.min() <= tie_price <= ys.max():
             (line,) = self.demand_canvas.ax.plot(
@@ -281,7 +303,7 @@ class DemandDiagram(Figure):
                 color=self.demand_canvas.theme.ic_color,
                 linewidth=self.demand_canvas.theme.ic_linewidth,
             )
-            line._ev_role = "demand"
+            tag(line, "demand")
             self._add_tie_marker(tie_quantity, tie_price)
 
         self.demand_canvas._legend_handles.append(
@@ -294,21 +316,21 @@ class DemandDiagram(Figure):
             )
         )
 
-    def _connected_mask(self, quantity_axis: str) -> list[bool]:
+    def _connected_mask(self, quantity_axis: QuantityAxis) -> list[bool]:
         if len(self.path.equilibria) < 2:
             return []
 
         if getattr(self.func, "utility_type", None) is UtilityType.LINEAR:
             preferred = [self._preferred_corner(budget) for budget in self.path.budgets]
-            return [left == right and left != "tie" for left, right in zip(preferred, preferred[1:])]
+            return [left == right and left != "tie" for left, right in zip(preferred, preferred[1:], strict=False)]
 
-        quantities = np.asarray(self.path.quantity_values(quantity_axis), dtype=float)
+        quantities = np.array(self.path.quantity_values(quantity_axis), dtype=float)
         connected: list[bool] = []
-        for left, right in zip(quantities, quantities[1:]):
+        for left, right in zip(quantities, quantities[1:], strict=False):
             connected.append(np.isfinite(left) and np.isfinite(right))
         return connected
 
-    def _preferred_corner(self, budget) -> str:
+    def _preferred_corner(self, budget: LinearBudget) -> str:
         x_corner = budget.income / budget.px
         y_corner = budget.income / budget.py
         u_x = float(self.func(x_corner, 0))
@@ -335,10 +357,10 @@ class DemandDiagram(Figure):
             linewidth=self.demand_canvas.theme.ic_linewidth,
             linestyle=linestyle,
         )
-        line._ev_role = "demand"
+        tag(line, "demand")
 
     def _add_demand_guides(self, *, quantity: float, price: float) -> None:
-        guide_style = dict(
+        guide_style: dict[str, Any] = dict(
             color=self.demand_canvas.theme.eq_color,
             linestyle=":",
             linewidth=0.8,
@@ -346,7 +368,7 @@ class DemandDiagram(Figure):
         )
         for xs, ys in (([quantity, quantity], [0, price]), ([0, quantity], [price, price])):
             (line,) = self.demand_canvas.ax.plot(xs, ys, **guide_style)
-            line._ev_role = "guide"
+            tag(line, "guide")
 
     def _add_tie_marker(self, quantity: float, price: float) -> None:
         (point,) = self.demand_canvas.ax.plot(
@@ -359,4 +381,4 @@ class DemandDiagram(Figure):
             clip_on=False,
             zorder=6,
         )
-        point._ev_role = "tie"
+        tag(point, "tie")

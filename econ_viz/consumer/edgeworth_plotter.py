@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import numpy as np
 
+from ..canvas.stroke import tag, tag_attr
 from ..enums import LabelPosition
 from ..themes.label import Label
 
@@ -28,7 +29,7 @@ def plot_endowment(
         markersize=markersize,
         zorder=20,
     )
-    point._ev_role = "endowment"
+    tag(point, "endowment")
     text = ax.annotate(
         rf"${label}$",
         (x, y),
@@ -38,8 +39,8 @@ def plot_endowment(
         fontsize=11,
         zorder=21,
     )
-    text._ev_role = "endowment_label"
-    text._ev_label_default = Label(position=LabelPosition.TOP_RIGHT, offset=5)
+    tag(text, "endowment_label")
+    tag_attr(text, "_ev_label_default", Label(position=LabelPosition.TOP_RIGHT, offset=5))
 
 
 def plot_price_line(
@@ -62,7 +63,7 @@ def plot_price_line(
         linestyle=linestyle,
         label=label,
     )
-    line._ev_role = "price"
+    tag(line, "price")
 
 
 def plot_equilibrium_marker(
@@ -87,7 +88,7 @@ def plot_equilibrium_marker(
         label=rf"${label}$",
         zorder=22,
     )
-    point._ev_role = "walrasian"
+    tag(point, "walrasian")
     text = ax.annotate(
         rf"${label}$",
         (x, y),
@@ -97,8 +98,8 @@ def plot_equilibrium_marker(
         fontsize=11,
         zorder=23,
     )
-    text._ev_role = "walrasian_label"
-    text._ev_label_default = Label(position=LabelPosition.TOP_RIGHT, offset=5)
+    tag(text, "walrasian_label")
+    tag_attr(text, "_ev_label_default", Label(position=LabelPosition.TOP_RIGHT, offset=5))
 
 
 def plot_indifference_pair(
@@ -126,7 +127,7 @@ def plot_indifference_pair(
         linewidths=linewidth,
         linestyles=linestyle_a,
     )
-    cs._ev_role = "curve_a"
+    tag(cs, "curve_a")
     cs = ax.contour(
         X,
         Y,
@@ -136,7 +137,7 @@ def plot_indifference_pair(
         linewidths=linewidth,
         linestyles=linestyle_b,
     )
-    cs._ev_role = "curve_b"
+    tag(cs, "curve_b")
 
 
 def plot_contract_curve(
@@ -159,7 +160,7 @@ def plot_contract_curve(
         linestyle=linestyle,
         label=label,
     )
-    line._ev_role = "contract"
+    tag(line, "contract")
 
 
 def plot_core(
@@ -174,7 +175,7 @@ def plot_core(
     """Draw the core as a segment or singleton point."""
     if len(core_points) >= min_points:
         (line,) = ax.plot(core_points[:, 0], core_points[:, 1], color=color, linewidth=linewidth, label=label)
-        line._ev_role = "core"
+        tag(line, "core")
     elif len(core_points) == 1:
         (point,) = ax.plot(core_points[0, 0], core_points[0, 1], "o", color=color, label=label)
-        point._ev_role = "core_point"
+        tag(point, "core_point")

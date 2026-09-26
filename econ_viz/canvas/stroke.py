@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
 from contextlib import contextmanager
+from typing import cast
 
 import numpy as np
 from matplotlib.collections import Collection, PolyCollection
@@ -12,16 +13,22 @@ from matplotlib.patches import FancyArrowPatch
 from matplotlib.text import Annotation, Text
 
 from ..constants.canvas import ARROW_HEAD_ONLY_FRAC, ARROW_WEDGE_FRAC
-from ..enums import ArrowStyle, LabelPosition
-from .labels import placement
+from ..enums import ArrowStyle, LabelPosition, LineStyle
 from ..themes.label import Label
 from ..themes.marker import Marker
 from ..themes.stroke import Stroke
+from .labels import placement
 
 
 def tag(artist, role: str):
     """Mark *artist* with the line role that a Stroke can target."""
     artist._ev_role = role
+    return artist
+
+
+def tag_attr(artist, name: str, value):
+    """Set an ``_ev_*`` attribute other than role (e.g. label defaults, arrow metadata)."""
+    setattr(artist, name, value)
     return artist
 
 
@@ -57,8 +64,8 @@ def styled(
     apply_markers(new, markers)
     apply_labels(new, labels or {}, markers)
     for handle in handles[handles_before:]:
-        role = getattr(handle, "_ev_role", default_role)
-        stroke = strokes.get(role)
+        role: str | None = getattr(handle, "_ev_role", default_role)
+        stroke = strokes.get(role) if role is not None else None
         if stroke is not None and isinstance(handle, Line2D):
             _style_line(handle, stroke)
         apply_markers([handle], markers)
@@ -66,15 +73,26 @@ def styled(
 
 # Drawing role -> Theme property that a config file may override.
 _ROLE_STROKES = {
-    "budget": "budget_stroke", "original_budget": "budget_stroke", "curve": "ic_stroke",
-    "ray": "ray_stroke", "path": "path_stroke", "drop": "drop_stroke",
-    "compensated_budget": "compensated_budget_stroke", "final_budget": "final_budget_stroke",
-    "substitution": "substitution_stroke", "income": "income_stroke",
-    "projection": "projection_stroke", "guide": "guide_stroke",
+    "budget": "budget_stroke",
+    "original_budget": "budget_stroke",
+    "curve": "ic_stroke",
+    "ray": "ray_stroke",
+    "path": "path_stroke",
+    "drop": "drop_stroke",
+    "compensated_budget": "compensated_budget_stroke",
+    "final_budget": "final_budget_stroke",
+    "substitution": "substitution_stroke",
+    "income": "income_stroke",
+    "projection": "projection_stroke",
+    "guide": "guide_stroke",
 }
 _ROLE_MARKERS = {
-    "equilibrium": "eq_marker", "bundle": "eq_marker", "point": "point_marker",
-    "kink": "kink_marker", "bliss": "bliss_marker", "path_point": "path_marker",
+    "equilibrium": "eq_marker",
+    "bundle": "eq_marker",
+    "point": "point_marker",
+    "kink": "kink_marker",
+    "bliss": "bliss_marker",
+    "path_point": "path_marker",
 }
 
 
@@ -95,7 +113,10 @@ def _with_config(canvas, strokes, markers):
 
 def apply_strokes(ax, artists: Iterable, strokes: Mapping[str, Stroke | None]) -> None:
     for artist in artists:
-        stroke = strokes.get(getattr(artist, "_ev_role", None))
+        role: str | None = getattr(artist, "_ev_role", None)
+        if role is None:
+            continue
+        stroke = strokes.get(role)
         if stroke is None:
             continue
         if isinstance(artist, Annotation) and artist.arrow_patch is not None:
@@ -103,35 +124,52 @@ def apply_strokes(ax, artists: Iterable, strokes: Mapping[str, Stroke | None]) -
             if stroke.arrow is ArrowStyle.WEDGE and artist.xycoords == artist.anncoords:
                 # The annotation keeps a plain shaft; the wedge covers only its tip, as on other lines.
                 add_arrowhead(
-                    ax, [artist.xyann, artist.xy], ArrowStyle.WEDGE,
-                    color=artist.arrow_patch.get_edgecolor(), width=artist.arrow_patch.get_linewidth(),
+                    ax,
+                    [artist.xyann, artist.xy],
+                    ArrowStyle.WEDGE,
+                    color=artist.arrow_patch.get_edgecolor(),
+                    width=artist.arrow_patch.get_linewidth(),
                     transform=ax.transData if artist.xycoords == "data" else artist.xycoords,
-                    role=artist._ev_role, opacity=stroke.opacity,
+                    role=role,
+                    opacity=stroke.opacity,
                 )
         elif isinstance(artist, Line2D) and _is_line(artist):
             _style_line(artist, stroke)
             if stroke.arrow:
                 add_arrowhead(
-                    ax, artist.get_xydata(), stroke.arrow,
-                    color=artist.get_color(), width=artist.get_linewidth(),
-                    transform=artist.get_transform(), role=artist._ev_role, opacity=stroke.opacity,
+                    ax,
+                    artist.get_xydata(),
+                    cast(ArrowStyle, stroke.arrow),
+                    color=artist.get_color(),
+                    width=artist.get_linewidth(),
+                    transform=artist.get_transform(),
+                    role=role,
+                    opacity=stroke.opacity,
                 )
         elif isinstance(artist, Collection) and not isinstance(artist, PolyCollection):
             _style_collection(artist, stroke)
             if stroke.arrow:
-                color, width = artist.get_edgecolor()[0], artist.get_linewidth()[0]
+                color = artist.get_edgecolor()[0]
+                width = float(np.ravel(artist.get_linewidth())[0])
                 for path in artist.get_paths():
                     for segment in path.to_polygons(closed_only=False):
                         add_arrowhead(
-                            ax, segment, stroke.arrow, color=color, width=width,
-                            transform=artist.get_transform(), role=artist._ev_role, opacity=stroke.opacity,
+                            ax,
+                            segment,
+                            cast(ArrowStyle, stroke.arrow),
+                            color=color,
+                            width=width,
+                            transform=artist.get_transform(),
+                            role=role,
+                            opacity=stroke.opacity,
                         )
 
 
 def apply_markers(artists: Iterable, markers: Mapping[str, Marker | None]) -> None:
     """Restyle marker-only lines whose role has a Marker."""
     for artist in artists:
-        marker = markers.get(getattr(artist, "_ev_role", None))
+        role: str | None = getattr(artist, "_ev_role", None)
+        marker = markers.get(role) if role is not None else None
         if marker is None or not isinstance(artist, Line2D):
             continue
         if marker.color is not None:
@@ -169,8 +207,11 @@ def apply_labels(artists: Iterable, labels: Mapping[str, Label | None], markers:
         placed = label.merged_over(default)
         moved = (placed.position, placed.offset) != (default.position, default.offset)
         if moved and isinstance(artist, Annotation):
-            xytext, ha, va = placement(placed.position or LabelPosition.TOP_RIGHT,
-                                       placed.offset if placed.offset is not None else 5.0)
+            # Label.__post_init__ always normalises position to a LabelPosition (or None).
+            position = cast("LabelPosition | None", placed.position)
+            xytext, ha, va = placement(
+                position or LabelPosition.TOP_RIGHT, placed.offset if placed.offset is not None else 5.0
+            )
             artist.set_position(xytext)
             artist.set_horizontalalignment(ha)
             artist.set_verticalalignment(va)
@@ -186,7 +227,8 @@ def _style_line(line: Line2D, stroke: Stroke) -> None:
     if stroke.width is not None:
         line.set_linewidth(stroke.width)
     if stroke.style is not None:
-        line.set_linestyle(stroke.style.value)
+        # Stroke.__post_init__ always normalises style to a LineStyle.
+        line.set_linestyle(cast(LineStyle, stroke.style).value)
     if stroke.color is not None:
         line.set_color(stroke.color)
     if stroke.opacity is not None:
@@ -197,7 +239,7 @@ def _style_collection(collection: Collection, stroke: Stroke) -> None:
     if stroke.width is not None:
         collection.set_linewidth(stroke.width)
     if stroke.style is not None:
-        collection.set_linestyle(stroke.style.value)
+        collection.set_linestyle(cast(LineStyle, stroke.style).value)
     if stroke.color is not None:
         collection.set_edgecolor(stroke.color)
     if stroke.opacity is not None:
@@ -208,18 +250,26 @@ def _style_patch(patch, stroke: Stroke) -> None:
     if stroke.width is not None:
         patch.set_linewidth(stroke.width)
     if stroke.style is not None:
-        patch.set_linestyle(stroke.style.value)
+        patch.set_linestyle(cast(LineStyle, stroke.style).value)
     if stroke.color is not None:
         patch.set_color(stroke.color)
     if stroke.opacity is not None:
         patch.set_alpha(stroke.opacity)
     if stroke.arrow is not None:
         # A wedge along a whole annotation becomes a long taper, so its head is drawn separately.
-        patch.set_arrowstyle("-" if stroke.arrow is ArrowStyle.WEDGE else stroke.arrow.value)
+        arrow = cast(ArrowStyle, stroke.arrow)
+        patch.set_arrowstyle("-" if arrow is ArrowStyle.WEDGE else arrow.value)
 
 
 def add_arrowhead(
-    ax, points, style: ArrowStyle, *, color, width: float, transform, role: str | None = None,
+    ax,
+    points,
+    style: ArrowStyle,
+    *,
+    color,
+    width: float,
+    transform,
+    role: str | None = None,
     opacity: float | None = None,
 ) -> FancyArrowPatch | None:
     """Draw an arrowhead at the last point of *points* (N×2), pointing along the line."""
@@ -263,7 +313,7 @@ def add_arrowhead(
         zorder=6,
         alpha=opacity,
     )
-    arrow._ev_arrow_for = role
-    arrow._ev_arrow_style = style
+    tag_attr(arrow, "_ev_arrow_for", role)
+    tag_attr(arrow, "_ev_arrow_style", style)
     ax.add_patch(arrow)
     return arrow

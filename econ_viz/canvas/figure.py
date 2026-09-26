@@ -11,16 +11,16 @@ from matplotlib.axes import Axes
 from matplotlib.figure import Figure as MplFigure
 from matplotlib.gridspec import GridSpec
 
-from .base import Canvas
+from ..config import Config
 from ..constants.canvas import DEFAULT_DPI
-from .fonts import FontApplier, resolve_font, resolve_math_font
+from ..enums import ArrowStyle, LabelPosition, Layout, LineStyle
+from ..io import save_figure
 from ..themes.axis import Axis
 from ..themes.label import Label, split_label
 from ..themes.stroke import Stroke
-from ..enums import ArrowStyle, LabelPosition, Layout, LineStyle
-from ..io import save_figure
-from ..config import Config
 from ..themes.theme import Theme
+from .base import Canvas
+from .fonts import FontApplier, resolve_font, resolve_math_font
 
 
 @dataclass(frozen=True)
@@ -139,7 +139,8 @@ class Figure:
         title_text, title_style = split_label(title, theme.title_label)
         if title_text:
             suptitle = self.fig.suptitle(
-                title_text, color=title_style.color or theme.label_color,
+                title_text,
+                color=title_style.color or theme.label_color,
                 **({"fontsize": title_style.fontsize} if title_style.fontsize else {}),
             )
             suptitle.set_visible(title_style.visible is not False)
@@ -154,7 +155,7 @@ class Figure:
             sharex_ax = anchor_ax if shared_x else None
             sharey_ax = anchor_ax if shared_y else None
             ax = self.fig.add_subplot(
-                gs[spec.row:spec.row + spec.rowspan, spec.col:spec.col + spec.colspan],
+                gs[spec.row : spec.row + spec.rowspan, spec.col : spec.col + spec.colspan],
                 sharex=sharex_ax,
                 sharey=sharey_ax,
             )
@@ -192,7 +193,7 @@ class Figure:
     def _apply_shared_axes(self, shape: tuple[int, int], specs: list[_PanelSpec]) -> None:
         """Hide duplicated axis-tip labels on inner edges for shared-axis layouts."""
         rows, cols = shape
-        for spec, canvas in zip(specs, self.canvases):
+        for spec, canvas in zip(specs, self.canvases, strict=True):
             show_x = not self.shared_x or (spec.row + spec.rowspan == rows)
             show_y = not self.shared_y or spec.col == 0
             canvas.set_axis_visibility(show_x_label=show_x, show_y_label=show_y)

@@ -1,6 +1,7 @@
 """Tests for Marker: colour, size, and shape of every point marker."""
 
 import matplotlib
+
 matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt
@@ -76,8 +77,9 @@ class TestThemeDefaults:
             _looks_like(point, cvs.theme.eq_marker)
 
     def test_path_points(self):
-        path = PricePath(MODEL, budget=LinearBudget(px=2.0, py=2.0, income=40.0), price="px",
-                         price_range=(0.8, 6.0), n=5)
+        path = PricePath(
+            MODEL, budget=LinearBudget(px=2.0, py=2.0, income=40.0), price="px", price_range=(0.8, 6.0), n=5
+        )
         cvs = Canvas(x_max=30, y_max=25).add_path(path, show_points=True)
         points = _role(cvs.ax, "path_point")
         assert len(points) == 5
@@ -96,7 +98,8 @@ class TestCanvasMarkers:
         for kink in _role(cvs.ax, "kink"):
             _looks_like(kink, SQUARE)
         cvs = Canvas(x_max=12, y_max=10).add_utility(
-            Satiation(bliss_x=6, bliss_y=4), levels=[-8, -2], bliss_marker=SQUARE)
+            Satiation(bliss_x=6, bliss_y=4), levels=[-8, -2], bliss_marker=SQUARE
+        )
         _looks_like(_role(cvs.ax, "bliss")[0], SQUARE)
 
     def test_decomposition_bundles_and_legend(self):
@@ -111,8 +114,9 @@ class TestCanvasMarkers:
             _looks_like(handle, SQUARE)
 
     def test_path_points_and_equilibria(self):
-        path = PricePath(MODEL, budget=LinearBudget(px=2.0, py=2.0, income=40.0), price="px",
-                         price_range=(0.8, 6.0), n=4)
+        path = PricePath(
+            MODEL, budget=LinearBudget(px=2.0, py=2.0, income=40.0), price="px", price_range=(0.8, 6.0), n=4
+        )
         cvs = Canvas(x_max=30, y_max=25).add_path(path, show_points=True, point_marker=SQUARE)
         _looks_like(_role(cvs.ax, "path_point")[0], SQUARE)
         cvs = Canvas(x_max=30, y_max=25).add_path(path, show_equilibria=True, equilibrium_marker=SQUARE)
@@ -135,8 +139,9 @@ class TestCanvasMarkers:
 
 class TestOtherDiagrams:
     def test_demand_diagram_points(self):
-        path = PricePath(MODEL, budget=LinearBudget(px=2.0, py=2.0, income=40.0), price="px",
-                         price_range=(0.8, 6.0), n=20)
+        path = PricePath(
+            MODEL, budget=LinearBudget(px=2.0, py=2.0, income=40.0), price="px", price_range=(0.8, 6.0), n=20
+        )
         fig = DemandDiagram(path).add_marshallian_panel(price_markers=[1.5, 4.0], point_marker=SQUARE)
         for point in _role(fig.utility_canvas.ax, "equilibrium") + _role(fig.demand_canvas.ax, "point"):
             _looks_like(point, SQUARE)

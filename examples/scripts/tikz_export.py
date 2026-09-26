@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable
 
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-
 import numpy as np
 
 from econ_viz import Canvas, levels, solve
@@ -193,7 +193,10 @@ def build_examples() -> None:
                 model=_min_piecewise(),
             ),
         ),
-        ("multigood-projection", _build_case(title="Multi-Good Cobb-Douglas Projection", model=_multigood_projection())),
+        (
+            "multigood-projection",
+            _build_case(title="Multi-Good Cobb-Douglas Projection", model=_multigood_projection()),
+        ),
     ]
 
     _write_multi_standalone(cases)
