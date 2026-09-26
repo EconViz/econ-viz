@@ -2,9 +2,10 @@
 
 from dataclasses import dataclass
 
-from ..enums import ArrowStyle, LabelPosition, LineStyle
+from ..enums import ArrowStyle, LabelPosition, LegendPosition, LineStyle
 from .fill import Fill
 from .label import Label
+from .legend import Legend
 from .marker import Marker
 from .stroke import Stroke
 
@@ -170,6 +171,11 @@ class Theme:
     def path_marker(self) -> Marker:
         """Points on PCC / ICC paths. Colour ``None`` uses the path colour."""
         return Marker(size=max(self.eq_markersize - 1, 3), shape="o")
+
+    @property
+    def legend(self) -> Legend:
+        """Legend placement and look: automatic position, no frame, 11 pt."""
+        return Legend(position=LegendPosition.AUTO, fontsize=11, frame=False, visible=True)
 
     @property
     def budget_fill(self) -> Fill:

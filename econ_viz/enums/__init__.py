@@ -11,6 +11,7 @@ from .utility import UtilityType
 from .axis import ArrowStyle, LabelPosition, LineStyle
 from .extension import ExportFormat
 from .layout import Layout
+from .legend import LegendPosition
 from .returns import ReturnsToScale
 
 __all__ = [
@@ -20,5 +21,6 @@ __all__ = [
     "UtilityType",
     "ExportFormat",
     "Layout",
+    "LegendPosition",
     "ReturnsToScale",
 ]
