@@ -235,6 +235,9 @@ class EdgeworthBox:
     ) -> "EdgeworthBox":
         """Draw both consumers' indifference maps.
 
+        Prefer *stroke_a* / *stroke_b*; *color_a*, *color_b*, and *linewidth*
+        are shorthand that a :class:`Stroke` supersedes.
+
         Parameters
         ----------
         stroke_a : Stroke, optional
@@ -312,6 +315,9 @@ class EdgeworthBox:
     ) -> "EdgeworthBox":
         """Draw each agent's indifference curve through the endowment point.
 
+        Prefer *stroke_a* / *stroke_b*; *color_a*, *color_b*, and *linewidth*
+        are shorthand that a :class:`Stroke` supersedes.
+
         Parameters
         ----------
         stroke_a : Stroke, optional
@@ -388,6 +394,9 @@ class EdgeworthBox:
     ) -> "EdgeworthBox":
         """Draw indifference curves around the Walrasian equilibrium utility levels.
 
+        Prefer *stroke_a* / *stroke_b*; *color_a*, *color_b*, and *linewidth*
+        are shorthand that a :class:`Stroke` supersedes.
+
         Parameters
         ----------
         stroke_a : Stroke, optional
@@ -415,6 +424,8 @@ class EdgeworthBox:
             color_b=color_b,
             linewidth=linewidth,
             res=res,
+            stroke_a=stroke_a,
+            stroke_b=stroke_b,
         )
 
     def add_equilibrium_indifference(
@@ -431,6 +442,9 @@ class EdgeworthBox:
         contract_stroke: Stroke | None = None,
     ) -> "EdgeworthBox":
         """Draw one indifference curve per agent through the Walrasian equilibrium.
+
+        Prefer *stroke_a* / *stroke_b*; *color_a*, *color_b*, and *linewidth*
+        are shorthand that a :class:`Stroke` supersedes.
 
         Parameters
         ----------
@@ -457,6 +471,8 @@ class EdgeworthBox:
             color_b=color_b,
             linewidth=linewidth,
             res=res,
+            stroke_a=stroke_a,
+            stroke_b=stroke_b,
         )
 
     def _contract_curve_mrs(self, *, n: int, tolerance: float) -> np.ndarray:
@@ -492,6 +508,9 @@ class EdgeworthBox:
         stroke: Stroke | None = None,
     ) -> "EdgeworthBox":
         """Approximate and draw the contract curve.
+
+        Prefer *stroke*; *color*, *linewidth*, and *linestyle* are shorthand
+        that a :class:`Stroke` supersedes.
 
         Parameters
         ----------
@@ -623,6 +642,9 @@ class EdgeworthBox:
     ) -> "EdgeworthBox":
         """Draw the core segment (IR part of the contract curve).
 
+        Prefer *stroke*; *color* and *linewidth* are shorthand that a
+        :class:`Stroke` supersedes.
+
         Parameters
         ----------
         stroke : Stroke, optional
@@ -675,6 +697,9 @@ class EdgeworthBox:
         stroke: Stroke | None = None,
     ) -> "EdgeworthBox":
         """Draw the price line through endowment with slope -px/py.
+
+        Prefer *stroke*; *color*, *linewidth*, and *linestyle* are shorthand
+        that a :class:`Stroke` supersedes.
 
         Parameters
         ----------
