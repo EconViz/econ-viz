@@ -63,17 +63,21 @@ ensure_remote_tag_absent() {
 
 bump_version() {
   local version="$1"
-  run sed -i -E "0,/^version = \"[^\"]+\"/{s//version = \"${version}\"/}" pyproject.toml
-  grep -q "^version = \"${version}\"" pyproject.toml || die "failed to bump version in pyproject.toml"
+  # perl -i behaves the same on GNU and BSD (macOS); the first match is the project version.
+  run perl -0pi -e "s/^version = \"[^\"]+\"/version = \"${version}\"/m" pyproject.toml
+  run perl -0pi -e "s/(\nname = \"econ-viz\"\nversion = )\"[^\"]+\"/\$1\"${version}\"/" uv.lock
+  if [[ "$DRY_RUN" == "false" ]]; then
+    grep -q "^version = \"${version}\"" pyproject.toml || die "failed to bump version in pyproject.toml"
+  fi
 }
 
 ensure_skip_existing() {
-  if rg -n "skip-existing:\s*true" .github/workflows/publish.yml >/dev/null 2>&1; then
+  if grep -Eq "skip-existing:[[:space:]]*true" .github/workflows/publish.yml >/dev/null 2>&1; then
     return
   fi
 
   run perl -0777 -i -pe 's|(\n\s*- name: Publish to PyPI\n\s*uses:\s*pypa/gh-action-pypi-publish@release/v1\n)|$1        with:\n          skip-existing: true\n|s' .github/workflows/publish.yml
-  rg -n "skip-existing:\s*true" .github/workflows/publish.yml >/dev/null 2>&1 || die "failed to inject skip-existing: true"
+  grep -Eq "skip-existing:[[:space:]]*true" .github/workflows/publish.yml >/dev/null 2>&1 || die "failed to inject skip-existing: true"
 }
 
 create_pr_body() {

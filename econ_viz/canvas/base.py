@@ -694,6 +694,9 @@ class Canvas:
         income: Effect | None = None,
         point_marker: Marker | None = None,
         point_label: Label | None = None,
+        show_curves: bool = True,
+        curve_stroke: Stroke | None = None,
+        curve_label: Label | None = None,
     ) -> Canvas:
         """Render a Hicks/Slutsky price-effect decomposition on this canvas.
 
@@ -738,7 +741,20 @@ class Canvas:
             Position, colour, and size of the A, B, C labels (default
             ``theme.bundle_label``); ``Label(visible=False)`` hides them. Its
             *text* is ignored.
+        show_curves : bool
+            Draw the indifference curves through A (:math:`U_0`) and C
+            (:math:`U_1 = V(p_1, I)`), plus the one through B for Slutsky, where
+            B is off :math:`U_0` (default ``True``). Pass ``False`` when you
+            draw the curves yourself with :meth:`add_utility`.
+        curve_stroke : Stroke, optional
+            Line style for those curves (default ``theme.ic_stroke``).
+        curve_label : Label, optional
+            Turns on the :math:`U_0`, :math:`U_1`, :math:`U_B` labels at the
+            curves' right ends and sets their position, colour, and size (default
+            ``theme.ic_label``). Its *text* is ignored.
         """
+        if show_curves and decomposition.func is not None:
+            self._add_decomposition_curves(decomposition, curve_stroke, curve_label)
         _, bundle_style = split_label(point_label, self.theme.bundle_label)
         with styled(self, {"original_budget": original_budget_stroke, "compensated_budget": compensated_budget_stroke, "final_budget": final_budget_stroke, "substitution": substitution_stroke, "income": income_stroke, "projection": projection_stroke, "guide": guide_stroke, "range": range_stroke}, markers={"bundle": point_marker}, labels={"bundle_label": bundle_style}):
             if substitution is not None and substitution.color is not None:
@@ -847,6 +863,23 @@ class Canvas:
                 self._legend_handles[-1]._ev_role = "income"
                 self.show_legend(loc="upper right")
         return self
+
+    def _add_decomposition_curves(self, decomposition, stroke: Stroke | None, label: Label | None) -> None:
+        """Draw U0 through A, U1 through C, and the curve through B when it is off U0."""
+        drawn: list[float] = []
+        for name, bundle in (("U_0", decomposition.A), ("U_1", decomposition.C), ("U_B", decomposition.B)):
+            level = float(bundle.utility)
+            # Under Hicks, B lies on U0; skip levels already drawn.
+            if any(np.isclose(level, u, rtol=1e-9, atol=1e-12) for u in drawn):
+                continue
+            drawn.append(level)
+            self.add_utility(
+                decomposition.func,
+                levels=[level],
+                show_bliss=False,
+                stroke=stroke,
+                ic_label=replace(label, text=f"${name}$") if label is not None else None,
+            )
 
     def add_ray(
         self,

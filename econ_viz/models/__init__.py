@@ -9,7 +9,7 @@ and exposes ``utility_type``, ``ray_slopes``, and ``kink_points`` for
 rendering support.
 """
 
-from .core import CobbDouglas, Leontief, PerfectSubstitutes, CES, Satiation, QuasiLinear, StoneGeary, Translog
+from .core import CobbDouglas, Leontief, PerfectSubstitutes, CES, Satiation, QuasiLinear, StoneGeary, Translog, Haagsma
 from .advanced import CustomUtility, MultiGoodCD
 from .parser import parse_latex
 from .protocol import UtilityFunction
@@ -26,6 +26,7 @@ __all__ = [
     "MultiGoodCD",
     "StoneGeary",
     "Translog",
+    "Haagsma",
     "UtilityFunction",
     "parse_latex",
     "get_model_registry",
