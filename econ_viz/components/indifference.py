@@ -37,6 +37,16 @@ class IndifferenceCurves:
         Kink marker size factor.
     subsistence_color, subsistence_linewidth : str, float
         Appearance of Stone-Geary subsistence reference lines.
+    highlight_level : float, optional
+        Utility level to draw with full ``color``/``linewidth`` weight; every
+        other level is drawn subdued, using *secondary_color* /
+        *secondary_linewidth* / *secondary_opacity*. ``None`` draws every
+        level with the same weight (unchanged default behaviour).
+    secondary_color, secondary_linewidth, secondary_opacity : str, float, float
+        Appearance of non-highlighted levels when *highlight_level* is set.
+    label_style : str
+        ``"numeric"`` (default) formats labels with *ic_label_fmt*;
+        ``"ordinal"`` labels levels ``u_1, u_2, ...`` in ascending order.
     """
 
     def __init__(
@@ -56,6 +66,11 @@ class IndifferenceCurves:
         ic_label_fmt: str = "{:.2g}",
         subsistence_color: str = "gray",
         subsistence_linewidth: float = 0.8,
+        highlight_level: float | None = None,
+        secondary_color: str = "gray",
+        secondary_linewidth: float = 1.0,
+        secondary_opacity: float = 0.45,
+        label_style: str = "numeric",
     ):
         self.func = func
         self.levels = levels
@@ -72,6 +87,11 @@ class IndifferenceCurves:
         self.label = label
         self.show_ic_labels = show_ic_labels
         self.ic_label_fmt = ic_label_fmt
+        self.highlight_level = highlight_level
+        self.secondary_color = secondary_color
+        self.secondary_linewidth = secondary_linewidth
+        self.secondary_opacity = secondary_opacity
+        self.label_style = label_style
 
     def draw(self, ax, x_max: float, y_max: float, **kwargs) -> list[float]:
         """Draw curves onto *ax* and return the computed contour levels."""
@@ -87,16 +107,34 @@ class IndifferenceCurves:
 
         # Matplotlib dashes negative contour levels by default; utility levels are just levels.
         kwargs.setdefault("linestyles", "solid")
-        cs = ax.contour(
-            X,
-            Y,
-            Z,
-            levels=computed,
-            colors=self.color,
-            linewidths=self.linewidth,
-            **kwargs,
-        )
+
+        focal_idx: int | None = None
+        if self.highlight_level is not None and computed:
+            focal_idx = int(np.argmin(np.abs(np.array(computed) - self.highlight_level)))
+
+        focal_levels = computed if focal_idx is None else [computed[focal_idx]]
+        secondary_levels = [] if focal_idx is None else [lv for i, lv in enumerate(computed) if i != focal_idx]
+
+        cs = ax.contour(X, Y, Z, levels=focal_levels, colors=self.color, linewidths=self.linewidth, **kwargs)
         tag(cs, "curve")
+
+        segs_by_level: dict[float, tuple] = dict(zip(focal_levels, cs.allsegs, strict=True))
+        color_by_level: dict[float, str] = dict.fromkeys(focal_levels, self.color)
+
+        if secondary_levels:
+            cs2 = ax.contour(
+                X,
+                Y,
+                Z,
+                levels=secondary_levels,
+                colors=self.secondary_color,
+                linewidths=self.secondary_linewidth,
+                alpha=self.secondary_opacity,
+                **kwargs,
+            )
+            tag(cs2, "secondary_curve")
+            segs_by_level.update(zip(secondary_levels, cs2.allsegs, strict=True))
+            color_by_level.update(dict.fromkeys(secondary_levels, self.secondary_color))
 
         import matplotlib.lines as mlines
 
@@ -106,7 +144,8 @@ class IndifferenceCurves:
             tag(self._proxy, "curve")
 
         if self.show_ic_labels:
-            for level, segs in zip(computed, cs.allsegs, strict=True):
+            for rank, level in enumerate(computed, start=1):
+                segs = segs_by_level[level]
                 best_x, best_y = -1.0, None
                 for seg in segs:
                     if len(seg) == 0:
@@ -119,18 +158,20 @@ class IndifferenceCurves:
                     if seg[idx, 0] > best_x:
                         best_x, best_y = seg[idx, 0], seg[idx, 1]
                 if best_y is not None:
+                    text_str = f"$u_{{{rank}}}$" if self.label_style == "ordinal" else self.ic_label_fmt.format(level)
                     text = ax.annotate(
-                        self.ic_label_fmt.format(level),
+                        text_str,
                         (best_x, best_y),
                         textcoords="offset points",
                         xytext=(4, 0),
-                        color=self.color,
+                        color=color_by_level[level],
                         fontsize=9,
                         ha="left",
                         va="center",
                         annotation_clip=True,
                     )
-                    tag(text, "ic_label")
+                    role = "ic_label" if level in focal_levels else "secondary_ic_label"
+                    tag(text, role)
                     tag_attr(text, "_ev_label_default", Label(position=LabelPosition.RIGHT, offset=4))
 
         if self.show_rays and hasattr(self.func, "utility_type") and self.func.utility_type is UtilityType.KINKED:
