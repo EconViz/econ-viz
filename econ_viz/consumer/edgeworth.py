@@ -11,6 +11,8 @@ from ..canvas.stroke import styled
 from ..contours import around_anchor_levels, percentile_levels
 from ..io import save_figure
 from ..themes import default as _default_theme
+from ..exceptions import InvalidParameterError
+from ..themes.axis import Axis
 from ..themes.label import Label, split_label
 from ..themes.marker import Marker
 from ..themes.stroke import Stroke
@@ -69,9 +71,24 @@ class EdgeworthBox:
         utility_a_color: str | None = None,
         utility_b_color: str | None = None,
         box_stroke: Stroke | None = None,
+        x_axis: Axis | None = None,
+        y_axis: Axis | None = None,
     ):
+        """*x_axis* / *y_axis* (:class:`Axis`) name a good (drawn as ``x_A``,
+        ``x_B``) and restyle the box sides along it: bottom and top for x,
+        left and right for y, over *box_stroke*. The box has fixed label
+        places, so ``label_position`` is not supported.
+        """
         if total_x <= 0 or total_y <= 0:
             raise ValueError("total_x and total_y must be positive.")
+        x_axis, y_axis = x_axis or Axis(), y_axis or Axis()
+        for name, axis in (("x_axis", x_axis), ("y_axis", y_axis)):
+            if axis.label_position is not None:
+                raise InvalidParameterError(f"EdgeworthBox {name} does not support label_position")
+        if x_axis.label is not None:
+            x_label = x_axis.label
+        if y_axis.label is not None:
+            y_label = y_axis.label
 
         self.utility_a = utility_a
         self.utility_b = utility_b
@@ -85,6 +102,8 @@ class EdgeworthBox:
         self.box_stroke = (box_stroke or Stroke()).merged_over(theme.box_stroke).merged_over(
             Stroke(color=theme.axis_color)
         )
+        self.x_side_stroke = (x_axis.stroke or Stroke()).merged_over(self.box_stroke)
+        self.y_side_stroke = (y_axis.stroke or Stroke()).merged_over(self.box_stroke)
         self.utility_a_color = utility_a_color or theme.ic_color
         self.utility_b_color = utility_b_color or theme.path_color
 
@@ -155,10 +174,11 @@ class EdgeworthBox:
         self.ax.set_yticks([])
 
         for side in ("top", "right", "bottom", "left"):
+            stroke = self.x_side_stroke if side in ("top", "bottom") else self.y_side_stroke
             self.ax.spines[side].set_visible(True)
-            self.ax.spines[side].set_color(self.box_stroke.color)
-            self.ax.spines[side].set_linewidth(self.box_stroke.width)
-            self.ax.spines[side].set_linestyle(self.box_stroke.style.value)
+            self.ax.spines[side].set_color(stroke.color)
+            self.ax.spines[side].set_linewidth(stroke.width)
+            self.ax.spines[side].set_linestyle(stroke.style.value)
 
         self.ax.set_xlabel(rf"${self.x_label}_A$", color=t.label_color)
         self.ax.set_ylabel(rf"${self.y_label}_A$", color=t.label_color)
