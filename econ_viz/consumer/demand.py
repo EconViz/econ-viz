@@ -10,6 +10,7 @@ from ..canvas.stroke import apply_strokes, styled
 from ..enums import Layout
 from ..enums import UtilityType
 from ..optimizer import solve
+from ..themes.axis import Axis
 from ..themes.label import Label, split_label
 from ..themes.marker import Marker
 from ..themes.stroke import Stroke
@@ -23,7 +24,12 @@ _PRICE_SYMBOL = {
 
 
 class DemandDiagram(Figure):
-    """Two-panel diagram linking utility maximisation to Marshallian demand."""
+    """Two-panel diagram linking utility maximisation to Marshallian demand.
+
+    *x_axis* / *y_axis* (:class:`Axis`) set both panels' axis strokes and the
+    goods-space panel's labels; the demand panel keeps its quantity and price
+    labels. Other keyword arguments go to :class:`Figure`.
+    """
 
     def __init__(
         self,
@@ -35,6 +41,8 @@ class DemandDiagram(Figure):
         x_label: str = "x",
         y_label: str = "y",
         title: str | None = None,
+        x_axis: Axis | None = None,
+        y_axis: Axis | None = None,
         **kwargs,
     ):
         if path.parameter_name not in {"px", "py"}:
@@ -49,6 +57,8 @@ class DemandDiagram(Figure):
             x_label=x_label,
             y_label=y_label,
             title=title,
+            x_axis=x_axis,
+            y_axis=y_axis,
             **kwargs,
         )
         self.utility_canvas = self[0]

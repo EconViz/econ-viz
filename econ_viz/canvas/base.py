@@ -38,6 +38,7 @@ from ..enums import ArrowStyle, LabelPosition, LineStyle
 from ..canvas.fonts import FontApplier, resolve_font, resolve_math_font
 from ..canvas.effect import Effect
 from ..canvas.stroke import styled
+from ..themes.axis import Axis
 from ..themes.fill import Fill
 from ..themes.label import Label, split_label
 from ..themes.marker import Marker
@@ -91,13 +92,13 @@ def _line_style(value: LineStyle | str) -> LineStyle:
         raise ValueError(f"invalid line style {value!r}; choose: {choices}") from None
 
 
-def _axis_stroke(theme, line_style, arrow_style, shared: Stroke | None, own: Stroke | None) -> Stroke:
-    """Resolve one axis's stroke; the colour falls back to ``theme.axis_color``."""
+def _axis_stroke(theme, line_style, arrow_style, *overrides: Stroke | None) -> Stroke:
+    """Resolve one axis's stroke; later *overrides* win, and the colour falls back to ``theme.axis_color``."""
     stroke = Stroke(
         style=_line_style(line_style) if line_style is not None else None,
         arrow=_arrow_style(arrow_style) if arrow_style is not None else None,
     ).merged_over(theme.axis_stroke)
-    for override in (shared, own):
+    for override in overrides:
         if override is not None:
             stroke = override.merged_over(stroke)
     return stroke.merged_over(Stroke(color=theme.axis_color))
@@ -235,6 +236,12 @@ class Canvas:
         (default ``theme.axis_stroke``).
     x_axis_stroke, y_axis_stroke : Stroke, optional
         Per-axis overrides on top of *axis_stroke*.
+    x_axis, y_axis : Axis, optional
+        Label, label position, and stroke of one axis in a single object. The
+        ``x_label`` / ``x_label_pos`` / ``x_*_style`` / ``*_axis_stroke``
+        arguments are shorthand for it. Stroke precedence, highest first:
+        ``Axis.stroke``, ``x_axis_stroke``, ``axis_stroke``,
+        ``x_line_style`` / ``x_arrow_style``, ``theme.axis_stroke``.
     """
 
     def __init__(
@@ -259,19 +266,22 @@ class Canvas:
         axis_stroke: Stroke | None = None,
         x_axis_stroke: Stroke | None = None,
         y_axis_stroke: Stroke | None = None,
+        x_axis: Axis | None = None,
+        y_axis: Axis | None = None,
     ):
+        x_axis, y_axis = x_axis or Axis(), y_axis or Axis()
         self.x_max = x_max
         self.y_max = y_max
-        self.x_label = x_label
-        self.y_label = y_label
+        self.x_label = x_axis.label if x_axis.label is not None else x_label
+        self.y_label = y_axis.label if y_axis.label is not None else y_label
         self.title = title
         self.dpi = max(MIN_DPI, min(dpi, MAX_DPI))
-        self.x_label_pos = _label_position(x_label_pos, axis="x")
-        self.y_label_pos = _label_position(y_label_pos, axis="y")
+        self.x_label_pos = _label_position(x_axis.label_position or x_label_pos, axis="x")
+        self.y_label_pos = _label_position(y_axis.label_position or y_label_pos, axis="y")
         self.theme = theme
-        # Precedence: per-axis stroke > shared stroke > x/y_*_style arguments > theme.axis_stroke.
-        self.x_axis_stroke = _axis_stroke(theme, x_line_style, x_arrow_style, axis_stroke, x_axis_stroke)
-        self.y_axis_stroke = _axis_stroke(theme, y_line_style, y_arrow_style, axis_stroke, y_axis_stroke)
+        # Precedence: Axis.stroke > per-axis stroke > shared stroke > x/y_*_style arguments > theme.axis_stroke.
+        self.x_axis_stroke = _axis_stroke(theme, x_line_style, x_arrow_style, axis_stroke, x_axis_stroke, x_axis.stroke)
+        self.y_axis_stroke = _axis_stroke(theme, y_line_style, y_arrow_style, axis_stroke, y_axis_stroke, y_axis.stroke)
         self.x_line_style = self.x_axis_stroke.style
         self.y_line_style = self.y_axis_stroke.style
         self.x_arrow_style = self.x_axis_stroke.arrow
