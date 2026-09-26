@@ -123,6 +123,15 @@ canvas.add_utility(u, levels=3, ic_label=Label(text="U={:.1f}", position="top"))
 canvas.add_decomposition(dec, point_label=Label(visible=False))  # hide A, B, C
 ```
 
+Shade the budget set with `fill=True`, or pass a `Fill` for a colour and
+opacity of its own (default `theme.budget_fill`, coloured like the line):
+
+```python
+from econ_viz import Fill
+
+canvas.add_budget(2, 3, 30, color="black", fill=Fill(color="lightgrey", alpha=0.4))
+```
+
 Set a font for one canvas or a whole multi-panel figure without touching
 Matplotlib's global settings. Pass a family name, a generic family such as
 `"serif"`, or a fallback list:

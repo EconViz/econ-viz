@@ -42,6 +42,7 @@ class BudgetConstraint:
         label: str | None = None,
         fill: bool = False,
         fill_alpha: float = 0.08,
+        fill_color: str | None = None,
     ):
         if px <= 0 or py <= 0 or income <= 0:
             raise InvalidParameterError(
@@ -56,6 +57,7 @@ class BudgetConstraint:
         self.label = label
         self.fill = fill
         self.fill_alpha = fill_alpha
+        self.fill_color = fill_color
 
     def draw(self, ax) -> None:
         """Draw the budget line (and optional feasible-set fill) onto *ax*."""
@@ -76,7 +78,8 @@ class BudgetConstraint:
         line._ev_role = "budget"
 
         if self.fill:
-            ax.fill_between(
+            region = ax.fill_between(
                 [0, x_int], [y_int, 0],
-                alpha=self.fill_alpha, color=self.color,
+                alpha=self.fill_alpha, color=self.fill_color or self.color,
             )
+            region._ev_role = "budget_fill"

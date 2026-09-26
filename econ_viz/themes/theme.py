@@ -3,6 +3,7 @@
 from dataclasses import dataclass
 
 from ..enums import ArrowStyle, LabelPosition, LineStyle
+from .fill import Fill
 from .label import Label
 from .marker import Marker
 from .stroke import Stroke
@@ -169,6 +170,11 @@ class Theme:
     def path_marker(self) -> Marker:
         """Points on PCC / ICC paths. Colour ``None`` uses the path colour."""
         return Marker(size=max(self.eq_markersize - 1, 3), shape="o")
+
+    @property
+    def budget_fill(self) -> Fill:
+        """Shading of the budget set. Colour ``None`` follows the budget line."""
+        return Fill(alpha=self.budget_fill_alpha)
 
     @property
     def point_label(self) -> Label:

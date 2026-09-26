@@ -38,6 +38,7 @@ from ..enums import ArrowStyle, LabelPosition, LineStyle
 from ..canvas.fonts import FontApplier, resolve_font, resolve_math_font
 from ..canvas.effect import Effect
 from ..canvas.stroke import styled
+from ..themes.fill import Fill
 from ..themes.label import Label, split_label
 from ..themes.marker import Marker
 from ..themes.stroke import Stroke
@@ -518,7 +519,7 @@ class Canvas:
         linewidth: float | None = None,
         linestyle: str = "-",
         label: str | None = None,
-        fill: bool = False,
+        fill: bool | Fill = False,
         fill_alpha: float | None = None,
         stroke: Stroke | None = None,
     ) -> Canvas:
@@ -541,10 +542,13 @@ class Canvas:
             Matplotlib line-style string.
         label : str or None
             Optional legend label rendered in LaTeX math mode.
-        fill : bool
-            If ``True``, shade the feasible set below the budget line.
+        fill : bool or Fill
+            ``True`` shades the feasible set below the budget line; a
+            :class:`Fill` also sets its colour and opacity (default
+            ``theme.budget_fill``, coloured like the budget line).
         fill_alpha : float or None
             Opacity of the shading. *None* → ``theme.budget_fill_alpha``.
+            A ``Fill`` alpha takes precedence.
 
         stroke : Stroke, optional
             Line style for the budget line (default ``theme.budget_stroke``).
@@ -554,19 +558,24 @@ class Canvas:
         Canvas
             *self*, to allow method chaining.
         """
+        t = self.theme
+        shade = (fill if isinstance(fill, Fill) else Fill()).merged_over(
+            Fill(alpha=fill_alpha).merged_over(t.budget_fill))
+        line_color = color or t.budget_color
         with styled(self, {"budget": stroke}):
-            t = self.theme
             render_budget(
                 self.ax,
                 px=px,
                 py=py,
                 income=income,
-                color=color or t.budget_color,
+                color=line_color,
                 linewidth=linewidth if linewidth is not None else t.budget_linewidth,
                 linestyle=linestyle,
                 label=label,
-                fill=fill,
-                fill_alpha=fill_alpha if fill_alpha is not None else t.budget_fill_alpha,
+                fill=fill is not False,
+                fill_alpha=shade.alpha,
+                # Unset, the fill follows the line, including a Stroke colour.
+                fill_color=shade.color or (stroke.color if stroke is not None and stroke.color else None),
             )
         return self
 
