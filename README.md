@@ -98,6 +98,9 @@ canvas.add_ray(0.5, stroke=Stroke(arrow=ArrowStyle.TRIANGLE))
 
 `add_utility`, `add_path`, `add_decomposition`, `DemandDiagram`, and
 `EdgeworthBox` take one `*_stroke` argument per kind of line they draw.
+`Stroke` is the preferred way to style lines; the separate `color`,
+`linewidth`, and `linestyle` arguments still work as shorthand and draw the
+same thing.
 
 Point markers work the same way with `Marker` (colour, size, and shape);
 fields you leave out keep the theme default, such as `theme.eq_marker`:

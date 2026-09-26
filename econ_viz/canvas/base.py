@@ -431,6 +431,9 @@ class Canvas:
     ) -> Canvas:
         """Add indifference curves for a given utility function.
 
+        Prefer *stroke* / *ray_stroke* for line styling; *color* and *linewidth*
+        are shorthand that a :class:`Stroke` supersedes.
+
         Colour and line-width fall back to the active theme when not
         specified explicitly.
 
@@ -534,6 +537,9 @@ class Canvas:
         stroke: Stroke | None = None,
     ) -> Canvas:
         """Add a linear budget constraint px*x + py*y = income.
+
+        Prefer *stroke* for line styling; *color*, *linewidth*, and *linestyle*
+        are shorthand that a :class:`Stroke` supersedes.
 
         Colour, line-width, and fill opacity fall back to the active
         theme when not specified explicitly.
@@ -691,6 +697,11 @@ class Canvas:
     ) -> Canvas:
         """Render a Hicks/Slutsky price-effect decomposition on this canvas.
 
+        Prefer the ``*_stroke`` arguments for line styling. The
+        ``*_budget_color`` / ``*_linewidth`` / ``*_linestyle``,
+        *substitution_color*, *income_color*, and *effect_arrow_linewidth*
+        arguments are shorthand that a :class:`Stroke` supersedes.
+
         Parameters
         ----------
         decomposition : PriceEffectDecomposition
@@ -846,6 +857,9 @@ class Canvas:
     ) -> Canvas:
         """Add a dashed ray emanating from the origin.
 
+        Prefer *stroke* for line styling; *color* and *linewidth* are
+        shorthand that a :class:`Stroke` supersedes.
+
         Parameters
         ----------
         slope : float
@@ -963,6 +977,12 @@ class Canvas:
         equilibrium_marker: Marker | None = None,
     ) -> Canvas:
         """Draw a PCC/ICC-style path through a sequence of equilibria.
+
+        Prefer *stroke* for line styling; *color* and *linewidth* are
+        shorthand that a :class:`Stroke` supersedes.
+
+        Parameters
+        ----------
         stroke : Stroke, optional
             Line style for the path line (default ``theme.path_stroke``).
         budget_stroke : Stroke, optional
