@@ -70,8 +70,7 @@ def _save_case(
         y_label="y",
         title=f"{model_label} - {method.name.title()} decomposition",
     )
-    utility_levels = sorted({round(decomposition.A.utility, 10), round(decomposition.C.utility, 10)})
-    canvas.add_utility(model, levels=utility_levels)
+    # The curves through A and C (and B for Slutsky) are drawn by default.
     canvas.add_decomposition(
         decomposition,
         show_arrows=True,

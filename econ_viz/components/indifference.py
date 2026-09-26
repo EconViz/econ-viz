@@ -83,6 +83,8 @@ class IndifferenceCurves:
 
         logger.debug("Drawing contours at levels: %s", computed)
 
+        # Matplotlib dashes negative contour levels by default; utility levels are just levels.
+        kwargs.setdefault("linestyles", "solid")
         cs = ax.contour(
             X, Y, Z, levels=computed,
             colors=self.color, linewidths=self.linewidth, **kwargs,

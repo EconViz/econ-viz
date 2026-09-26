@@ -23,6 +23,9 @@ from ..enums import UtilityType
 from ..exceptions import OptimizationError, InvalidParameterError
 from ..utils.logging import get_logger
 
+_SLSQP_FTOL = 1e-12
+_SLSQP_MAXITER = 500
+
 logger = get_logger(__name__)
 
 
@@ -127,6 +130,9 @@ def _solve_interior(func, px: float, py: float, income: float) -> Equilibrium:
         method="SLSQP",
         bounds=[(x_floor + 1e-12, x_max), (y_floor + 1e-12, y_max)],
         constraints=budget_constraint,
+        # Utility is flat at the optimum, so a loose ftol leaves the bundle off by
+        # about sqrt(ftol); comparative statics difference these bundles.
+        options={"ftol": _SLSQP_FTOL, "maxiter": _SLSQP_MAXITER},
     )
 
     if not result.success:
