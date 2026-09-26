@@ -14,6 +14,17 @@ from ..utils.logging import get_logger
 logger = get_logger(__name__)
 
 
+def _label_angle(ax, segment: np.ndarray, index: int) -> float:
+    """Return the local contour angle in display coordinates, kept upright."""
+    if len(segment) < 2:
+        return 0.0
+    before = max(0, index - 1)
+    after = min(len(segment) - 1, index + 1)
+    start, end = ax.transData.transform([segment[before], segment[after]])
+    angle = float(np.degrees(np.arctan2(end[1] - start[1], end[0] - start[0])))
+    return (angle + 90.0) % 180.0 - 90.0
+
+
 class IndifferenceCurves:
     """Renders a family of indifference curves for a utility function.
 
@@ -147,6 +158,7 @@ class IndifferenceCurves:
             for rank, level in enumerate(computed, start=1):
                 segs = segs_by_level[level]
                 best_x, best_y = -1.0, None
+                best_angle = 0.0
                 for seg in segs:
                     if len(seg) == 0:
                         continue
@@ -157,6 +169,7 @@ class IndifferenceCurves:
                     idx = np.argmax(seg[:, 0])
                     if seg[idx, 0] > best_x:
                         best_x, best_y = seg[idx, 0], seg[idx, 1]
+                        best_angle = _label_angle(ax, seg, int(idx))
                 if best_y is not None:
                     text_str = f"$u_{{{rank}}}$" if self.label_style == "ordinal" else self.ic_label_fmt.format(level)
                     text = ax.annotate(
@@ -168,6 +181,8 @@ class IndifferenceCurves:
                         fontsize=9,
                         ha="left",
                         va="center",
+                        rotation=best_angle,
+                        rotation_mode="anchor",
                         annotation_clip=True,
                     )
                     role = "ic_label" if level in focal_levels else "secondary_ic_label"

@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import pytest
 
 from econ_viz import Canvas, Stroke, themes
-from econ_viz.models import CobbDouglas, Leontief
+from econ_viz.models import CobbDouglas, Leontief, PerfectSubstitutes, Satiation
 
 MODEL = CobbDouglas(alpha=0.5, beta=0.5)
 
@@ -67,6 +67,18 @@ class TestHighlightLevel:
         assert len(_role(cvs.ax, "secondary_curve")) == 1
         assert len(_role(cvs.ax, "kink")) > 0
 
+    @pytest.mark.parametrize(
+        ("model", "levels", "highlight_level"),
+        [
+            (PerfectSubstitutes(a=1.0, b=1.0), [4, 8, 12], 8),
+            (Satiation(bliss_x=8, bliss_y=6), [-20, -8, -2], -8),
+        ],
+    )
+    def test_linear_and_satiation_preferences_still_supported_with_highlight(self, model, levels, highlight_level):
+        cvs = Canvas(x_max=20, y_max=15).add_utility(model, levels=levels, highlight_level=highlight_level)
+        assert len(_role(cvs.ax, "curve")) == 1
+        assert len(_role(cvs.ax, "secondary_curve")) == 1
+
 
 class TestLabelStyle:
     def test_numeric_is_the_default_label_style(self):
@@ -90,6 +102,15 @@ class TestLabelStyle:
                 continue
             x, _y = text.xy
             assert x < 20 * 0.97
+
+    def test_inline_labels_follow_the_curve_angle(self):
+        cvs = Canvas(x_max=10, y_max=10).add_utility(
+            PerfectSubstitutes(a=1.0, b=1.0),
+            levels=[5],
+            show_ic_labels=True,
+        )
+        text = next(artist for artist in cvs.ax.texts if getattr(artist, "_ev_role", None) == "ic_label")
+        assert text.get_rotation() != pytest.approx(0.0)
 
 
 class TestThemeControlsHierarchy:
