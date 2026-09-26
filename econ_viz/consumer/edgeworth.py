@@ -67,7 +67,7 @@ class EdgeworthBox:
         *,
         x_label: str = "x",
         y_label: str = "y",
-        title: str | None = None,
+        title: str | Label | None = None,
         dpi: int = DEFAULT_DPI,
         theme: Theme = _default_theme,
         utility_a_color: str | None = None,
@@ -75,11 +75,16 @@ class EdgeworthBox:
         box_stroke: Stroke | None = None,
         x_axis: Axis | None = None,
         y_axis: Axis | None = None,
+        origin_label: Label | None = None,
     ):
         """*x_axis* / *y_axis* (:class:`Axis`) name a good (drawn as ``x_A``,
         ``x_B``) and restyle the box sides along it: bottom and top for x,
         left and right for y, over *box_stroke*. The box has fixed label
-        places, so ``label_position`` is not supported.
+        places, so ``label_position`` is not supported. ``Axis.label`` may be
+        a :class:`Label` for the good names' font size, colour, and
+        visibility; *origin_label* does the same for ``O_A`` / ``O_B`` and
+        *title* may be a Label too (defaults ``theme.box_label`` /
+        ``theme.title_label``).
         """
         if total_x <= 0 or total_y <= 0:
             raise ValueError("total_x and total_y must be positive.")
@@ -87,10 +92,12 @@ class EdgeworthBox:
         for name, axis in (("x_axis", x_axis), ("y_axis", y_axis)):
             if axis.label_position is not None:
                 raise InvalidParameterError(f"EdgeworthBox {name} does not support label_position")
-        if x_axis.label is not None:
-            x_label = x_axis.label
-        if y_axis.label is not None:
-            y_label = y_axis.label
+        x_text, self.x_label_style = split_label(x_axis.label, theme.box_label)
+        y_text, self.y_label_style = split_label(y_axis.label, theme.box_label)
+        x_label = x_text if x_text is not None else x_label
+        y_label = y_text if y_text is not None else y_label
+        _, self.origin_style = split_label(origin_label, theme.box_label)
+        title, self.title_style = split_label(title, theme.title_label)
 
         self.utility_a = utility_a
         self.utility_b = utility_b
@@ -182,29 +189,34 @@ class EdgeworthBox:
             self.ax.spines[side].set_linewidth(stroke.width)
             self.ax.spines[side].set_linestyle(stroke.style.value)
 
-        self.ax.set_xlabel(rf"${self.x_label}_A$", color=t.label_color)
-        self.ax.set_ylabel(rf"${self.y_label}_A$", color=t.label_color)
-        self.ax.text(0.0, 0.0, r"$O_A$", ha="right", va="top", color=t.label_color)
-        self.ax.text(self.total_x, self.total_y, r"$O_B$", ha="left", va="bottom", color=t.label_color)
-        self.ax.text(
+        def styled_text(text, style: Label):
+            text.set_color(style.color or t.label_color)
+            if style.fontsize is not None:
+                text.set_fontsize(style.fontsize)
+            text.set_visible(style.visible is not False)
+            return text
+
+        styled_text(self.ax.set_xlabel(rf"${self.x_label}_A$"), self.x_label_style)
+        styled_text(self.ax.set_ylabel(rf"${self.y_label}_A$"), self.y_label_style)
+        styled_text(self.ax.text(0.0, 0.0, r"$O_A$", ha="right", va="top"), self.origin_style)
+        styled_text(self.ax.text(self.total_x, self.total_y, r"$O_B$", ha="left", va="bottom"), self.origin_style)
+        styled_text(self.ax.text(
             self.total_x * 0.98,
             self.total_y * -0.06,
             rf"${self.x_label}_B$",
             ha="right",
             va="top",
-            color=t.label_color,
-        )
-        self.ax.text(
+        ), self.x_label_style)
+        styled_text(self.ax.text(
             self.total_x * -0.04,
             self.total_y * 0.98,
             rf"${self.y_label}_B$",
             ha="right",
             va="top",
-            color=t.label_color,
             rotation=90,
-        )
+        ), self.y_label_style)
         if self.title:
-            self.ax.set_title(self.title, color=t.label_color)
+            styled_text(self.ax.set_title(self.title), self.title_style)
 
     def _grid(self, *, res: int) -> tuple[np.ndarray, np.ndarray]:
         x = np.linspace(_EPS, self.total_x - _EPS, res)

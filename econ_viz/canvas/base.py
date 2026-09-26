@@ -244,6 +244,14 @@ class Canvas:
         arguments are shorthand for it. Stroke precedence, highest first:
         ``Axis.stroke``, ``x_axis_stroke``, ``axis_stroke``,
         ``x_line_style`` / ``x_arrow_style``, ``theme.axis_stroke``.
+        ``Axis.label`` may be a :class:`Label` for font size, colour, distance,
+        and visibility (default ``theme.axis_label``).
+    origin_label : str or Label, optional
+        The ``0`` at the origin (default ``theme.origin_label``);
+        ``Label(visible=False)`` hides it.
+
+    *title* may also be a :class:`Label` for its font size and colour
+    (default ``theme.title_label``).
     """
 
     def __init__(
@@ -252,7 +260,7 @@ class Canvas:
         y_max: float = 10.0,
         x_label: str = "X",
         y_label: str = "Y",
-        title: str | None = None,
+        title: str | Label | None = None,
         dpi: int = DEFAULT_DPI,
         x_label_pos: LabelPosition | str = LabelPosition.RIGHT,
         y_label_pos: LabelPosition | str = LabelPosition.TOP,
@@ -270,16 +278,23 @@ class Canvas:
         y_axis_stroke: Stroke | None = None,
         x_axis: Axis | None = None,
         y_axis: Axis | None = None,
+        origin_label: str | Label | None = None,
     ):
         x_axis, y_axis = x_axis or Axis(), y_axis or Axis()
+        x_text, self.x_label_style = split_label(x_axis.label, theme.axis_label)
+        y_text, self.y_label_style = split_label(y_axis.label, theme.axis_label)
+        self.title, self.title_style = split_label(title, theme.title_label)
+        origin_text, self.origin_style = split_label(origin_label, theme.origin_label, theme.origin_label.text)
+        self.origin_text = origin_text if origin_text is not None else theme.origin_label.text
         self.x_max = x_max
         self.y_max = y_max
-        self.x_label = x_axis.label if x_axis.label is not None else x_label
-        self.y_label = y_axis.label if y_axis.label is not None else y_label
-        self.title = title
+        self.x_label = x_text if x_text is not None else x_label
+        self.y_label = y_text if y_text is not None else y_label
         self.dpi = max(MIN_DPI, min(dpi, MAX_DPI))
-        self.x_label_pos = _label_position(x_axis.label_position or x_label_pos, axis="x")
-        self.y_label_pos = _label_position(y_axis.label_position or y_label_pos, axis="y")
+        self.x_label_pos = _label_position(
+            x_axis.label_position or self.x_label_style.position or x_label_pos, axis="x")
+        self.y_label_pos = _label_position(
+            y_axis.label_position or self.y_label_style.position or y_label_pos, axis="y")
         self.theme = theme
         # Precedence: Axis.stroke > per-axis stroke > shared stroke > x/y_*_style arguments > theme.axis_stroke.
         self.x_axis_stroke = _axis_stroke(theme, x_line_style, x_arrow_style, axis_stroke, x_axis_stroke, x_axis.stroke)
@@ -318,42 +333,42 @@ class Canvas:
         self.ax.set_yticklabels([])
         self.ax.tick_params(length=0)
 
-        x_offset, x_ha, x_va = _X_LABEL_POSITIONS[self.x_label_pos]
-        x_label_text = self.ax.annotate(
-            _label_math(self.x_label),
-            xy=(self.x_max, 0),
-            xytext=x_offset,
-            textcoords="offset points",
-            ha=x_ha,
-            va=x_va,
-            fontsize=14,
-            color=t.label_color,
-            clip_on=False,
-        )
-        x_label_text._ev_axis_label = "x"
+        for axis, text, position, style, tip, layout in (
+            ("x", self.x_label, self.x_label_pos, self.x_label_style, (self.x_max, 0), _X_LABEL_POSITIONS),
+            ("y", self.y_label, self.y_label_pos, self.y_label_style, (0, self.y_max), _Y_LABEL_POSITIONS),
+        ):
+            (dx, dy), ha, va = layout[position]
+            if style.offset is not None:
+                # Layout offsets are 8 pt along one direction; rescale to the requested distance.
+                dx, dy = dx / 8 * style.offset, dy / 8 * style.offset
+            axis_text = self.ax.annotate(
+                _label_math(text),
+                xy=tip,
+                xytext=(dx, dy),
+                textcoords="offset points",
+                ha=ha,
+                va=va,
+                fontsize=style.fontsize,
+                color=style.color or t.label_color,
+                clip_on=False,
+            )
+            axis_text.set_visible(style.visible is not False)
+            axis_text._ev_axis_label = axis
 
-        y_offset, y_ha, y_va = _Y_LABEL_POSITIONS[self.y_label_pos]
-        y_label_text = self.ax.annotate(
-            _label_math(self.y_label),
-            xy=(0, self.y_max),
-            xytext=y_offset,
-            textcoords="offset points",
-            ha=y_ha,
-            va=y_va,
-            fontsize=14,
-            color=t.label_color,
-            clip_on=False,
-        )
-        y_label_text._ev_axis_label = "y"
-
-        # Origin label
-        self.ax.text(
+        origin = self.ax.text(
             -self.x_max * 0.03, -self.y_max * 0.03,
-            r"$0$", ha="right", va="top", fontsize=12, color=t.label_color,
+            _label_math(self.origin_text), ha="right", va="top",
+            fontsize=self.origin_style.fontsize, color=self.origin_style.color or t.label_color,
         )
+        origin.set_visible(self.origin_style.visible is not False)
+        origin._ev_role = "origin_label"
 
         if self.title:
-            self.ax.set_title(_math_wrap(self.title), color=t.label_color, pad=18)
+            title = self.ax.set_title(
+                _math_wrap(self.title), color=self.title_style.color or t.label_color, pad=18,
+                **({"fontsize": self.title_style.fontsize} if self.title_style.fontsize else {}),
+            )
+            title.set_visible(self.title_style.visible is not False)
 
         # Spines
         self.ax.spines["top"].set_visible(False)
@@ -815,6 +830,7 @@ class Canvas:
                 show_x_projections=show_x_projections,
                 substitution_effect=substitution,
                 income_effect=income,
+                effect_label=t.effect_label,
             )
             if label_effects:
                 sub_dx, sub_dy = decomposition.substitution_effect

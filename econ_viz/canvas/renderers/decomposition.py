@@ -36,6 +36,7 @@ def render_decomposition(
     show_x_projections: bool,
     substitution_effect: Effect | None = None,
     income_effect: Effect | None = None,
+    effect_label: Label | None = None,
 ) -> None:
     """Render A/B/C bundles, budget lines, and effect arrows."""
     render_budget(
@@ -122,6 +123,7 @@ def render_decomposition(
             linewidth=max(0.8, effect_arrow_linewidth * 0.7),
             substitution_effect=substitution_effect,
             income_effect=income_effect,
+            effect_label=effect_label,
         )
         return
 
@@ -143,9 +145,9 @@ def render_decomposition(
     )
     a, b, c = ((eq.x, eq.y) for eq in (decomposition.A, decomposition.B, decomposition.C))
     _draw_effect_label(ax, start=a, end=b, effect=substitution_effect, color=substitution_color,
-                       transform=ax.transData, role="substitution_label")
+                       transform=ax.transData, role="substitution_label", default=effect_label)
     _draw_effect_label(ax, start=b, end=c, effect=income_effect, color=income_color,
-                       transform=ax.transData, role="income_label")
+                       transform=ax.transData, role="income_label", default=effect_label)
 
 
 def _draw_effect_arrow(
@@ -182,6 +184,7 @@ def _draw_x_projections(
     linewidth: float,
     substitution_effect: Effect | None = None,
     income_effect: Effect | None = None,
+    effect_label: Label | None = None,
 ) -> None:
     a_x = decomposition.A.x
     b_x = decomposition.B.x
@@ -243,9 +246,11 @@ def _draw_x_projections(
         )
         effect_range._ev_role = "range"
     _draw_effect_label(ax, start=(a_x, sub_y), end=(b_x, sub_y), effect=substitution_effect,
-                       color=substitution_color, transform=xaxis_t, role="substitution_label", beyond_ends=True)
+                       color=substitution_color, transform=xaxis_t, role="substitution_label", beyond_ends=True,
+                       default=effect_label)
     _draw_effect_label(ax, start=(b_x, inc_y), end=(c_x, inc_y), effect=income_effect,
-                       color=income_color, transform=xaxis_t, role="income_label", beyond_ends=True)
+                       color=income_color, transform=xaxis_t, role="income_label", beyond_ends=True,
+                       default=effect_label)
 
 
 def _range_y(effect: Effect | None, default: float) -> float:
@@ -253,7 +258,8 @@ def _range_y(effect: Effect | None, default: float) -> float:
 
 
 def _draw_effect_label(
-    ax, *, start, end, effect: Effect | None, color: str, transform, role: str, beyond_ends: bool = False
+    ax, *, start, end, effect: Effect | None, color: str, transform, role: str, beyond_ends: bool = False,
+    default: Label | None = None,
 ) -> None:
     """Write ``effect.label`` beside the middle of an effect arrow.
 
@@ -262,27 +268,31 @@ def _draw_effect_label(
     """
     if effect is None or not effect.label:
         return
-    (dx, dy), ha, va = placement(effect.label_position, effect.label_offset)
-    if beyond_ends and effect.label_position is LabelPosition.LEFT:
+    text, style = effect.resolved_label(default or Label(fontsize=10))
+    if not text:
+        return
+    (dx, dy), ha, va = placement(style.position, style.offset)
+    if beyond_ends and style.position is LabelPosition.LEFT:
         anchor = min(start, end, key=lambda p: p[0])
-    elif beyond_ends and effect.label_position is LabelPosition.RIGHT:
+    elif beyond_ends and style.position is LabelPosition.RIGHT:
         anchor = max(start, end, key=lambda p: p[0])
     else:
         anchor = ((start[0] + end[0]) / 2, (start[1] + end[1]) / 2)
-    text = ax.annotate(
-        effect.label,
+    label = ax.annotate(
+        text,
         xy=anchor,
         xycoords=transform,
         xytext=(dx, dy),
         textcoords="offset points",
         ha=ha,
         va=va,
-        color=effect.color or color,
-        fontsize=10,
+        color=style.color or effect.color or color,
+        fontsize=style.fontsize,
         zorder=9,
         annotation_clip=False,
     )
-    text._ev_role = role
+    label.set_visible(style.visible is not False)
+    label._ev_role = role
 
 
 def _retag_last_budget(ax, role: str) -> None:
