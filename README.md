@@ -132,6 +132,20 @@ from econ_viz import Fill
 canvas.add_budget(2, 3, 30, color="black", fill=Fill(color="lightgrey", alpha=0.4))
 ```
 
+Each axis's label, label position, and stroke fit in one `Axis`, accepted by
+`Canvas`, `Figure`, `DemandDiagram`, and `EdgeworthBox`. `x_label`,
+`x_label_pos`, and `x_axis_stroke` stay as shorthand; an `Axis` field wins
+when both are set:
+
+```python
+from econ_viz import Axis, Stroke
+
+canvas = Canvas(
+    x_axis=Axis(label="x_1", label_position="bottom", stroke=Stroke(width=1.2)),
+    y_axis=Axis(label="x_2"),
+)
+```
+
 Set a font for one canvas or a whole multi-panel figure without touching
 Matplotlib's global settings. Pass a family name, a generic family such as
 `"serif"`, or a fallback list:

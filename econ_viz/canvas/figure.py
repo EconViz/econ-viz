@@ -14,6 +14,7 @@ from matplotlib.gridspec import GridSpec
 from .base import Canvas
 from ..constants.canvas import DEFAULT_DPI
 from .fonts import FontApplier, resolve_font, resolve_math_font
+from ..themes.axis import Axis
 from ..themes.stroke import Stroke
 from ..enums import ArrowStyle, LabelPosition, Layout, LineStyle
 from ..io import save_figure
@@ -81,6 +82,9 @@ class Figure:
         Per-panel axis line styles forwarded to :class:`Canvas`.
     axis_stroke, x_axis_stroke, y_axis_stroke : Stroke, optional
         Per-panel axis strokes forwarded to :class:`Canvas`.
+    x_axis, y_axis : Axis, optional
+        Per-panel axis label, label position, and stroke forwarded to
+        :class:`Canvas`, with the same precedence.
     """
 
     def __init__(
@@ -109,6 +113,8 @@ class Figure:
         axis_stroke: Stroke | None = None,
         x_axis_stroke: Stroke | None = None,
         y_axis_stroke: Stroke | None = None,
+        x_axis: Axis | None = None,
+        y_axis: Axis | None = None,
     ):
         """Create a multi-panel figure composed of injected :class:`Canvas` instances."""
         self.layout = layout
@@ -163,6 +169,8 @@ class Figure:
                 axis_stroke=axis_stroke,
                 x_axis_stroke=x_axis_stroke,
                 y_axis_stroke=y_axis_stroke,
+                x_axis=x_axis,
+                y_axis=y_axis,
             )
             self.canvases.append(canvas)
             self._grid_lookup[(spec.row, spec.col)] = canvas
