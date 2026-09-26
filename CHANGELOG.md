@@ -2,6 +2,36 @@
 
 <!-- version list -->
 
+## v1.9.0 (2026-09-26)
+
+### Features
+
+- Draw the indifference curves of a price-effect decomposition by default: U0 through A, U1 through C, and the curve through B under Slutsky; `show_curves=False` restores the previous figure, and `curve_stroke` / `curve_label` restyle and label them
+
+- Add the `Haagsma` utility model (Haagsma, 2012), whose good x is always inferior and Giffen at high enough income, with closed-form `demand()` and `is_giffen()`
+
+- Add `Legend`, placed automatically where it covers the least of the diagram (moving outside the plot area when every corner is taken), or at a chosen inside corner or outside side
+
+- Accept `Label` for every text element: axis labels, the origin, titles, effect labels, and Edgeworth box text
+
+- Add `opacity` to `Stroke`, `Marker`, `Label`, `Legend`, `Effect`, and `Fill`
+
+### Changes
+
+- Existing decomposition figures now include their indifference curves; pass `show_curves=False` if you already draw them with `add_utility`
+
+- Effect range arrows below the x-axis point one way (A to B, B to C), and a zero effect draws no range arrow
+
+- `Fill.alpha` becomes shorthand for `Fill.opacity`
+
+### Bug Fixes
+
+- Solve utility maximisation to a much tighter tolerance, so comparative statics and Slutsky matrices are accurate
+
+- Draw indifference curves at negative utility levels as solid lines
+
+- Make `scripts/release.sh` work on macOS
+
 ## v1.8.0 (2026-09-26)
 
 ### Features
