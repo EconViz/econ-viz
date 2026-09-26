@@ -6,6 +6,7 @@ from dataclasses import dataclass, replace
 
 from ..enums import LabelPosition
 from ..themes.label import Label, split_label, to_position
+from ..themes.opacity import check_opacity
 
 
 @dataclass(frozen=True)
@@ -33,6 +34,9 @@ class Effect:
     label_offset : float
         Distance between the arrow and the text, in points. Shorthand for
         ``Label(offset=...)``; a Label offset wins.
+    opacity : float, optional
+        From 0 (transparent) to 1 (opaque) for the arrow, its range arrow, and
+        its label. A Stroke or Label opacity wins for its own part.
     """
 
     color: str | None = None
@@ -40,9 +44,11 @@ class Effect:
     label: str | Label | None = None
     label_position: LabelPosition | str = LabelPosition.RIGHT
     label_offset: float = 4.0
+    opacity: float | None = None
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "label_position", to_position(self.label_position, what="Effect label_position"))
+        check_opacity("Effect", self.opacity)
 
     def resolved_label(self, default: Label) -> tuple[str | None, Label]:
         """Return the label text and its style: Label fields, then the shorthand, then *default*."""

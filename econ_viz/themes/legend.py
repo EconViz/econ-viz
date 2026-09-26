@@ -6,6 +6,7 @@ from dataclasses import dataclass
 
 from ..enums import LegendPosition
 from ..exceptions import InvalidParameterError
+from .opacity import check_opacity
 
 
 @dataclass(frozen=True)
@@ -28,6 +29,8 @@ class Legend:
         Number of columns.
     visible : bool, optional
         ``False`` draws no legend.
+    opacity : float, optional
+        From 0 (transparent) to 1 (opaque); fades the frame, text, and entries.
     """
 
     position: LegendPosition | str | None = None
@@ -35,8 +38,10 @@ class Legend:
     frame: bool | None = None
     columns: int | None = None
     visible: bool | None = None
+    opacity: float | None = None
 
     def __post_init__(self) -> None:
+        check_opacity("Legend", self.opacity)
         if self.position is not None:
             try:
                 object.__setattr__(self, "position", LegendPosition(self.position))
@@ -54,7 +59,7 @@ class Legend:
         """Return this legend with unset fields taken from *base*."""
         if base is None:
             return self
-        fields = ("position", "fontsize", "frame", "columns", "visible")
+        fields = ("position", "fontsize", "frame", "columns", "visible", "opacity")
         return Legend(**{
             field: getattr(self, field) if getattr(self, field) is not None else getattr(base, field)
             for field in fields

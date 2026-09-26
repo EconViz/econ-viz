@@ -6,6 +6,7 @@ from dataclasses import dataclass
 
 from ..enums import ArrowStyle, LineStyle
 from ..exceptions import InvalidParameterError
+from .opacity import check_opacity
 
 
 @dataclass(frozen=True)
@@ -22,16 +23,20 @@ class Stroke:
         Any Matplotlib colour.
     arrow : ArrowStyle or str, optional
         Arrowhead drawn at the end of the line.
+    opacity : float, optional
+        From 0 (transparent) to 1 (opaque).
     """
 
     width: float | None = None
     style: LineStyle | str | None = None
     color: str | None = None
     arrow: ArrowStyle | str | None = None
+    opacity: float | None = None
 
     def __post_init__(self) -> None:
         if self.width is not None and not self.width > 0:
             raise InvalidParameterError(f"Stroke width must be positive, got {self.width!r}")
+        check_opacity("Stroke", self.opacity)
         for field, enum in (("style", LineStyle), ("arrow", ArrowStyle)):
             value = getattr(self, field)
             if value is None:
@@ -51,4 +56,5 @@ class Stroke:
             style=self.style if self.style is not None else base.style,
             color=self.color if self.color is not None else base.color,
             arrow=self.arrow if self.arrow is not None else base.arrow,
+            opacity=self.opacity if self.opacity is not None else base.opacity,
         )
