@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 
 import numpy as np
@@ -55,6 +55,8 @@ class PriceEffectDecomposition:
     income_effect: tuple[float, float]
     total_effect: tuple[float, float]
     slutsky_matrix: SlutskyMatrix
+    #: Utility function that was decomposed; lets ``add_decomposition`` draw its curves.
+    func: object = field(default=None, repr=False, compare=False)
 
     def vector_identity_holds(self, tol: float = 1e-9) -> bool:
         """Return ``True`` when ``(A->B) + (B->C) == (A->C)`` within tolerance."""
@@ -126,6 +128,7 @@ def decompose_price_effect(
         income_effect=income_effect,
         total_effect=total_effect,
         slutsky_matrix=slutsky_matrix(func, px=px_before, py=py, income=income),
+        func=func,
     )
 
     if not decomposition.vector_identity_holds():

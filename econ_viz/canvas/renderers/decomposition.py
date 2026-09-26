@@ -218,38 +218,30 @@ def _draw_x_projections(
         )
         guide._ev_role = "guide"
 
-    sub_range = ax.annotate(
-        "",
-        xy=(b_x, sub_y),
-        xytext=(a_x, sub_y),
-        xycoords=xaxis_t,
-        textcoords=xaxis_t,
-        arrowprops={
-            "arrowstyle": "<->",
-            "color": substitution_color,
-            "linewidth": linewidth,
-            "linestyle": "--",
-        },
-        zorder=9,
-        clip_on=False,
-    )
-    inc_range = ax.annotate(
-        "",
-        xy=(c_x, inc_y),
-        xytext=(b_x, inc_y),
-        xycoords=xaxis_t,
-        textcoords=xaxis_t,
-        arrowprops={
-            "arrowstyle": "<->",
-            "color": income_color,
-            "linewidth": linewidth,
-            "linestyle": "--",
-        },
-        zorder=9,
-        clip_on=False,
-    )
-    sub_range._ev_role = "range"
-    inc_range._ev_role = "range"
+    x0, x1 = ax.get_xlim()
+    # A zero effect has no range; an arrow there would be a bare head.
+    min_length = 1e-3 * abs(x1 - x0)
+    for (start_x, end_x, y, color) in ((a_x, b_x, sub_y, substitution_color), (b_x, c_x, inc_y, income_color)):
+        if abs(end_x - start_x) <= min_length:
+            continue
+        effect_range = ax.annotate(
+            "",
+            xy=(end_x, y),
+            xytext=(start_x, y),
+            xycoords=xaxis_t,
+            textcoords=xaxis_t,
+            arrowprops={
+                "arrowstyle": "->",
+                "color": color,
+                "linewidth": linewidth,
+                "linestyle": "--",
+                "shrinkA": 0.0,
+                "shrinkB": 0.0,
+            },
+            zorder=9,
+            clip_on=False,
+        )
+        effect_range._ev_role = "range"
     _draw_effect_label(ax, start=(a_x, sub_y), end=(b_x, sub_y), effect=substitution_effect,
                        color=substitution_color, transform=xaxis_t, role="substitution_label", beyond_ends=True)
     _draw_effect_label(ax, start=(b_x, inc_y), end=(c_x, inc_y), effect=income_effect,

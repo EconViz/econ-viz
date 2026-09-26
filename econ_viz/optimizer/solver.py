@@ -23,6 +23,10 @@ from ..enums import UtilityType
 from ..exceptions import OptimizationError, InvalidParameterError
 from ..utils.logging import get_logger
 
+_SLSQP_FTOL = 1e-12
+_SLSQP_MAXITER = 500
+_DOMAIN_MARGIN = 1e-9
+
 logger = get_logger(__name__)
 
 
@@ -78,6 +82,10 @@ def solve(func, px: float, py: float, income: float) -> Equilibrium:
             f"Prices and income must be positive (px={px}, py={py}, income={income})."
         )
 
+    validate_budget = getattr(func, "validate_budget", None)
+    if validate_budget is not None:
+        validate_budget(px, py, income)
+
     utype = getattr(func, "utility_type", UtilityType.SMOOTH)
 
     if utype is UtilityType.KINKED:
@@ -107,8 +115,10 @@ def _solve_interior(func, px: float, py: float, income: float) -> Equilibrium:
             f"({subsistence_cost:.4g} = px*bar_x + py*bar_y)."
         )
 
-    x_max = income / px
-    y_max = income / py
+    # Models with a bounded domain (e.g. Haagsma's y < gamma_y) expose upper_bounds().
+    x_cap, y_cap = getattr(func, "upper_bounds", lambda: (np.inf, np.inf))()
+    x_max = min(income / px, x_cap - _DOMAIN_MARGIN)
+    y_max = min(income / py, y_cap - _DOMAIN_MARGIN)
     x0 = np.array([
         x_floor + (x_max - x_floor) / 2,
         y_floor + (y_max - y_floor) / 2,
@@ -127,6 +137,9 @@ def _solve_interior(func, px: float, py: float, income: float) -> Equilibrium:
         method="SLSQP",
         bounds=[(x_floor + 1e-12, x_max), (y_floor + 1e-12, y_max)],
         constraints=budget_constraint,
+        # Utility is flat at the optimum, so a loose ftol leaves the bundle off by
+        # about sqrt(ftol); comparative statics difference these bundles.
+        options={"ftol": _SLSQP_FTOL, "maxiter": _SLSQP_MAXITER},
     )
 
     if not result.success:
