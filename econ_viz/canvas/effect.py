@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from ..enums import LabelPosition
-from ..exceptions import InvalidParameterError
+from ..themes.label import to_position
 
 
 @dataclass(frozen=True)
@@ -38,11 +38,4 @@ class Effect:
     label_offset: float = 4.0
 
     def __post_init__(self) -> None:
-        value = {"above": "top", "below": "bottom"}.get(self.label_position, self.label_position)
-        try:
-            object.__setattr__(self, "label_position", LabelPosition(value))
-        except ValueError:
-            choices = ", ".join(p.value for p in LabelPosition)
-            raise InvalidParameterError(
-                f"invalid Effect label_position {self.label_position!r}; choose: {choices}"
-            ) from None
+        object.__setattr__(self, "label_position", to_position(self.label_position, what="Effect label_position"))

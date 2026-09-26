@@ -10,6 +10,7 @@ from ..canvas.stroke import apply_strokes, styled
 from ..enums import Layout
 from ..enums import UtilityType
 from ..optimizer import solve
+from ..themes.label import Label, split_label
 from ..themes.marker import Marker
 from ..themes.stroke import Stroke
 from .paths import PricePath
@@ -73,13 +74,16 @@ class DemandDiagram(Figure):
         demand_stroke: Stroke | None = None,
         guide_stroke: Stroke | None = None,
         point_marker: Marker | None = None,
+        point_label: Label | None = None,
     ) -> "DemandDiagram":
         """Draw the goods-space panel and the linked Marshallian demand panel.
 
         The ``*_stroke`` arguments restyle one kind of line each: indifference
         curves, budget lines, equilibrium drop lines, and the PCC in the top
         panel; the demand curve and its guides in the bottom panel.
-        ``point_marker`` restyles the equilibrium points in both panels.
+        ``point_marker`` restyles the equilibrium points in both panels, and
+        ``point_label`` their labels (its *text* is ignored; default
+        ``theme.point_label``).
         """
         price_markers = price_markers or [self.path.parameter_values[len(self.path.parameter_values) // 2]]
         quantity_axis = self._quantity_axis()
@@ -89,8 +93,10 @@ class DemandDiagram(Figure):
         bottom = {"demand": demand_stroke, "guide": guide_stroke}
         # Style before the legends are built: a legend copies line styles when created.
         with (
-            styled(self.utility_canvas, top, markers={"equilibrium": point_marker}),
-            styled(self.demand_canvas, bottom, markers={"point": point_marker, "tie": point_marker}),
+            styled(self.utility_canvas, top, markers={"equilibrium": point_marker},
+                   labels={"equilibrium_label": split_label(point_label, self.utility_canvas.theme.point_label)[1]}),
+            styled(self.demand_canvas, bottom, markers={"point": point_marker, "tie": point_marker},
+                   labels={"point_label": split_label(point_label, self.demand_canvas.theme.point_label)[1]}),
         ):
             selected_levels = sorted(dict.fromkeys(eq.utility for _, eq in selected_equilibria))
             self.utility_canvas.add_utility(

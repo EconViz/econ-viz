@@ -110,6 +110,19 @@ canvas.add_point(12, 2, label="A", marker=Marker(color="black", shape="D"))
 canvas.add_decomposition(dec, point_marker=Marker(shape="^"))
 ```
 
+Point labels take a `Label` (text, position, offset, colour, size, and
+visibility) wherever a plain string worked. A label follows its point's
+`Marker` colour unless it sets its own:
+
+```python
+from econ_viz import Label
+
+canvas.add_equilibrium(eq, label=Label(position="bottom-left", offset=8))
+canvas.add_point(12, 2, label=Label(text="A", position="left", fontsize=14))
+canvas.add_utility(u, levels=3, ic_label=Label(text="U={:.1f}", position="top"))
+canvas.add_decomposition(dec, point_label=Label(visible=False))  # hide A, B, C
+```
+
 Set a font for one canvas or a whole multi-panel figure without touching
 Matplotlib's global settings. Pass a family name, a generic family such as
 `"serif"`, or a fallback list:
