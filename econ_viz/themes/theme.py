@@ -183,6 +183,31 @@ class Theme:
         return Fill(alpha=self.budget_fill_alpha)
 
     @property
+    def axis_label(self) -> Label:
+        """Axis labels at the arrow tips. Colour ``None`` uses ``label_color``."""
+        return Label(offset=8, fontsize=14)
+
+    @property
+    def origin_label(self) -> Label:
+        """The ``0`` at the origin. Colour ``None`` uses ``label_color``."""
+        return Label(text="0", fontsize=12)
+
+    @property
+    def title_label(self) -> Label:
+        """Diagram titles. Font size ``None`` keeps Matplotlib's title size."""
+        return Label()
+
+    @property
+    def box_label(self) -> Label:
+        """Edgeworth box text: good names and the O_A / O_B origins. ``None`` keeps Matplotlib's size."""
+        return Label()
+
+    @property
+    def effect_label(self) -> Label:
+        """Labels beside decomposition effect arrows. Colour ``None`` follows the effect."""
+        return Label(fontsize=10)
+
+    @property
     def point_label(self) -> Label:
         """Labels of equilibria and ``add_point`` points. Colour ``None`` follows the marker."""
         return Label(position=LabelPosition.TOP_RIGHT, offset=5, fontsize=12)

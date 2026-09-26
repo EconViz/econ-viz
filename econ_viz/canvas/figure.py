@@ -15,6 +15,7 @@ from .base import Canvas
 from ..constants.canvas import DEFAULT_DPI
 from .fonts import FontApplier, resolve_font, resolve_math_font
 from ..themes.axis import Axis
+from ..themes.label import Label, split_label
 from ..themes.stroke import Stroke
 from ..enums import ArrowStyle, LabelPosition, Layout, LineStyle
 from ..io import save_figure
@@ -57,8 +58,9 @@ class Figure:
         Axis limits applied to every panel.
     x_label, y_label : str
         Axis labels applied to every panel.
-    title : str | None
-        Optional super-title for the whole figure.
+    title : str, Label, or None
+        Optional super-title for the whole figure, or a :class:`Label` that
+        also sets its font size and colour (default ``theme.title_label``).
     dpi : int
         Export resolution passed through to panel canvases.
     x_label_pos, y_label_pos : LabelPosition or str
@@ -94,7 +96,7 @@ class Figure:
         y_max: float = 10.0,
         x_label: str = "X",
         y_label: str = "Y",
-        title: str | None = None,
+        title: str | Label | None = None,
         dpi: int = DEFAULT_DPI,
         x_label_pos: LabelPosition | str = LabelPosition.RIGHT,
         y_label_pos: LabelPosition | str = LabelPosition.TOP,
@@ -130,8 +132,13 @@ class Figure:
         self.fig.patch.set_alpha(0.0)
         if self.font or self.math_font:
             self.fig.add_artist(FontApplier(self.font, self.math_font))
-        if title:
-            self.fig.suptitle(title, color=theme.label_color)
+        title_text, title_style = split_label(title, theme.title_label)
+        if title_text:
+            suptitle = self.fig.suptitle(
+                title_text, color=title_style.color or theme.label_color,
+                **({"fontsize": title_style.fontsize} if title_style.fontsize else {}),
+            )
+            suptitle.set_visible(title_style.visible is not False)
 
         gs = GridSpec(rows, cols, figure=self.fig, hspace=hspace, wspace=wspace)
         self.canvases: list[Canvas] = []
