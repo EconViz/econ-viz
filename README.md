@@ -271,4 +271,4 @@ Full documentation lives at [econ-viz.org](https://econ-viz.org).
 
 ## License
 
-MIT © Anthony Sung
+MIT © Pin Yue Sung
