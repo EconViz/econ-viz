@@ -10,6 +10,7 @@ Usage:
 Examples:
   scripts/release.sh prepare 1.3.3
   scripts/release.sh finalize 1.3.3
+  scripts/release.sh prepare 2.0.0b1   # PEP 440 pre-release: GitHub pre-release, never "latest"
 
 What it does:
   prepare:
@@ -48,7 +49,7 @@ ensure_clean() {
 }
 
 ensure_version() {
-  [[ "$1" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || die "version must match X.Y.Z"
+  [[ "$1" =~ ^[0-9]+\.[0-9]+\.[0-9]+((a|b|rc)[0-9]+)?$ ]] || die "version must match X.Y.Z or a PEP 440 pre-release such as X.Y.ZbN"
 }
 
 ensure_remote_tag_absent() {
@@ -65,7 +66,7 @@ bump_version() {
   local version="$1"
   # perl -i behaves the same on GNU and BSD (macOS); the first match is the project version.
   run perl -0pi -e "s/^version = \"[^\"]+\"/version = \"${version}\"/m" pyproject.toml
-  run perl -0pi -e "s/(\nname = \"econ-viz\"\nversion = )\"[^\"]+\"/\$1\"${version}\"/" uv.lock
+  run perl -0pi -e "s/(\nname = \"utility-viz\"\nversion = )\"[^\"]+\"/\$1\"${version}\"/" uv.lock
   if [[ "$DRY_RUN" == "false" ]]; then
     grep -q "^version = \"${version}\"" pyproject.toml || die "failed to bump version in pyproject.toml"
   fi
@@ -150,7 +151,12 @@ finalize_release() {
   run git tag -a "$tag" "$target_sha" -m "release: ${tag}"
   run git push origin "$tag"
 
-  run gh release create "$tag" --title "$tag" --generate-notes --latest
+  if [[ "$version" =~ (a|b|rc)[0-9]+$ ]]; then
+    # Pre-releases are never marked latest.
+    run gh release create "$tag" --title "$tag" --generate-notes --prerelease
+  else
+    run gh release create "$tag" --title "$tag" --generate-notes --latest
+  fi
 
   echo "[release.sh] finalize done: ${tag}"
 }
