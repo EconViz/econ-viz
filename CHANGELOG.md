@@ -48,6 +48,8 @@
 
 - Indifference curves of kinked utilities (Leontief, piecewise `min`/`max` `CustomUtility`, ...) now keep exact right-angle corners instead of a chamfered diagonal, in Matplotlib and TikZ output; the TikZ exporter also drops repeated consecutive vertices
 
+- Turn `utility_viz.core.diagrams.consumer.edgeworth` into a subpackage (`box`, `style/`, `focus/`, `exchange/`, `plotting/`, `methods/`) with no module over 250 lines; `EdgeworthBox` and `EquilibriumFocusConfig` import from the same path and rendered output is unchanged (#154)
+
 ## v1.12.0 (2026-09-26)
 
 ### Features
