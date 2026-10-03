@@ -22,6 +22,8 @@
 
 ### Features
 
+- Add `UtilityVizError` as the canonical base exception; `EconVizError` remains as an alias of the same class (#154)
+
 - Add `UtilityVizDeprecationWarning` (a `FutureWarning`) stating deprecated-since, removal version, and replacement
 
 - Add `Config.discover()` and a lookup order of explicit path, `utility-viz.toml`, legacy `econ-viz.toml`, defaults
