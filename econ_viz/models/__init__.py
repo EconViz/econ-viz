@@ -9,11 +9,11 @@ and exposes ``utility_type``, ``ray_slopes``, and ``kink_points`` for
 rendering support.
 """
 
-from .advanced import CustomUtility, MultiGoodCD
-from .core import CES, CobbDouglas, Haagsma, Leontief, PerfectSubstitutes, QuasiLinear, Satiation, StoneGeary, Translog
-from .parser import parse_latex
-from .protocol import UtilityFunction
-from .registry import build_registered_model, get_model_registry
+from econ_viz.models.advanced import CustomUtility, MultiGoodCD
+from econ_viz.models.core import CES, CobbDouglas, Haagsma, Leontief, PerfectSubstitutes, QuasiLinear, Satiation, StoneGeary, Translog
+from econ_viz.models.parser import parse_latex
+from econ_viz.models.protocol import UtilityFunction
+from econ_viz.models.registry import build_registered_model, get_model_registry
 
 __all__ = [
     "CobbDouglas",

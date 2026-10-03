@@ -22,14 +22,14 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
 
-from . import themes
-from .exceptions import InvalidParameterError
-from .themes.fill import Fill
-from .themes.label import Label
-from .themes.legend import Legend
-from .themes.marker import Marker
-from .themes.stroke import Stroke
-from .themes.theme import Theme
+import econ_viz.themes as themes
+from econ_viz.exceptions import InvalidParameterError
+from econ_viz.themes.fill import Fill
+from econ_viz.themes.label import Label
+from econ_viz.themes.legend import Legend
+from econ_viz.themes.marker import Marker
+from econ_viz.themes.stroke import Stroke
+from econ_viz.themes.theme import Theme
 
 if sys.version_info >= (3, 11):
     import tomllib

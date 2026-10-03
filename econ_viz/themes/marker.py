@@ -6,8 +6,8 @@ from dataclasses import dataclass
 
 from matplotlib.markers import MarkerStyle
 
-from ..exceptions import InvalidParameterError
-from .opacity import check_opacity
+from econ_viz.exceptions import InvalidParameterError
+from econ_viz.themes.opacity import check_opacity
 
 
 @dataclass(frozen=True)

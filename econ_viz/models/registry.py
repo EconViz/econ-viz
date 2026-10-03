@@ -7,7 +7,7 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from .core import (
+from econ_viz.models.core import (
     CES,
     CobbDouglas,
     Leontief,

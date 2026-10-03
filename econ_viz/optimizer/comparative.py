@@ -13,9 +13,9 @@ import math
 import warnings
 from dataclasses import dataclass
 
-from ..exceptions import InvalidParameterError
-from ..utils.logging import get_logger
-from .solver import solve
+from econ_viz.exceptions import InvalidParameterError
+from econ_viz.utils.logging import get_logger
+from econ_viz.optimizer.solver import solve
 
 logger = get_logger(__name__)
 

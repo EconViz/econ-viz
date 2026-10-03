@@ -7,15 +7,15 @@ interior solution or corner solution) and returns a structured result
 that the :class:`~econ_viz.canvas.base.Canvas` can render directly.
 """
 
-from .analytic import solution_tex
-from .comparative import ComparativeStatics, comparative_statics
-from .decomposition import (
+from econ_viz.optimizer.analytic import solution_tex
+from econ_viz.optimizer.comparative import ComparativeStatics, comparative_statics
+from econ_viz.optimizer.decomposition import (
     DecompositionMethod,
     PriceEffectDecomposition,
     decompose_price_effect,
 )
-from .slutsky import SlutskyMatrix, slutsky_matrix
-from .solver import Equilibrium, solve
+from econ_viz.optimizer.slutsky import SlutskyMatrix, slutsky_matrix
+from econ_viz.optimizer.solver import Equilibrium, solve
 
 __all__ = [
     "Equilibrium",

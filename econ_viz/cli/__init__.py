@@ -13,6 +13,6 @@ The ``econ-viz`` command is registered in ``pyproject.toml`` and
 delegates to :func:`~econ_viz.cli.main.main`.
 """
 
-from .main import main
+from econ_viz.cli.main import main
 
 __all__ = ["main"]

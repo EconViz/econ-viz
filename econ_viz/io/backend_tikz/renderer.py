@@ -5,9 +5,9 @@ from __future__ import annotations
 import numpy as np
 from matplotlib.backend_bases import RendererBase
 
-from ._color import ColorRegistry
-from ._path import dash_spec, path_to_polylines
-from ._text import sanitize_text
+from econ_viz.io.backend_tikz._color import ColorRegistry
+from econ_viz.io.backend_tikz._path import dash_spec, path_to_polylines
+from econ_viz.io.backend_tikz._text import sanitize_text
 
 _DEFAULT_CM_PER_INCH = 1.25
 

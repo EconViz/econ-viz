@@ -6,12 +6,12 @@ import argparse
 import sys
 from importlib.metadata import version
 
-from .errors import CliConfigError
-from .help import cmd_help
-from .init import cmd_init
-from .models import cmd_models
-from .plot import cmd_plot
-from .solve_tex import cmd_solve_tex
+from econ_viz.cli.errors import CliConfigError
+from econ_viz.cli.help import cmd_help
+from econ_viz.cli.init import cmd_init
+from econ_viz.cli.models import cmd_models
+from econ_viz.cli.plot import cmd_plot
+from econ_viz.cli.solve_tex import cmd_solve_tex
 
 
 def build_parser() -> tuple[argparse.ArgumentParser, dict[str, argparse.ArgumentParser]]:

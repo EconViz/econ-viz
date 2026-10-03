@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import numpy as np
 
-from ..canvas.stroke import tag, tag_attr
-from ..constants.canvas import CONTOUR_DOMAIN_MIN
-from ..contours import percentile_levels
-from ..enums import LabelPosition, UtilityType
-from ..themes.label import Label
-from ..utils.logging import get_logger
+from econ_viz.canvas.stroke import tag, tag_attr
+from econ_viz.constants.canvas import CONTOUR_DOMAIN_MIN
+from econ_viz.contours import percentile_levels
+from econ_viz.enums import LabelPosition, UtilityType
+from econ_viz.themes.label import Label
+from econ_viz.utils.logging import get_logger
 
 logger = get_logger(__name__)
 
@@ -106,8 +106,8 @@ class IndifferenceCurves:
 
     def draw(self, ax, x_max: float, y_max: float, **kwargs) -> list[float]:
         """Draw curves onto *ax* and return the computed contour levels."""
-        from ..canvas.layers import Layer
-        from . import draw_ray
+        from econ_viz.canvas.layers import Layer
+        from econ_viz.components import draw_ray
 
         res = int(kwargs.pop("res", 400))
         X, Y, Z = Layer.compute_contour(self.func, (CONTOUR_DOMAIN_MIN, x_max), (CONTOUR_DOMAIN_MIN, y_max), res=res)

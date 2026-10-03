@@ -13,7 +13,7 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from ..enums import ReturnsToScale
+from econ_viz.enums import ReturnsToScale
 
 
 @dataclass(frozen=True)
@@ -224,7 +224,7 @@ class HomogeneityAnalyzer:
         -------
         bool
         """
-        from ..optimizer import solve
+        from econ_viz.optimizer import solve
 
         eq0 = solve(self._func, px=px, py=py, income=income)
         for t in scales:

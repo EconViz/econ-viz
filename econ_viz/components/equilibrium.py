@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from ..canvas.stroke import tag, tag_attr
-from ..enums import LabelPosition
-from ..themes.label import Label
-from ..utils.logging import get_logger
+from econ_viz.canvas.stroke import tag, tag_attr
+from econ_viz.enums import LabelPosition
+from econ_viz.themes.label import Label
+from econ_viz.utils.logging import get_logger
 
 logger = get_logger(__name__)
 
@@ -61,7 +61,7 @@ class EquilibriumPoint:
 
     def draw(self, ax, x_max: float, y_max: float) -> None:
         """Draw the equilibrium annotation onto *ax*."""
-        from . import draw_ray
+        from econ_viz.components import draw_ray
 
         eq = self.eq
         logger.info(

@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from ..canvas.stroke import tag
-from ..exceptions import InvalidParameterError
-from ..utils.logging import get_logger
+from econ_viz.canvas.stroke import tag
+from econ_viz.exceptions import InvalidParameterError
+from econ_viz.utils.logging import get_logger
 
 logger = get_logger(__name__)
 

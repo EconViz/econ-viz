@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from ..enums import ArrowStyle, LineStyle
-from ..exceptions import InvalidParameterError
-from .opacity import check_opacity
+from econ_viz.enums import ArrowStyle, LineStyle
+from econ_viz.exceptions import InvalidParameterError
+from econ_viz.themes.opacity import check_opacity
 
 
 @dataclass(frozen=True)

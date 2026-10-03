@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass, replace
 
-from ..enums import LabelPosition
-from ..themes.label import Label, split_label, to_position
-from ..themes.opacity import check_opacity
+from econ_viz.enums import LabelPosition
+from econ_viz.themes.label import Label, split_label, to_position
+from econ_viz.themes.opacity import check_opacity
 
 
 @dataclass(frozen=True)

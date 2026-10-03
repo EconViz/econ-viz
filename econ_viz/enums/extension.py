@@ -7,7 +7,7 @@ with strict validation rather than raw string comparison.
 
 from enum import Enum
 
-from ..exceptions import ExportError
+from econ_viz.exceptions import ExportError
 
 
 class ExportFormat(Enum):

@@ -7,8 +7,8 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from .comparative import ComparativeStatics, comparative_statics
-from .solver import solve
+from econ_viz.optimizer.comparative import ComparativeStatics, comparative_statics
+from econ_viz.optimizer.solver import solve
 
 _DEFAULT_H = 1e-3
 _DEFAULT_TOL = 5e-2

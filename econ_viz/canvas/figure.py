@@ -11,16 +11,16 @@ from matplotlib.axes import Axes
 from matplotlib.figure import Figure as MplFigure
 from matplotlib.gridspec import GridSpec
 
-from ..config import Config
-from ..constants.canvas import DEFAULT_DPI
-from ..enums import ArrowStyle, LabelPosition, Layout, LineStyle
-from ..io import save_figure
-from ..themes.axis import Axis
-from ..themes.label import Label, split_label
-from ..themes.stroke import Stroke
-from ..themes.theme import Theme
-from .base import Canvas
-from .fonts import FontApplier, resolve_font, resolve_math_font
+from econ_viz.config import Config
+from econ_viz.constants.canvas import DEFAULT_DPI
+from econ_viz.enums import ArrowStyle, LabelPosition, Layout, LineStyle
+from econ_viz.io import save_figure
+from econ_viz.themes.axis import Axis
+from econ_viz.themes.label import Label, split_label
+from econ_viz.themes.stroke import Stroke
+from econ_viz.themes.theme import Theme
+from econ_viz.canvas.base import Canvas
+from econ_viz.canvas.fonts import FontApplier, resolve_font, resolve_math_font
 
 
 @dataclass(frozen=True)

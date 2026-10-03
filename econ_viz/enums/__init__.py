@@ -7,12 +7,12 @@ the qualitative shape of the underlying preference family, and to
 validate export formats at save time.
 """
 
-from .axis import ArrowStyle, LabelPosition, LineStyle
-from .extension import ExportFormat
-from .layout import Layout
-from .legend import LegendPosition
-from .returns import ReturnsToScale
-from .utility import UtilityType
+from econ_viz.enums.axis import ArrowStyle, LabelPosition, LineStyle
+from econ_viz.enums.extension import ExportFormat
+from econ_viz.enums.layout import Layout
+from econ_viz.enums.legend import LegendPosition
+from econ_viz.enums.returns import ReturnsToScale
+from econ_viz.enums.utility import UtilityType
 
 __all__ = [
     "ArrowStyle",
