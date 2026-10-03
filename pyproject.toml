@@ -79,8 +79,10 @@ target-version = "py310"
 exclude = ["notebook"]
 
 [tool.ruff.lint]
-select = ["E", "F", "W", "I", "UP", "B", "SIM"]
-ignore = ["E501"]  # long lines are common in this codebase (dense math expressions)
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "C901", "PLR0915"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["B011"]
