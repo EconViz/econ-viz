@@ -32,6 +32,10 @@
 
 - Add architecture and public-API tests that enforce package layering and the root facade
 
+### Changes
+
+- Make the whole repository (library, tests, examples) pass `mypy .`, split `apply_strokes` into helpers to satisfy the complexity limit, clear remaining long-line and commented-out-code lint findings, and run `mypy .` in CI (#154)
+
 ### Maintenance
 
 - Split `core/canvas/base.py` into cohesive modules (`style`, `layers`, `decomposition`, `legend`, `output`) and break long methods into private helpers; `Canvas` and its public API are unchanged (#154)
