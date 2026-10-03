@@ -9,10 +9,10 @@ import pytest
 from matplotlib.colors import to_hex
 
 from econ_viz import Axis, Canvas, Effect, Figure, Label, Layout
-from econ_viz.consumer.edgeworth import EdgeworthBox
+from econ_viz.core.diagrams.consumer.edgeworth import EdgeworthBox
 from econ_viz.enums import LabelPosition
-from econ_viz.models import CobbDouglas
-from econ_viz.optimizer import decompose_price_effect
+from econ_viz.models.optimization import decompose_price_effect
+from econ_viz.models.utility import CobbDouglas
 
 MODEL = CobbDouglas(alpha=0.5, beta=0.5)
 DEC = decompose_price_effect(MODEL, px=(2.0, 4.0), py=3.0, income=30.0)

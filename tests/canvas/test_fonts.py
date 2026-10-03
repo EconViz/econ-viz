@@ -5,8 +5,8 @@ import pytest
 from matplotlib.text import Text
 
 from econ_viz import Canvas, Figure, Layout, levels, solve
-from econ_viz.exceptions import InvalidParameterError
-from econ_viz.models import CobbDouglas
+from econ_viz.core.errors.exceptions import InvalidParameterError
+from econ_viz.models.utility import CobbDouglas
 
 
 def _full_canvas(**kwargs) -> Canvas:

@@ -9,9 +9,9 @@ import pytest
 from matplotlib.colors import to_hex
 
 from econ_viz import Canvas, Effect, LabelPosition
-from econ_viz.exceptions import InvalidParameterError
-from econ_viz.models import CobbDouglas
-from econ_viz.optimizer import decompose_price_effect
+from econ_viz.core.errors.exceptions import InvalidParameterError
+from econ_viz.models.optimization import decompose_price_effect
+from econ_viz.models.utility import CobbDouglas
 
 DEC = decompose_price_effect(CobbDouglas(alpha=0.5, beta=0.5), px=(2.0, 4.0), py=3.0, income=30.0)
 

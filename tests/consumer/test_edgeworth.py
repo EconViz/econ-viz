@@ -7,8 +7,8 @@ import pytest
 from matplotlib.colors import to_hex
 
 from econ_viz import EdgeworthBox, EquilibriumFocusConfig
-from econ_viz.consumer.edgeworth_plotter import plot_indifference_pair
-from econ_viz.models import CobbDouglas, Leontief, PerfectSubstitutes, QuasiLinear
+from econ_viz.core.diagrams.consumer.edgeworth_plotter import plot_indifference_pair
+from econ_viz.models.utility import CobbDouglas, Leontief, PerfectSubstitutes, QuasiLinear
 
 
 def test_invalid_totals_raise():

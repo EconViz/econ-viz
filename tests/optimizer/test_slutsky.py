@@ -2,14 +2,14 @@
 
 import numpy as np
 
-from econ_viz.optimizer.slutsky import slutsky_matrix
+from econ_viz.models.optimization.slutsky import slutsky_matrix
 
 
 def test_slutsky_matrix_is_accurate_for_haagsma_inferior_demand():
     """Solver precision regression: Haagsma demand has a closed form."""
     import warnings
 
-    from econ_viz.models.advanced import CustomUtility
+    from econ_viz.models.utility.advanced import CustomUtility
 
     def utility(x, y, d=27.0):
         x = np.asarray(x, dtype=float)

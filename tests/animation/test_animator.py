@@ -1,4 +1,4 @@
-"""Tests for the econ_viz.animation submodule (issue #44).
+"""Tests for the econ_viz.core.animation submodule (issue #44).
 
 All rendering uses the non-interactive 'Agg' backend so tests can run
 headlessly in CI.
@@ -8,7 +8,7 @@ import numpy as np
 import pytest
 
 from econ_viz import Canvas
-from econ_viz.models import CobbDouglas
+from econ_viz.models.utility import CobbDouglas
 
 # ------------------------------------------------------------------
 # Animator initialisation
@@ -19,7 +19,7 @@ class TestAnimatorInit:
     """Animator constructor validation."""
 
     def test_valid_frames(self):
-        from econ_viz.animation import Animator
+        from econ_viz.core.animation import Animator
 
         def _factory(val):
             return Canvas(x_max=10, y_max=10)
@@ -28,13 +28,13 @@ class TestAnimatorInit:
         assert len(anim._frames) == 10
 
     def test_empty_frames_raises(self):
-        from econ_viz.animation import Animator
+        from econ_viz.core.animation import Animator
 
         with pytest.raises(ValueError, match="non-empty 1-D"):
             Animator(lambda v: Canvas(), frames=[])
 
     def test_2d_frames_raises(self):
-        from econ_viz.animation import Animator
+        from econ_viz.core.animation import Animator
 
         with pytest.raises(ValueError, match="non-empty 1-D"):
             Animator(lambda v: Canvas(), frames=np.ones((3, 3)))
@@ -56,7 +56,7 @@ class TestAnimatorSave:
         return c
 
     def test_save_creates_gif(self, tmp_path):
-        from econ_viz.animation import Animator
+        from econ_viz.core.animation import Animator
 
         out = tmp_path / "test.gif"
         Animator(self._draw, frames=np.linspace(1, 5, 5)).save(str(out), fps=5, dpi=72)
@@ -64,7 +64,7 @@ class TestAnimatorSave:
         assert out.stat().st_size > 0
 
     def test_gif_starts_with_magic_bytes(self, tmp_path):
-        from econ_viz.animation import Animator
+        from econ_viz.core.animation import Animator
 
         out = tmp_path / "magic.gif"
         Animator(self._draw, frames=[2.0, 3.0]).save(str(out), fps=5, dpi=72)
@@ -73,7 +73,7 @@ class TestAnimatorSave:
         assert header in (b"GIF87a", b"GIF89a")
 
     def test_save_creates_parent_dirs(self, tmp_path):
-        from econ_viz.animation import Animator
+        from econ_viz.core.animation import Animator
 
         out = tmp_path / "subdir" / "nested" / "anim.gif"
         Animator(self._draw, frames=[1.0, 2.0]).save(str(out), fps=5, dpi=72)
@@ -82,7 +82,7 @@ class TestAnimatorSave:
     def test_gif_uses_restore_to_background_disposal(self, tmp_path):
         from PIL import Image
 
-        from econ_viz.animation import Animator
+        from econ_viz.core.animation import Animator
 
         out = tmp_path / "disposal.gif"
         Animator(self._draw, frames=[1.0, 2.0, 3.0]).save(str(out), fps=5, dpi=72)
@@ -120,7 +120,7 @@ class TestRequirePillow:
 
         monkeypatch.setattr(builtins, "__import__", _mock_import)
 
-        from econ_viz.animation.animator import _require_pillow
+        from econ_viz.core.animation.animator import _require_pillow
 
         with pytest.raises(ImportError, match="Pillow is required"):
             _require_pillow()

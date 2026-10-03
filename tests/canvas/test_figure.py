@@ -14,7 +14,7 @@ from econ_viz import (
     LinearBudget,
     PricePath,
 )
-from econ_viz.models import CES, CobbDouglas, Leontief, PerfectSubstitutes, QuasiLinear, StoneGeary
+from econ_viz.models.utility import CES, CobbDouglas, Leontief, PerfectSubstitutes, QuasiLinear, StoneGeary
 
 
 class TestFigure:
