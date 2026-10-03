@@ -30,6 +30,8 @@
 
 - Split long functions and the Edgeworth box module into private helpers and `edgeworth_style`, `edgeworth_focus` and `edgeworth_exchange` modules without changing the public API or rendered output (#154)
 
+- Turn `utility_viz.core.diagrams.consumer.edgeworth` into a subpackage (`box`, `style/`, `focus/`, `exchange/`, `plotting/`, `methods/`) with no module over 250 lines; `EdgeworthBox` and `EquilibriumFocusConfig` import from the same path and rendered output is unchanged (#154)
+
 ## v1.12.0 (2026-09-26)
 
 ### Features
