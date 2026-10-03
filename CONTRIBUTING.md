@@ -7,8 +7,13 @@ Thank you for your interest in contributing! This guide covers everything you ne
 ```bash
 git clone https://github.com/EconViz/econ-viz.git
 cd utility-viz
-uv sync --all-extras
+uv sync --all-packages --all-extras
 ```
+
+The repository is a uv workspace with two distributions released in lockstep:
+`utility-viz` (the root, `utility_viz/`) and `econ-viz` (`packages/econ-viz/`), the deprecated
+1.x name that ships the `econ_viz` compat package and the `econ-viz` command. `--all-packages`
+installs both in editable mode, which `tests/compat` needs.
 
 Run the complete local quality gate:
 
@@ -16,7 +21,7 @@ Run the complete local quality gate:
 uv run pytest
 uv run ruff check .
 uv run ruff format --check .
-uv run mypy utility_viz
+uv run mypy .
 ```
 
 Tests are grouped by package domain under `tests/`. The default command
