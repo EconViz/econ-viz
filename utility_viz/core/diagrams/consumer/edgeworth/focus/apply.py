@@ -6,8 +6,11 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
+from utility_viz.core.diagrams.consumer.edgeworth.focus.selection import curve_count_bounds, should_include_endowment_ic
+
 if TYPE_CHECKING:
-    from utility_viz.core.diagrams.consumer.edgeworth import EdgeworthBox, EquilibriumFocusConfig
+    from utility_viz.core.diagrams.consumer.edgeworth.box import EdgeworthBox
+    from utility_viz.core.diagrams.consumer.edgeworth.config import EquilibriumFocusConfig
 
 
 def apply_equilibrium_focus(box: EdgeworthBox, px: float, py: float, cfg: EquilibriumFocusConfig) -> None:
@@ -15,12 +18,7 @@ def apply_equilibrium_focus(box: EdgeworthBox, px: float, py: float, cfg: Equili
     if box.walrasian_equilibrium is None:
         box.add_walrasian_equilibrium(px=px, py=py)
 
-    min_curves = max(1, int(cfg.min_curves_per_agent))
-    max_curves = max(min_curves, int(cfg.max_curves_per_agent))
-    min_curves = max(3, min_curves)
-    max_curves = min(5, max_curves)
-    if min_curves > max_curves:
-        min_curves = max_curves
+    min_curves, max_curves = curve_count_bounds(cfg)
 
     include = cfg.include_endowment_indifference
     if include == "auto":
@@ -69,18 +67,3 @@ def apply_equilibrium_focus(box: EdgeworthBox, px: float, py: float, cfg: Equili
     box.equilibrium_focus_levels_a = levels_a
     box.equilibrium_focus_levels_b = levels_b
     box.add_indifference_curves(levels_a=levels_a, levels_b=levels_b, linewidth=lw_eq, res=cfg.res)
-
-
-def should_include_endowment_ic(box: EdgeworthBox, *, min_relative_gap: float) -> bool:
-    """Whether the endowment indifference curves differ enough from ``X*``'s."""
-    if box.endowment is None or box.walrasian_equilibrium is None:
-        return False
-    ex, ey = box.endowment
-    x_star, y_star = box.walrasian_equilibrium
-    ua_e = box._eval_ua(ex, ey)
-    ub_e = box._eval_ub(ex, ey)
-    ua_s = box._eval_ua(x_star, y_star)
-    ub_s = box._eval_ub(x_star, y_star)
-    gap_a = abs(ua_s - ua_e) / (abs(ua_s) + 1e-9)
-    gap_b = abs(ub_s - ub_e) / (abs(ub_s) + 1e-9)
-    return max(gap_a, gap_b) >= max(min_relative_gap, 0.0)
