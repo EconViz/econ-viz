@@ -28,6 +28,10 @@
 
 - Add architecture and public-API tests that enforce package layering and the root facade
 
+### Maintenance
+
+- Split `core/canvas/base.py` into cohesive modules (`style`, `layers`, `decomposition`, `legend`, `output`) and break long methods into private helpers; `Canvas` and its public API are unchanged (#154)
+
 ## v1.12.0 (2026-09-26)
 
 ### Features
