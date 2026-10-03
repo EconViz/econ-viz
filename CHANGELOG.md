@@ -2,7 +2,7 @@
 
 <!-- version list -->
 
-## Unreleased
+## v2.0.0b1 (2026-10-03)
 
 ### Breaking changes
 
