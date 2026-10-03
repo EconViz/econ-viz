@@ -10,6 +10,14 @@
 
 - Reorganise internals into `core/` (styles, themes, rendering, canvas, layout, diagrams, export, config, errors, constants, animation, interactive) and `models/` (utility, curves, consumer, optimization, analysis); deep `core` imports are advanced/internal APIs (#131)
 
+### Behaviour notes
+
+- `import econ_viz` emits one `UtilityVizDeprecationWarning` per process; `econ_viz.Canvas`, `Figure` and `Animator` additionally warn on construction and `econ_viz.Layout` on access. `isinstance`/`issubclass` against these legacy classes accept instances and classes of the 2.x counterparts, and vice versa
+
+- `Config.load()` with no argument looks up `utility-viz.toml`, then legacy `econ-viz.toml` (with a warning) and raises `InvalidParameterError` ("config file not found") if neither exists, as in 1.x; `Config.discover()` falls back to the built-in defaults instead
+
+- `utility-viz plot` without `--config` now reads `utility-viz.toml` (or legacy `econ-viz.toml`, with a warning; the new file wins if both exist) from the current directory, otherwise uses the defaults. An explicit `--config` still wins. Previously no file was read unless `--config` was passed
+
 ### Features
 
 - Add `UtilityVizDeprecationWarning` (a `FutureWarning`) stating deprecated-since, removal version, and replacement

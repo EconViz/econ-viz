@@ -111,7 +111,9 @@ def test_new_wins_when_both_exist_and_legacy_is_ignored_with_warning(tmp_path):
 
 def test_load_without_path_uses_lookup_in_cwd(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
-    assert Config.load() == Config()
+    with pytest.raises(InvalidParameterError, match="config file not found: utility-viz.toml"):
+        Config.load()  # 1.x semantics: no file is an error ...
+    assert Config.discover() == Config()  # ... discover() falls back to defaults
     _write(tmp_path, LEGACY_FILE, OLD_TOML)
     with pytest.warns(UtilityVizDeprecationWarning):
         assert Config.load().theme.ic_color == "#222222"
@@ -258,3 +260,71 @@ def test_both_import_names_are_importable():
     import utility_viz
 
     assert econ_viz.__name__ == "econ_viz" and utility_viz.__name__ == "utility_viz"
+
+
+# --- CLI plot: automatic config lookup ---------------------------------------------------------------
+
+
+def _plot(monkeypatch, tmp_path, *extra):
+    out = tmp_path / "o.png"
+    _run_cli(monkeypatch, "plot", "--model", "cobb-douglas", "--alpha", "0.5", "--beta", "0.5", "-o", str(out), *extra)
+    return out
+
+
+@pytest.fixture
+def captured_theme(monkeypatch):
+    seen = {}
+    from utility_viz.core.canvas.base import Canvas
+
+    original = Canvas.__init__
+
+    def spy(self, *a, **k):
+        seen["theme"] = k.get("theme")
+        original(self, *a, **k)
+
+    monkeypatch.setattr(Canvas, "__init__", spy)
+    return seen
+
+
+def test_plot_without_config_uses_defaults(tmp_path, monkeypatch, captured_theme):
+    monkeypatch.chdir(tmp_path)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        assert _plot(monkeypatch, tmp_path).exists()
+    assert captured_theme["theme"] is themes.default
+
+
+def test_plot_picks_up_new_file_from_cwd(tmp_path, monkeypatch, captured_theme):
+    monkeypatch.chdir(tmp_path)
+    _write(tmp_path, DEFAULT_FILE, NEW_TOML)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        _plot(monkeypatch, tmp_path)
+    assert captured_theme["theme"].ic_color == "#111111"
+
+
+def test_plot_picks_up_legacy_file_with_warning(tmp_path, monkeypatch, captured_theme):
+    monkeypatch.chdir(tmp_path)
+    _write(tmp_path, LEGACY_FILE, OLD_TOML)
+    with pytest.warns(UtilityVizDeprecationWarning, match="econ-viz.toml"):
+        _plot(monkeypatch, tmp_path)
+    assert captured_theme["theme"].ic_color == "#222222"
+
+
+def test_plot_new_wins_over_legacy_with_warning(tmp_path, monkeypatch, captured_theme):
+    monkeypatch.chdir(tmp_path)
+    _write(tmp_path, DEFAULT_FILE, NEW_TOML)
+    _write(tmp_path, LEGACY_FILE, OLD_TOML)
+    with pytest.warns(UtilityVizDeprecationWarning, match="ignored"):
+        _plot(monkeypatch, tmp_path)
+    assert captured_theme["theme"].ic_color == "#111111"
+
+
+def test_plot_explicit_config_beats_lookup(tmp_path, monkeypatch, captured_theme):
+    monkeypatch.chdir(tmp_path)
+    _write(tmp_path, DEFAULT_FILE, NEW_TOML)
+    explicit = _write(tmp_path, "mine.toml", 'base = "paper"\n')
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        _plot(monkeypatch, tmp_path, "--config", str(explicit))
+    assert captured_theme["theme"].ic_color == themes.paper.ic_color

@@ -220,9 +220,65 @@ def test_utility_viz_names_do_not_warn():
         utility_viz.Figure(utility_viz.Layout.SIDE_BY_SIDE)
 
 
-def test_importing_legacy_package_does_not_warn_by_itself():
+def test_importing_legacy_package_warns_once_at_the_import_line():
     code = (
-        "import warnings; warnings.simplefilter('error'); import econ_viz, econ_viz.models; "
-        "from econ_viz import Stroke, solve"
+        "import warnings\n"
+        "with warnings.catch_warnings(record=True) as w:\n"
+        "    warnings.simplefilter('always')\n"
+        "    import econ_viz\n"
+        "    import econ_viz.models\n"
+        "    from econ_viz import Stroke, solve\n"
+        "    import econ_viz\n"
+        "assert len(w) == 1, [str(x.message) for x in w]\n"
+        "m = str(w[0].message)\n"
+        "assert w[0].category.__name__ == 'UtilityVizDeprecationWarning'\n"
+        "assert 'deprecated since 2.0.0' in m and 'removed in 3.0.0' in m and 'utility_viz' in m, m\n"
+        "assert w[0].filename == '<string>' and w[0].lineno == 4, (w[0].filename, w[0].lineno)\n"
     )
-    assert subprocess.run([sys.executable, "-c", code]).returncode == 0
+    result = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True)
+    assert result.returncode == 0, result.stderr
+
+
+def test_isinstance_is_symmetric_for_shims():
+    import econ_viz
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UtilityVizDeprecationWarning)
+        new_canvas = utility_viz.Canvas(x_max=5, y_max=5)
+        old_canvas = econ_viz.Canvas(x_max=5, y_max=5)
+        new_fig = utility_viz.Figure(utility_viz.Layout.SIDE_BY_SIDE)
+        old_fig = econ_viz.Figure(utility_viz.Layout.SIDE_BY_SIDE)
+        new_anim = utility_viz.core.animation.Animator(lambda v: new_canvas, frames=[1.0])
+        old_anim = econ_viz.animation.Animator(lambda v: new_canvas, frames=[1.0])
+    for new, old, legacy_cls, new_cls in [
+        (new_canvas, old_canvas, econ_viz.Canvas, utility_viz.Canvas),
+        (new_fig, old_fig, econ_viz.Figure, utility_viz.Figure),
+        (new_anim, old_anim, econ_viz.animation.Animator, utility_viz.core.animation.Animator),
+    ]:
+        assert isinstance(new, legacy_cls) and isinstance(old, legacy_cls)
+        assert isinstance(new, new_cls) and isinstance(old, new_cls)
+        assert issubclass(new_cls, legacy_cls) and issubclass(legacy_cls, new_cls)
+    assert not isinstance(object(), econ_viz.Canvas)
+    assert not isinstance(new_fig, econ_viz.Canvas)
+
+
+def test_user_subclass_of_shim_keeps_normal_isinstance():
+    import econ_viz
+
+    class Mine(econ_viz.Canvas):
+        pass
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UtilityVizDeprecationWarning)
+        assert isinstance(Mine(x_max=5, y_max=5), econ_viz.Canvas)
+        assert not isinstance(utility_viz.Canvas(x_max=5, y_max=5), Mine)
+
+
+def test_shim_class_pickles_by_reference_and_equality_is_untouched():
+    import pickle
+
+    import econ_viz
+
+    assert pickle.loads(pickle.dumps(econ_viz.Canvas)) is econ_viz.Canvas
+    assert econ_viz.Canvas.__module__ == "econ_viz" and econ_viz.Canvas.__qualname__ == "Canvas"
+    assert econ_viz.Canvas.__eq__ is utility_viz.Canvas.__eq__
