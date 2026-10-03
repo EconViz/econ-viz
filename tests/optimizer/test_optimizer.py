@@ -753,7 +753,7 @@ class TestPriceEffectDecompositionCobbDouglas:
             )
 
         with pytest.raises(InvalidParameterError):
-            decompose_price_effect(
+            decompose_price_effect(  # type: ignore[arg-type]
                 self.model,
                 px=(2.0,),  # pragma: no branch
                 py=self.py,

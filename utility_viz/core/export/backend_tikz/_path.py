@@ -58,17 +58,8 @@ def strip_closing_vertex(poly: np.ndarray, *, filled: bool) -> np.ndarray:
     if filled or len(poly) <= 2:
         return poly
     if np.allclose(poly[0], poly[-1]):
-        poly = poly[:-1]
-    return _drop_repeated_vertices(poly)
-
-
-def _drop_repeated_vertices(poly: np.ndarray) -> np.ndarray:
-    """Remove consecutive identical vertices left behind by path simplification."""
-    if len(poly) < 2:
-        return poly
-    keep = np.ones(len(poly), dtype=bool)
-    keep[1:] = np.any(poly[1:] != poly[:-1], axis=1)
-    return poly if keep.all() else poly[keep]
+        return poly[:-1]
+    return poly
 
 
 def dash_spec(dashes) -> str:

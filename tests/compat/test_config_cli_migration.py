@@ -228,9 +228,9 @@ def test_legacy_cli_end_to_end_subprocess():
 
 
 def _pyproject() -> dict:
-    if sys.version_info >= (3, 11):
+    try:
         import tomllib
-    else:  # pragma: no cover
+    except ModuleNotFoundError:  # pragma: no cover
         import tomli as tomllib
     return tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
 

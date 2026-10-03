@@ -1,7 +1,6 @@
 """Generate Edgeworth box examples for common utility-function combinations."""
 
 from pathlib import Path
-from typing import Any
 
 import matplotlib
 
@@ -78,7 +77,7 @@ def _min_piecewise() -> CustomUtility:
 
 
 def build_all_cases() -> None:
-    cases: list[dict[str, Any]] = [
+    cases = [
         {
             "filename": "edgeworth_cobb_asymmetric.png",
             "title": "Edgeworth: Asymmetric Cobb-Douglas",

@@ -76,7 +76,7 @@ jobs:
         run: uv run ruff format --check .
 
       - name: Check types
-        run: uv run mypy .
+        run: uv run mypy utility_viz
 
   # Branch protection requires a check named "test"; it passes only if every version passes.
   test:

@@ -5,7 +5,6 @@ from __future__ import annotations
 import numpy as np
 
 from utility_viz.core.constants.canvas import CONTOUR_DOMAIN_MIN
-from utility_viz.core.diagrams.components._corners import repair_contour_set
 from utility_viz.core.rendering.stroke import tag, tag_attr
 from utility_viz.core.styles.label import Label
 from utility_viz.enums import LabelPosition, UtilityType
@@ -105,16 +104,6 @@ class IndifferenceCurves:
         self.secondary_opacity = secondary_opacity
         self.label_style = label_style
 
-    def _kinks(self, levels: list[float]) -> list[tuple[float, float]]:
-        """Exact model kink points used to snap reconstructed corners, if available."""
-        kink_points = getattr(self.func, "kink_points", None)
-        if kink_points is None:
-            return []
-        try:
-            return [(float(x), float(y)) for x, y in kink_points(levels)]
-        except Exception:  # noqa: BLE001 - an unusable kink hook must not break drawing
-            return []
-
     def draw(self, ax, x_max: float, y_max: float, **kwargs) -> list[float]:
         """Draw curves onto *ax* and return the computed contour levels."""
         from utility_viz.models.curves.layers import Layer
@@ -129,6 +118,21 @@ class IndifferenceCurves:
         # Matplotlib dashes negative contour levels by default; utility levels are just levels.
         kwargs.setdefault("linestyles", "solid")
 
+        focal_levels, segs_by_level, color_by_level = self._draw_contours(ax, X, Y, Z, computed, kwargs)
+        self._make_legend_proxy()
+
+        if self.show_ic_labels:
+            self._draw_ic_labels(ax, computed, segs_by_level, color_by_level, focal_levels, x_max, y_max)
+
+        self._draw_kinked_decorations(ax, computed, x_max, y_max)
+        self._draw_subsistence_lines(ax)
+
+        return computed
+
+    def _draw_contours(
+        self, ax, X, Y, Z, computed: list[float], kwargs: dict
+    ) -> tuple[list[float], dict[float, tuple], dict[float, str]]:
+        """Draw the focal (and, when highlighting, the muted secondary) contours."""
         focal_idx: int | None = None
         if self.highlight_level is not None and computed:
             focal_idx = int(np.argmin(np.abs(np.array(computed) - self.highlight_level)))
@@ -136,11 +140,7 @@ class IndifferenceCurves:
         focal_levels = computed if focal_idx is None else [computed[focal_idx]]
         secondary_levels = [] if focal_idx is None else [lv for i, lv in enumerate(computed) if i != focal_idx]
 
-        cell = float(np.hypot(X[0, 1] - X[0, 0], Y[1, 0] - Y[0, 0]))
-        kinks = self._kinks(computed)
-
         cs = ax.contour(X, Y, Z, levels=focal_levels, colors=self.color, linewidths=self.linewidth, **kwargs)
-        repair_contour_set(cs, cell, kinks)
         tag(cs, "curve")
 
         segs_by_level: dict[float, tuple] = dict(zip(focal_levels, cs.allsegs, strict=True))
@@ -157,11 +157,13 @@ class IndifferenceCurves:
                 alpha=self.secondary_opacity,
                 **kwargs,
             )
-            repair_contour_set(cs2, cell, kinks)
             tag(cs2, "secondary_curve")
             segs_by_level.update(zip(secondary_levels, cs2.allsegs, strict=True))
             color_by_level.update(dict.fromkeys(secondary_levels, self.secondary_color))
+        return focal_levels, segs_by_level, color_by_level
 
+    def _make_legend_proxy(self) -> None:
+        """Create the legend handle standing in for the contour set (if labelled)."""
         import matplotlib.lines as mlines
 
         self._proxy: mlines.Line2D | None = None
@@ -169,18 +171,12 @@ class IndifferenceCurves:
             self._proxy = mlines.Line2D([], [], color=self.color, linewidth=self.linewidth, label=self.label)
             tag(self._proxy, "curve")
 
-        if self.show_ic_labels:
-            self._draw_ic_labels(ax, computed, segs_by_level, color_by_level, focal_levels, x_max, y_max)
-
-        self._draw_kinked_decorations(ax, computed, x_max, y_max)
-
+    def _draw_subsistence_lines(self, ax) -> None:
         if hasattr(self.func, "subsistence_lines"):
             sub_x, sub_y = self.func.subsistence_lines()
             style = dict(color=self.subsistence_color, linewidth=self.subsistence_linewidth, linestyle="--", alpha=0.6)
             tag(ax.axvline(x=sub_x, **style), "subsistence")
             tag(ax.axhline(y=sub_y, **style), "subsistence")
-
-        return computed
 
     def _draw_ic_labels(self, ax, computed, segs_by_level, color_by_level, focal_levels, x_max, y_max) -> None:
         for rank, level in enumerate(computed, start=1):

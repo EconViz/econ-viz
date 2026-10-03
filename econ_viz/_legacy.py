@@ -123,7 +123,7 @@ _MODULE_MAP: list[tuple[str, str]] = [
     ("canvas.layers", "models.curves.layers"),
     ("components", "core.diagrams.components"),
     ("consumer.demand", "core.diagrams.consumer.demand"),
-    ("consumer.edgeworth_plotter", "core.diagrams.consumer.edgeworth_plotter"),
+    ("consumer.edgeworth_plotter", "core.diagrams.consumer.edgeworth.plotting"),
     ("consumer.edgeworth_compute", "models.consumer.edgeworth_compute"),
     ("consumer.edgeworth_state", "models.consumer.edgeworth_state"),
     ("consumer.paths", "models.consumer.paths"),
