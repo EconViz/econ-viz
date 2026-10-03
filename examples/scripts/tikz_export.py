@@ -12,8 +12,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from econ_viz import Canvas, levels, solve
-from econ_viz.io.backend_tikz import figure_to_tikz
-from econ_viz.models import (
+from econ_viz.core.export.backend_tikz import figure_to_tikz
+from econ_viz.models.utility import (
     CES,
     CobbDouglas,
     CustomUtility,

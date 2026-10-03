@@ -2,7 +2,7 @@
 
 
 def test_statics_module_reexports_public_helpers():
-    from econ_viz.optimizer import statics
+    from econ_viz.models.optimization import statics
 
     assert statics.__all__ == [
         "ComparativeStatics",

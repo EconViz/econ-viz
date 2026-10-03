@@ -47,6 +47,33 @@ This keeps everyone from stepping on each other.
 
 Issues labelled [`good first issue`](https://github.com/EconViz/econ-viz/issues?q=label%3A%22good+first+issue%22) are a great starting point. They are self-contained and well-documented.
 
+## Package architecture
+
+The package is organised into a small number of cohesive subpackages. Imports
+must point **down** the layer table below (enforced by `tests/test_architecture.py`,
+which also forbids cycles and relative imports).
+
+```
+econ_viz/
+  __init__.py      root facade (public API, lazy)               layer 10
+  cli/             command-line interface                       layer 9
+  models/          facade re-exporting the economic models      layer 9
+    utility/ curves/ consumer/ optimization/ analysis/          layers 2-4  (never import econ_viz.core drawing code)
+  core/            drawing, styling, export, runtime (advanced/internal API)
+    errors/ constants/                                          layer 0
+    styles/ themes/ export/ config/ rendering/                  layers 2-4
+    diagrams/components/                                        layer 5
+    canvas/ layout/                                             layers 6-7
+    diagrams/consumer/ animation/ interactive/                  layer 8
+  enums/ utils/    shared internal areas                        layer 1
+```
+
+- Public API = the root facade (`from econ_viz import Canvas, ...`) and `econ_viz.models`.
+  Deep `econ_viz.core.*` imports are advanced/internal and may move between minor releases.
+- Helpers live beside the feature that owns them and are underscore-prefixed
+  (`_color.py`, `_require_pillow`). Do not add a generic top-level `helper/` package.
+- Adding a subpackage? Register it (with a layer) in `tests/test_architecture.py`.
+
 ## Code style
 
 - Python 3.10+

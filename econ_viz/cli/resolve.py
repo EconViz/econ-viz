@@ -21,8 +21,8 @@ def build_model(args: argparse.Namespace):
     UtilityFunction
         A concrete model conforming to the ``UtilityFunction`` protocol.
     """
-    from econ_viz.models.registry import build_registered_model, get_model_registry
-    from econ_viz.parser import parse_latex
+    from econ_viz.models.utility.parser import parse_latex
+    from econ_viz.models.utility.registry import build_registered_model, get_model_registry
 
     if args.latex:
         return parse_latex(args.latex)
@@ -44,7 +44,7 @@ def _themes_map() -> dict[str, object]:
     """Return the name→Theme mapping, loading themes lazily."""
     global _THEMES
     if _THEMES is None:
-        from econ_viz import themes
+        import econ_viz.core.themes as themes
 
         _THEMES = {
             "default": themes.default,

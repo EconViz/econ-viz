@@ -2,7 +2,7 @@
 Enumeration of returns-to-scale classifications.
 
 Derived from the homogeneity degree *k* of a utility or production function
-and used by :class:`~econ_viz.analysis.homogeneity.HomogeneityAnalyzer` to
+and used by :class:`~econ_viz.models.analysis.homogeneity.HomogeneityAnalyzer` to
 summarise scaling behaviour in production-theoretic terms.
 """
 

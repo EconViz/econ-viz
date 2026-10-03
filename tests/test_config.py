@@ -9,11 +9,11 @@ import pytest
 from matplotlib.colors import to_hex
 
 from econ_viz import Canvas, Config, Figure, Layout, themes
-from econ_viz.config import template
-from econ_viz.consumer.edgeworth import EdgeworthBox
+from econ_viz.core.config.settings import template
+from econ_viz.core.diagrams.consumer.edgeworth import EdgeworthBox
+from econ_viz.core.errors.exceptions import InvalidParameterError
 from econ_viz.enums import LabelPosition, LegendPosition, LineStyle
-from econ_viz.exceptions import InvalidParameterError
-from econ_viz.models import CobbDouglas
+from econ_viz.models.utility import CobbDouglas
 
 EXAMPLE = """
 base = "default"

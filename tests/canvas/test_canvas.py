@@ -5,17 +5,17 @@ import numpy as np
 import pytest
 
 from econ_viz import ArrowStyle, Canvas, LabelPosition, LineStyle, themes
-from econ_viz.canvas.layers import Layer
-from econ_viz.components import BudgetConstraint, EquilibriumPoint, IndifferenceCurves, draw_ray
-from econ_viz.consumer.paths import LinearBudget, PricePath
-from econ_viz.exceptions import ExportError, InvalidParameterError
-from econ_viz.models import CobbDouglas, Leontief, QuasiLinear, Satiation
-from econ_viz.optimizer import (
+from econ_viz.core.diagrams.components import BudgetConstraint, EquilibriumPoint, IndifferenceCurves, draw_ray
+from econ_viz.core.errors.exceptions import ExportError, InvalidParameterError
+from econ_viz.models.consumer.paths import LinearBudget, PricePath
+from econ_viz.models.curves.layers import Layer
+from econ_viz.models.optimization import (
     DecompositionMethod,
     Equilibrium,
     decompose_price_effect,
     solve,
 )
+from econ_viz.models.utility import CobbDouglas, Leontief, QuasiLinear, Satiation
 
 
 class TestCanvasInit:

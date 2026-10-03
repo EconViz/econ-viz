@@ -1,13 +1,13 @@
-"""Tests for econ_viz.analysis.homogeneity — HomogeneityAnalyzer."""
+"""Tests for econ_viz.models.analysis.homogeneity — HomogeneityAnalyzer."""
 
 import dataclasses
 import math
 
 import pytest
 
-from econ_viz.analysis import HomogeneityAnalyzer, HomogeneityResult
 from econ_viz.enums import ReturnsToScale
-from econ_viz.models import CES, CobbDouglas, Leontief, PerfectSubstitutes, StoneGeary
+from econ_viz.models.analysis import HomogeneityAnalyzer, HomogeneityResult
+from econ_viz.models.utility import CES, CobbDouglas, Leontief, PerfectSubstitutes, StoneGeary
 
 pytestmark = pytest.mark.filterwarnings("ignore:invalid value encountered in scalar power:RuntimeWarning")
 

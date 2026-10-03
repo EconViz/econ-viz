@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import argparse
 
-from econ_viz.models import get_model_registry
+from econ_viz.models.utility import get_model_registry
 
 _MODEL_FLAGS = {
     "cobb-douglas": "--alpha A --beta B",

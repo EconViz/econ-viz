@@ -9,8 +9,8 @@ import pytest
 from matplotlib.colors import to_hex
 
 from econ_viz import Canvas, Fill, Stroke
-from econ_viz.exceptions import InvalidParameterError
-from econ_viz.themes.theme import Theme
+from econ_viz.core.errors.exceptions import InvalidParameterError
+from econ_viz.core.themes.theme import Theme
 
 
 @pytest.fixture(autouse=True)

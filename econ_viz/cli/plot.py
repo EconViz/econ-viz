@@ -20,8 +20,9 @@ def cmd_plot(args: argparse.Namespace) -> None:
     args : argparse.Namespace
         Parsed CLI arguments produced by :func:`~econ_viz.cli.main.build_parser`.
     """
-    from econ_viz import Canvas, solve
-    from econ_viz import levels as lvl_mod
+    from econ_viz.core.canvas import Canvas
+    from econ_viz.models.analysis import levels as lvl_mod
+    from econ_viz.models.optimization import solve
 
     if args.model is None and args.latex is None:
         raise CliConfigError("provide --model <name> or --latex <expr>")
@@ -67,8 +68,8 @@ def cmd_plot(args: argparse.Namespace) -> None:
 
 def _load_config(path: str, theme_name: str | None):
     """Read *path*; an explicit ``--theme`` replaces the file's ``base``."""
-    from econ_viz.config import Config, tomllib
-    from econ_viz.exceptions import InvalidParameterError
+    from econ_viz.core.config.settings import Config, tomllib
+    from econ_viz.core.errors.exceptions import InvalidParameterError
 
     try:
         with open(path, "rb") as handle:
@@ -100,8 +101,8 @@ def _maybe_solve(args: argparse.Namespace, model, solve_fn):
 def _compute_levels(args: argparse.Namespace, model, eq, lvl_mod) -> list[float]:
     """Compute indifference-curve utility levels.
 
-    Uses :func:`~econ_viz.levels.around` when an equilibrium is available,
-    otherwise falls back to :func:`~econ_viz.levels.percentile`.
+    Uses :func:`~econ_viz.models.analysis.levels.around` when an equilibrium is available,
+    otherwise falls back to :func:`~econ_viz.models.analysis.levels.percentile`.
     """
     if eq is not None:
         return lvl_mod.around(eq.utility, n=args.n_curves)

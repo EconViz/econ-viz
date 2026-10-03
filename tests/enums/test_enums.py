@@ -2,8 +2,8 @@
 
 import pytest
 
+from econ_viz.core.errors.exceptions import ExportError
 from econ_viz.enums import ArrowStyle, ExportFormat, LabelPosition, Layout, LineStyle, UtilityType
-from econ_viz.exceptions import ExportError
 
 
 class TestExportFormat:

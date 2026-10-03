@@ -1,4 +1,4 @@
-"""Tests for econ_viz.levels — utility level spacing strategies."""
+"""Tests for econ_viz.models.analysis.levels — utility level spacing strategies."""
 
 import numpy as np
 import pytest

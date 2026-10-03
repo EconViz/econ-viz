@@ -8,7 +8,7 @@ import pytest
 
 from econ_viz.cli.main import build_parser, main
 from econ_viz.cli.resolve import build_model
-from econ_viz.models import QuasiLinear, StoneGeary, Translog
+from econ_viz.models.utility import QuasiLinear, StoneGeary, Translog
 
 
 class TestSolveTexCLI:
