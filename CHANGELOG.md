@@ -22,6 +22,8 @@
 
 ### Features
 
+- Add `utility_viz.core.scenes`: backend-neutral mosaickit layer factories for the budget constraint (`budget_layers`), equilibrium bundle (`equilibrium_layers`) and Cobb-Douglas-class indifference curves (`indifference_layers`), concept-local `utility.*` theme roles and `UTILITY_THEME`, plus `models.curves.trace_level_sets` (bezierkit marching-squares tracing) and `core.scenes.canvas_to_tikz` (native Bezier TikZ export from the same scene). Additive: legacy drawing modules are unchanged. `mosaickit>=0.5.1,<0.6.0` and `bezierkit>=0.5.0rc1,<0.6.0` are new dependencies (Refs #150)
+
 - Add `UtilityVizError` as the canonical base exception; `EconVizError` remains as an alias of the same class (#154)
 
 - Add `UtilityVizDeprecationWarning` (a `FutureWarning`) stating deprecated-since, removal version, and replacement
