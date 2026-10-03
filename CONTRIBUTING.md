@@ -115,7 +115,9 @@ marker and text layers are exported.
 ## Code style
 
 - Python 3.10+
-- Ruff enforces lint rules and formatting
+- Ruff enforces lint rules and formatting, including a 120-column line limit (`E501`), a McCabe
+  complexity cap of 10 (`C901`) and at most 50 statements per function (`PLR0915`); split long
+  functions into private helpers
 - Mypy checks the `utility_viz` package
 - Add tests for any new behaviour
 

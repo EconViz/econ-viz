@@ -44,6 +44,8 @@
 
 - Split `core/canvas/base.py` into cohesive modules (`style`, `layers`, `decomposition`, `legend`, `output`) and break long methods into private helpers; `Canvas` and its public API are unchanged (#154)
 
+- Enable Ruff `E501` (line length 120), `C901` (complexity 10) and `PLR0915` (50 statements) in the lint config, wrapping one long docstring line and splitting `repair_corners` and `canvas_to_tikz` into private helpers with identical output (#154)
+
 ### Bug fixes
 
 - Indifference curves of kinked utilities (Leontief, piecewise `min`/`max` `CustomUtility`, ...) now keep exact right-angle corners instead of a chamfered diagonal, in Matplotlib and TikZ output; the TikZ exporter also drops repeated consecutive vertices

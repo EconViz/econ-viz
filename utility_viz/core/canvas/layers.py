@@ -98,7 +98,8 @@ class LayerMixin(CanvasState):
             Forwarded to :meth:`matplotlib.axes.Axes.contour`.
 
         stroke : Stroke, optional
-            Line style for the indifference curves (default ``theme.ic_stroke``); ``arrow`` adds an arrowhead to each curve.
+            Line style for the indifference curves (default ``theme.ic_stroke``);
+            ``arrow`` adds an arrowhead to each curve.
         ray_stroke : Stroke, optional
             Line style for kink-locus rays (default ``theme.ray_stroke``).
         secondary_stroke : Stroke, optional
