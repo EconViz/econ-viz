@@ -20,6 +20,8 @@
 
 ### Features
 
+- Add `utility_viz.core.scenes`: backend-neutral mosaickit layer factories for the budget constraint (`budget_layers`), equilibrium bundle (`equilibrium_layers`) and Cobb-Douglas-class indifference curves (`indifference_layers`), concept-local `utility.*` theme roles and `UTILITY_THEME`, plus numpy-only `models.curves.level_curve_path`. Additive: legacy drawing modules are unchanged. `mosaickit>=0.5.1,<0.6.0` is a new dependency (Refs #150)
+
 - Add `UtilityVizDeprecationWarning` (a `FutureWarning`) stating deprecated-since, removal version, and replacement
 
 - Add `Config.discover()` and a lookup order of explicit path, `utility-viz.toml`, legacy `econ-viz.toml`, defaults
