@@ -276,7 +276,15 @@ utility-viz plot --model cobb-douglas --alpha 0.5 --beta 0.5 \
 | CLI | `econ-viz` | `utility-viz` |
 | Config file | `econ-viz.toml` | `utility-viz.toml` (section names unchanged) |
 
-**Compatibility layer.** Throughout 2.x the `utility-viz` distribution also ships an
+**Which package to install.** `utility-viz` ships only `utility_viz` and the `utility-viz` command: it has no
+`econ_viz` package and no `econ-viz` command. `econ-viz` 2.x (same version number) is a thin compatibility
+distribution: `pip install econ-viz` installs `utility-viz` of the same version plus the `econ_viz` package and
+the `econ-viz` command, which warn that they are deprecated. Upgrading an existing 1.x installation with
+`pip install --upgrade econ-viz` therefore keeps working and moves you onto 2.x. Pre-releases need `--pre`
+(for example `pip install --pre --upgrade econ-viz`). Switch to `pip install utility-viz` when you are ready
+to drop the compatibility layer.
+
+**Compatibility layer.** Throughout 2.x the `econ-viz` distribution provides an
 `econ_viz` package and an `econ-viz` command so documented 1.x code keeps working:
 
 - `import econ_viz` emits one deprecation warning per process.
