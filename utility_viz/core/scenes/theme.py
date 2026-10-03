@@ -30,7 +30,7 @@ class UtilityColors:
     compensated_budget_color: str = "#777777"
     compensated_budget_linewidth: float = 1.5
     eq_color: str = "#E41A1C"
-    eq_markersize: float = 4.0
+    eq_markersize: float = 4.0  # marker diameter in points (legacy unit)
     ray_color: str = "#999999"
     ray_linewidth: float = 0.8
     drop_linewidth: float = 0.8
@@ -57,6 +57,7 @@ def utility_roles(colors: UtilityColors | None = None) -> dict[str, StyleBundle]
         Equilibrium.MAIN.value: StyleBundle(
             marker=Marker(
                 color=c.eq_color,
+                # mosaickit's Marker.size is an area (points squared); ours is a diameter.
                 size=c.eq_markersize**2,
                 shape="o",
                 edge_color=c.eq_color,
