@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from ..themes.label import Label
-from .stroke import tag, tag_attr
+from econ_viz.themes.label import Label
+from econ_viz.canvas.stroke import tag, tag_attr
 
 
 def plot_point(

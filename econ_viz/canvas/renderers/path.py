@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import matplotlib.lines as mlines
 
-from ...canvas.stroke import tag
+from econ_viz.canvas.stroke import tag
 
 
 def render_path(

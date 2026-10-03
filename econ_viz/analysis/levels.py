@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from ..contours import around_anchor_levels, percentile_levels
+from econ_viz.contours import around_anchor_levels, percentile_levels
 
 
 def around(anchor: float, n: int = 5, spread: float = 0.5) -> list[float]:

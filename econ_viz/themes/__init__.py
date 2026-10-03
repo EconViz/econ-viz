@@ -10,11 +10,11 @@ References
 
 from typing import TypedDict
 
-from ..enums import ArrowStyle, LineStyle
-from .label import Label
-from .marker import Marker
-from .stroke import Stroke
-from .theme import Theme
+from econ_viz.enums import ArrowStyle, LineStyle
+from econ_viz.themes.label import Label
+from econ_viz.themes.marker import Marker
+from econ_viz.themes.stroke import Stroke
+from econ_viz.themes.theme import Theme
 
 COLORBLIND_CYCLE_RGB: tuple[tuple[int, int, int], ...] = (
     (55, 126, 184),  # blue

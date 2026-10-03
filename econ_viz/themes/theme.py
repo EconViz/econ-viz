@@ -2,12 +2,12 @@
 
 from dataclasses import dataclass
 
-from ..enums import ArrowStyle, LabelPosition, LegendPosition, LineStyle
-from .fill import Fill
-from .label import Label
-from .legend import Legend
-from .marker import Marker
-from .stroke import Stroke
+from econ_viz.enums import ArrowStyle, LabelPosition, LegendPosition, LineStyle
+from econ_viz.themes.fill import Fill
+from econ_viz.themes.label import Label
+from econ_viz.themes.legend import Legend
+from econ_viz.themes.marker import Marker
+from econ_viz.themes.stroke import Stroke
 
 
 @dataclass(frozen=True)

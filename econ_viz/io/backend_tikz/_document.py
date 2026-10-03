@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .renderer import TikzRenderer
+    from econ_viz.io.backend_tikz.renderer import TikzRenderer
 
 
 _STANDALONE_PREAMBLE = r"""\documentclass[border=8pt]{standalone}

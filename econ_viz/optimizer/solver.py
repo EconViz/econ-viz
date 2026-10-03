@@ -19,9 +19,9 @@ from dataclasses import dataclass
 import numpy as np
 from scipy.optimize import minimize
 
-from ..enums import UtilityType
-from ..exceptions import InvalidParameterError, OptimizationError
-from ..utils.logging import get_logger
+from econ_viz.enums import UtilityType
+from econ_viz.exceptions import InvalidParameterError, OptimizationError
+from econ_viz.utils.logging import get_logger
 
 _SLSQP_FTOL = 1e-12
 _SLSQP_MAXITER = 500

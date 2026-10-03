@@ -21,19 +21,19 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.patches import FancyArrowPatch
 
-from ..canvas.effect import Effect
-from ..canvas.fonts import FontApplier, resolve_font, resolve_math_font
-from ..canvas.legend import place_legend
-from ..canvas.primitives import annotate_math, plot_point
-from ..canvas.renderers import (
+from econ_viz.canvas.effect import Effect
+from econ_viz.canvas.fonts import FontApplier, resolve_font, resolve_math_font
+from econ_viz.canvas.legend import place_legend
+from econ_viz.canvas.primitives import annotate_math, plot_point
+from econ_viz.canvas.renderers import (
     render_budget,
     render_decomposition,
     render_equilibrium,
     render_path,
     render_utility,
 )
-from ..config import Config
-from ..constants.canvas import (
+from econ_viz.config import Config
+from econ_viz.constants.canvas import (
     ARROW_HEAD_ONLY_FRAC,
     ARROW_WEDGE_FRAC,
     DEFAULT_DPI,
@@ -43,18 +43,18 @@ from ..constants.canvas import (
     MIN_DPI,
     SMOOTH_SAMPLES,
 )
-from ..enums import ArrowStyle, LabelPosition, LineStyle
-from ..io import save_figure
-from ..themes.axis import Axis
-from ..themes.fill import Fill
-from ..themes.label import Label, split_label
-from ..themes.legend import Legend
-from ..themes.marker import Marker
-from ..themes.stroke import Stroke
-from ..themes.theme import Theme
-from ..utils.logging import get_logger
-from .labels import HAlign, VAlign
-from .stroke import styled, tag, tag_attr
+from econ_viz.enums import ArrowStyle, LabelPosition, LineStyle
+from econ_viz.io import save_figure
+from econ_viz.themes.axis import Axis
+from econ_viz.themes.fill import Fill
+from econ_viz.themes.label import Label, split_label
+from econ_viz.themes.legend import Legend
+from econ_viz.themes.marker import Marker
+from econ_viz.themes.stroke import Stroke
+from econ_viz.themes.theme import Theme
+from econ_viz.utils.logging import get_logger
+from econ_viz.canvas.labels import HAlign, VAlign
+from econ_viz.canvas.stroke import styled, tag, tag_attr
 
 logger = get_logger(__name__)
 
@@ -1021,7 +1021,7 @@ class Canvas:
             *self*, to allow method chaining.
         """
         with styled(self, {"ray": stroke}):
-            from ..components import draw_ray
+            from econ_viz.components import draw_ray
 
             t = self.theme
             draw_ray(

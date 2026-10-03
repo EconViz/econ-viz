@@ -1,9 +1,9 @@
 """Reusable drawing components for economic diagrams."""
 
-from ..canvas.stroke import tag
-from .budget import BudgetConstraint
-from .equilibrium import EquilibriumPoint
-from .indifference import IndifferenceCurves
+from econ_viz.canvas.stroke import tag
+from econ_viz.components.budget import BudgetConstraint
+from econ_viz.components.equilibrium import EquilibriumPoint
+from econ_viz.components.indifference import IndifferenceCurves
 
 __all__ = ["IndifferenceCurves", "BudgetConstraint", "EquilibriumPoint"]
 

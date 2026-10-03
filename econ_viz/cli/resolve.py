@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import argparse
 
-from .errors import CliConfigError
+from econ_viz.cli.errors import CliConfigError
 
 
 def build_model(args: argparse.Namespace):

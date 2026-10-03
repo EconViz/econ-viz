@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-from ..enums import LabelPosition
+from econ_viz.enums import LabelPosition
 
 HAlign = Literal["left", "center", "right"]
 VAlign = Literal["bottom", "baseline", "center", "center_baseline", "top"]

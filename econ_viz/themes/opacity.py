@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from ..exceptions import InvalidParameterError
+from econ_viz.exceptions import InvalidParameterError
 
 
 def check_opacity(owner: str, value: float | None) -> None:

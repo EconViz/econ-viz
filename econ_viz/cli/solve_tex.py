@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import argparse
 
-from .errors import CliConfigError
-from .resolve import build_model
+from econ_viz.cli.errors import CliConfigError
+from econ_viz.cli.resolve import build_model
 
 
 def cmd_solve_tex(args: argparse.Namespace) -> None:
