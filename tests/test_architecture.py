@@ -9,7 +9,7 @@ Dependency direction (a unit may import only from a strictly lower layer)::
         models.optimization, models.curves    layer 3
     core.config, core.rendering,
         models.analysis, models.consumer      layer 4
-    core.diagrams.components                  layer 5
+    core.diagrams.components, core.scenes     layer 5
     core.canvas                               layer 6
     core.layout                               layer 7
     core.diagrams.consumer, core.animation,
@@ -44,6 +44,7 @@ LAYERS: dict[str, int] = {
     "models.analysis": 4,
     "models.consumer": 4,
     "core.diagrams.components": 5,
+    "core.scenes": 5,
     "core.canvas": 6,
     "core.layout": 7,
     "core.diagrams.consumer": 8,
@@ -202,4 +203,49 @@ def test_utility_viz_never_depends_on_the_legacy_package():
                 names = [a.name for a in node.names]
             if any(n == "econ_viz" or n.startswith("econ_viz.") for n in names):
                 offenders.append(module)
+    assert not offenders, offenders
+
+
+_SCENE_FORBIDDEN = (
+    "matplotlib",
+    "utility_viz.core.canvas",
+    "utility_viz.core.themes",
+    "utility_viz.core.export",
+    "utility_viz.core.rendering",
+)
+
+
+def test_scene_modules_import_no_matplotlib_or_legacy_drawing():
+    """``core.scenes`` builds mosaickit layers only: no matplotlib, no legacy drawing layers."""
+    offenders = []
+    scene_modules = [(m, p) for m, p in _modules() if m == "core.scenes" or m.startswith("core.scenes.")]
+    assert scene_modules, "core.scenes package is missing"
+    for module, path in scene_modules:
+        for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+            if isinstance(node, ast.ImportFrom) and node.module:
+                names = [node.module]
+            elif isinstance(node, ast.Import):
+                names = [a.name for a in node.names]
+            else:
+                continue
+            for name in names:
+                if any(name == bad or name.startswith(bad + ".") for bad in _SCENE_FORBIDDEN):
+                    offenders.append(f"{module}: {name}")
+    assert not offenders, offenders
+
+
+def test_models_curves_import_no_matplotlib():
+    offenders = []
+    for module, path in _modules():
+        if module != "models.curves" and not module.startswith("models.curves."):
+            continue
+        for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+            names = (
+                [node.module]
+                if isinstance(node, ast.ImportFrom) and node.module
+                else [a.name for a in node.names]
+                if isinstance(node, ast.Import)
+                else []
+            )
+            offenders += [f"{module}: {n}" for n in names if n == "matplotlib" or n.startswith("matplotlib.")]
     assert not offenders, offenders

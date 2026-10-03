@@ -1,0 +1,74 @@
+"""Cobb-Douglas IC + budget + equilibrium built only from mosaickit layers, then rendered."""
+
+import shutil
+import subprocess
+
+import pytest
+from mosaickit import Canvas, CanvasSpec, LegendLayer, Scene, quadrant_axes
+from tikz_probe import scene_to_tikz
+
+from utility_viz.core.scenes import UTILITY_THEME, budget_layers, equilibrium_layers, indifference_layers
+from utility_viz.models import CobbDouglas, solve
+
+PX, PY, INCOME = 2.0, 3.0, 30.0
+X_MAX, Y_MAX = INCOME / PX * 1.2, INCOME / PY * 1.2
+
+
+@pytest.fixture(scope="module")
+def canvas() -> Canvas:
+    func = CobbDouglas(0.5, 0.5)
+    eq = solve(func, PX, PY, INCOME)
+    ic, _ = indifference_layers(
+        func, [eq.utility * 0.6, eq.utility, eq.utility * 1.4], X_MAX, Y_MAX, show_labels=True, legend="IC"
+    )
+    spec = CanvasSpec(x_range=(0, X_MAX), y_range=(0, Y_MAX), x_label="x", y_label="y", dpi=100)
+    return (
+        Canvas(spec, theme=UTILITY_THEME)
+        .extend(quadrant_axes(X_MAX, Y_MAX))
+        .extend(ic)
+        .extend(budget_layers(PX, PY, INCOME, fill=True, label="I", legend="Budget"))
+        .extend(equilibrium_layers(eq, ray_to=(X_MAX, Y_MAX)))
+        .add(LegendLayer())
+    )
+
+
+def test_scene_contains_only_mosaickit_layers(canvas):
+    scene = canvas.snapshot()
+    assert isinstance(scene, Scene)
+    roles = {layer.role for layer in scene.layers}
+    assert {"utility.budget", "utility.equilibrium", "utility.indifference"} <= roles
+    assert len({layer.id for layer in scene.layers}) == len(scene.layers)
+
+
+def test_matplotlib_render_to_png(canvas, tmp_path):
+    (png,) = canvas.save(tmp_path / "cd.png")
+    assert png.read_bytes()[:8] == b"\x89PNG\r\n\x1a\n"
+    assert png.stat().st_size > 5_000
+
+
+def test_matplotlib_render_to_svg_uses_theme_colors(canvas, tmp_path):
+    (svg,) = canvas.save(tmp_path / "cd.svg")
+    text = svg.read_text(encoding="utf-8").lower()
+    for color in ("#377eb8", "#984ea3", "#e41a1c"):
+        assert color in text
+
+
+def test_tikz_probe_source_has_every_layer_kind(canvas):
+    tex = scene_to_tikz(canvas.snapshot(), canvas.theme)
+    assert "\\draw[" in tex and "\\fill[" in tex and "\\node[" in tex
+    assert "377EB8" in tex and "984EA3" in tex and "E41A1C" in tex
+
+
+@pytest.mark.skipif(shutil.which("pdflatex") is None, reason="pdflatex is not installed")
+def test_tikz_probe_compiles_with_pdflatex(canvas, tmp_path):
+    tex = tmp_path / "cd.tex"
+    tex.write_text(scene_to_tikz(canvas.snapshot(), canvas.theme), encoding="utf-8")
+    result = subprocess.run(
+        ["pdflatex", "-interaction=nonstopmode", "-halt-on-error", tex.name],
+        cwd=tmp_path,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert result.returncode == 0, result.stdout[-2000:]
+    assert (tmp_path / "cd.pdf").stat().st_size > 0
