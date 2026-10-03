@@ -59,13 +59,13 @@ def test_font_does_not_change_global_rcparams():
 
 
 def test_font_accepts_fallback_list():
-    cvs = Canvas(font=["No Such Font EconViz", "DejaVu Serif"])
-    assert cvs.font == ("No Such Font EconViz", "DejaVu Serif")
+    cvs = Canvas(font=["No Such Font UtilityViz", "DejaVu Serif"])
+    assert cvs.font == ("No Such Font UtilityViz", "DejaVu Serif")
 
 
 def test_missing_font_raises_clear_error():
-    with pytest.raises(InvalidParameterError, match="No Such Font EconViz"):
-        Canvas(font="No Such Font EconViz")
+    with pytest.raises(InvalidParameterError, match="No Such Font UtilityViz"):
+        Canvas(font="No Such Font UtilityViz")
 
 
 def test_empty_font_is_rejected():

@@ -4,10 +4,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from matplotlib.markers import MarkerStyle
-
 from utility_viz.core.errors.exceptions import InvalidParameterError
 from utility_viz.core.styles.opacity import check_opacity
+from utility_viz.core.styles.validation import check_shape
 
 
 @dataclass(frozen=True)
@@ -35,11 +34,7 @@ class Marker:
         check_opacity("Marker", self.opacity)
         if self.size is not None and not self.size > 0:
             raise InvalidParameterError(f"Marker size must be positive, got {self.size!r}")
-        if self.shape is not None:
-            try:
-                MarkerStyle(self.shape)
-            except ValueError:
-                raise InvalidParameterError(f"invalid Marker shape {self.shape!r}") from None
+        check_shape("Marker", self.shape)
 
     def merged_over(self, base: Marker | None) -> Marker:
         """Return this marker with unset fields taken from *base*."""
