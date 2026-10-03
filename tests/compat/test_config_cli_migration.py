@@ -1,0 +1,260 @@
+"""Config lookup order, CLI forwarder, ``init --migrate`` and packaging metadata (#132)."""
+
+from __future__ import annotations
+
+import dataclasses
+import subprocess
+import sys
+import warnings
+from pathlib import Path
+
+import pytest
+
+from utility_viz import Config, UtilityVizDeprecationWarning, themes
+from utility_viz.core.config.settings import DEFAULT_FILE, LEGACY_FILE, find_config_file
+from utility_viz.core.errors.deprecation import deprecation_message, warn_deprecated
+from utility_viz.core.errors.exceptions import InvalidParameterError
+
+ROOT = Path(__file__).resolve().parent.parent.parent
+
+NEW_TOML = 'base = "nord"\n[color]\nic = "#111111"\n'
+OLD_TOML = 'base = "dark"\n[color]\nic = "#222222"\n'
+
+
+# --- deprecation warning type ------------------------------------------------------------------------
+
+
+def test_warning_is_a_futurewarning():
+    assert issubclass(UtilityVizDeprecationWarning, FutureWarning)
+
+
+def test_message_states_version_removal_and_replacement():
+    text = deprecation_message("econ_viz.Thing", "utility_viz.Other")
+    assert "econ_viz.Thing" in text
+    assert "deprecated since 2.0.0" in text
+    assert "removed in 3.0.0" in text
+    assert "use utility_viz.Other instead" in text
+
+
+def test_warn_deprecated_blames_the_caller():
+    def legacy_api():
+        warn_deprecated("old", "new")  # default stacklevel blames legacy_api's caller
+
+    with pytest.warns(UtilityVizDeprecationWarning) as caught:
+        legacy_api()
+    assert caught[0].filename == __file__
+
+
+# --- config lookup order -----------------------------------------------------------------------------
+
+
+def _same(a: Config, b: Config) -> bool:
+    return (dataclasses.asdict(a.theme), a.font, a.math_font) == (dataclasses.asdict(b.theme), b.font, b.math_font)
+
+
+def _write(directory: Path, name: str, text: str) -> Path:
+    path = directory / name
+    path.write_text(text, encoding="utf-8")
+    return path
+
+
+def test_defaults_when_no_file(tmp_path):
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        assert find_config_file(directory=tmp_path) is None
+        assert Config.discover(directory=tmp_path) == Config()
+
+
+def test_explicit_path_beats_everything(tmp_path):
+    _write(tmp_path, DEFAULT_FILE, NEW_TOML)
+    _write(tmp_path, LEGACY_FILE, OLD_TOML)
+    explicit = _write(tmp_path, "custom.toml", 'base = "paper"\n')
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")  # explicit path: no lookup warnings at all
+        config = Config.discover(explicit, directory=tmp_path)
+    assert config.theme.ic_color == themes.paper.ic_color
+
+
+def test_explicit_missing_path_errors(tmp_path):
+    with pytest.raises(InvalidParameterError, match="not found"):
+        Config.discover(tmp_path / "nope.toml", directory=tmp_path)
+
+
+def test_new_file_is_used_silently(tmp_path):
+    _write(tmp_path, DEFAULT_FILE, NEW_TOML)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        config = Config.discover(directory=tmp_path)
+    assert config.theme.ic_color == "#111111"
+
+
+def test_legacy_file_is_used_with_warning(tmp_path):
+    _write(tmp_path, LEGACY_FILE, OLD_TOML)
+    with pytest.warns(UtilityVizDeprecationWarning) as caught:
+        config = Config.discover(directory=tmp_path)
+    assert config.theme.ic_color == "#222222"
+    text = str(caught[0].message)
+    assert "econ-viz.toml" in text and "utility-viz.toml" in text
+    assert "deprecated since 2.0.0" in text and "removed in 3.0.0" in text
+    assert "init --migrate" in text
+    assert caught[0].filename == __file__
+
+
+def test_new_wins_when_both_exist_and_legacy_is_ignored_with_warning(tmp_path):
+    _write(tmp_path, DEFAULT_FILE, NEW_TOML)
+    _write(tmp_path, LEGACY_FILE, OLD_TOML)
+    with pytest.warns(UtilityVizDeprecationWarning, match="ignored") as caught:
+        config = Config.discover(directory=tmp_path)
+    assert config.theme.ic_color == "#111111"
+    assert "econ-viz.toml" in str(caught[0].message)
+
+
+def test_load_without_path_uses_lookup_in_cwd(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    assert Config.load() == Config()
+    _write(tmp_path, LEGACY_FILE, OLD_TOML)
+    with pytest.warns(UtilityVizDeprecationWarning):
+        assert Config.load().theme.ic_color == "#222222"
+    _write(tmp_path, DEFAULT_FILE, NEW_TOML)
+    with pytest.warns(UtilityVizDeprecationWarning, match="ignored"):
+        assert Config.load().theme.ic_color == "#111111"
+
+
+def test_load_with_explicit_path_is_unchanged(tmp_path):
+    path = _write(tmp_path, "x.toml", NEW_TOML)
+    assert Config.load(path).theme.ic_color == "#111111"
+    assert Config.load(str(path)).theme.ic_color == "#111111"
+
+
+def test_section_names_unchanged_between_files(tmp_path):
+    text = '[font]\ntext = "serif"\n[stroke.budget]\nwidth = 2\n'
+    old = Config.load(_write(tmp_path, LEGACY_FILE, text))
+    new = Config.load(_write(tmp_path, DEFAULT_FILE, text))
+    assert _same(old, new)
+
+
+# --- CLI: utility-viz init --migrate -----------------------------------------------------------------
+
+
+def _run_cli(monkeypatch, *argv):
+    from utility_viz.cli.main import main
+
+    monkeypatch.setattr(sys, "argv", ["utility-viz", *argv])
+    main()
+
+
+def test_init_migrate_writes_new_and_keeps_old(tmp_path, monkeypatch, capsys):
+    legacy = _write(tmp_path, LEGACY_FILE, OLD_TOML)
+    target = tmp_path / DEFAULT_FILE
+    _run_cli(monkeypatch, "init", str(target), "--migrate")
+    assert legacy.read_text(encoding="utf-8") == OLD_TOML  # old file kept untouched
+    assert target.exists()
+    migrated = target.read_text(encoding="utf-8")
+    assert migrated.endswith(OLD_TOML)  # sections/contents preserved verbatim
+    assert "Migrated from econ-viz.toml" in migrated
+    assert _same(Config.load(target), Config.load(legacy))
+    assert "kept" in capsys.readouterr().out
+    # After migrating, the new file wins; the leftover legacy file warns as ignored.
+    with pytest.warns(UtilityVizDeprecationWarning, match="ignored"):
+        Config.discover(directory=tmp_path)
+
+
+def test_init_migrate_without_legacy_file_fails(tmp_path, monkeypatch, capsys):
+    with pytest.raises(SystemExit) as exc:
+        _run_cli(monkeypatch, "init", str(tmp_path / DEFAULT_FILE), "--migrate")
+    assert exc.value.code == 1
+    assert "nothing to migrate" in capsys.readouterr().err
+    assert not (tmp_path / DEFAULT_FILE).exists()
+
+
+def test_init_migrate_refuses_to_overwrite_without_force(tmp_path, monkeypatch):
+    _write(tmp_path, LEGACY_FILE, OLD_TOML)
+    _write(tmp_path, DEFAULT_FILE, NEW_TOML)
+    with pytest.raises(SystemExit):
+        _run_cli(monkeypatch, "init", str(tmp_path / DEFAULT_FILE), "--migrate")
+    assert (tmp_path / DEFAULT_FILE).read_text(encoding="utf-8") == NEW_TOML
+    _run_cli(monkeypatch, "init", str(tmp_path / DEFAULT_FILE), "--migrate", "--force")
+    assert (tmp_path / DEFAULT_FILE).read_text(encoding="utf-8").endswith(OLD_TOML)
+
+
+def test_init_migrate_rejects_invalid_toml(tmp_path, monkeypatch, capsys):
+    _write(tmp_path, LEGACY_FILE, "this is = = not toml")
+    with pytest.raises(SystemExit):
+        _run_cli(monkeypatch, "init", str(tmp_path / DEFAULT_FILE), "--migrate")
+    assert "invalid TOML" in capsys.readouterr().err
+    assert not (tmp_path / DEFAULT_FILE).exists()
+
+
+def test_plain_init_writes_new_default_name(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    _run_cli(monkeypatch, "init")
+    assert (tmp_path / "utility-viz.toml").exists()
+    assert not (tmp_path / "econ-viz.toml").exists()
+
+
+def test_utility_viz_cli_prog_and_version(monkeypatch, capsys):
+    with pytest.raises(SystemExit):
+        _run_cli(monkeypatch, "--version")
+    assert capsys.readouterr().out.startswith("utility-viz ")
+
+
+# --- CLI: legacy econ-viz forwarder ------------------------------------------------------------------
+
+
+def test_legacy_cli_forwards_with_warning(monkeypatch, capsys):
+    from econ_viz.cli import main
+
+    monkeypatch.setattr(sys, "argv", ["econ-viz", "models"])
+    with pytest.warns(UtilityVizDeprecationWarning) as caught:
+        main()
+    text = str(caught[0].message)
+    assert "`econ-viz` command" in text and "`utility-viz`" in text
+    assert "deprecated since 2.0.0" in text and "removed in 3.0.0" in text
+    assert "CobbDouglas" in capsys.readouterr().out  # real output from the forwarded command
+
+
+def test_legacy_cli_end_to_end_subprocess():
+    code = "import sys; sys.argv = ['econ-viz', '--version']; from econ_viz.cli import main; main()"
+    result = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True)
+    assert result.returncode == 0
+    assert "utility-viz" in result.stdout
+    assert "UtilityVizDeprecationWarning" in result.stderr
+    assert "removed in 3.0.0" in result.stderr
+
+
+# --- packaging metadata ------------------------------------------------------------------------------
+
+
+def _pyproject() -> dict:
+    try:
+        import tomllib
+    except ModuleNotFoundError:  # pragma: no cover
+        import tomli as tomllib
+    return tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+
+
+def test_pyproject_uses_canonical_names():
+    data = _pyproject()
+    assert data["project"]["name"] == "utility-viz"
+    assert data["project"]["scripts"]["utility-viz"] == "utility_viz.cli:main"
+    assert data["project"]["scripts"]["econ-viz"] == "econ_viz.cli:main"  # 2.x forwarder
+    assert data["tool"]["uv"]["build-backend"]["module-name"] == ["utility_viz", "econ_viz"]
+
+
+def test_installed_distribution_metadata():
+    from importlib.metadata import PackageNotFoundError, entry_points, version
+
+    try:
+        assert version("utility-viz")
+    except PackageNotFoundError:  # pragma: no cover - not installed
+        pytest.skip("utility-viz is not installed")
+    scripts = {ep.name: ep.value for ep in entry_points(group="console_scripts")}
+    assert scripts.get("utility-viz") == "utility_viz.cli:main"
+    assert scripts.get("econ-viz") == "econ_viz.cli:main"
+
+
+def test_both_import_names_are_importable():
+    import econ_viz
+    import utility_viz
+
+    assert econ_viz.__name__ == "econ_viz" and utility_viz.__name__ == "utility_viz"

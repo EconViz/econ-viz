@@ -24,6 +24,8 @@ all         = ["Pillow (>=9.0.0)", "ipywidgets (>=8.0.0)", "IPython (>=8.0.0)"]
 
 [project.scripts]
 utility-viz = "utility_viz.cli:main"
+# Deprecated 1.x command: warns, then forwards to utility-viz. Removed in 3.0.
+econ-viz    = "econ_viz.cli:main"
 
 [project.urls]
 Homepage = "https://econ-viz.org"
@@ -38,7 +40,7 @@ requires = ["uv_build>=0.12.1,<0.13.0"]
 build-backend = "uv_build"
 
 [tool.uv.build-backend]
-module-name = "utility_viz"
+module-name = ["utility_viz", "econ_viz"]
 module-root = ""
 
 [dependency-groups]
@@ -51,10 +53,10 @@ dev = [
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "--cov=utility_viz --cov-report=term-missing --cov-report=html:htmlcov"
+addopts = "--cov=utility_viz --cov=econ_viz --cov-report=term-missing --cov-report=html:htmlcov"
 
 [tool.coverage.run]
-source = ["utility_viz"]
+source = ["utility_viz", "econ_viz"]
 branch = true
 omit = ["utility_viz/logging.py"]
 
@@ -76,7 +78,7 @@ ignore = ["E501"]  # long lines are common in this codebase (dense math expressi
 "tests/*" = ["B011"]
 
 [tool.mypy]
-packages = ["utility_viz"]
+packages = ["utility_viz", "econ_viz"]
 ignore_missing_imports = true
 warn_redundant_casts = true
 warn_unused_ignores = true
