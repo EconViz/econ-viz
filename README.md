@@ -279,6 +279,7 @@ utility-viz plot --model cobb-douglas --alpha 0.5 --beta 0.5 \
 **Compatibility layer.** Throughout 2.x the `utility-viz` distribution also ships an
 `econ_viz` package and an `econ-viz` command so documented 1.x code keeps working:
 
+- `import econ_viz` emits one deprecation warning per process.
 - `from econ_viz import ...` and the documented sub-modules (`econ_viz.models`, `econ_viz.optimizer`,
   `econ_viz.themes`, ...) resolve to their `utility_viz` equivalents. Names that did not change are the
   very same objects.
@@ -289,7 +290,9 @@ utility-viz plot --model cobb-douglas --alpha 0.5 --beta 0.5 \
   named in the message as such.
 - Config lookup: explicit path, then `utility-viz.toml`, then legacy `econ-viz.toml` (with a warning), then
   defaults. If both files exist the new one wins and the legacy one is ignored with a warning.
-  `Config.load()` with no argument follows this order; `Config.load("file.toml")` reads exactly that file.
+  `Config.load()` with no argument follows the file order and raises if neither file exists (as in 1.x);
+  `Config.discover()` falls back to defaults; `Config.load("file.toml")` reads exactly that file.
+  `utility-viz plot` applies the same lookup in the current directory when `--config` is not given.
 - The `econ-viz` command prints a deprecation warning and forwards to `utility-viz`.
 - `utility-viz init --migrate` writes `utility-viz.toml` from `econ-viz.toml` and keeps the old file.
 
