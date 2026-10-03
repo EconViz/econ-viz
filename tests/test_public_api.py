@@ -17,7 +17,7 @@ AGREED_ROOT_EXPORTS = [
     # enums
     "UtilityType", "ExportFormat", "Layout", "ArrowStyle", "LabelPosition", "LineStyle",
     # public exceptions
-    "EconVizError", "ExportError", "InvalidParameterError", "OptimizationError", "ParseError",
+    "UtilityVizError", "EconVizError", "ExportError", "InvalidParameterError", "OptimizationError", "ParseError",
     # diagrams
     "IndifferenceCurves", "BudgetConstraint", "EquilibriumPoint", "DemandDiagram", "EdgeworthBox",
     # economics (also available from utility_viz.models)
@@ -63,20 +63,46 @@ def test_models_facade_has_no_drawing_dependency():
     import subprocess
     import sys
 
-    code = "import sys, utility_viz.models; sys.exit(1 if any(m.startswith('utility_viz.core.canvas') for m in sys.modules) else 0)"
+    code = (
+        "import sys, utility_viz.models; "
+        "sys.exit(1 if any(m.startswith('utility_viz.core.canvas') for m in sys.modules) else 0)"
+    )
     assert subprocess.run([sys.executable, "-c", code]).returncode == 0
 
 
 @pytest.mark.parametrize(
     "module",
     [
-        "utility_viz.core.canvas", "utility_viz.core.layout", "utility_viz.core.styles.stroke", "utility_viz.core.themes",
-        "utility_viz.core.config", "utility_viz.core.errors", "utility_viz.core.export", "utility_viz.core.constants",
-        "utility_viz.core.rendering.stroke", "utility_viz.core.diagrams.components", "utility_viz.core.diagrams.consumer",
-        "utility_viz.core.animation", "utility_viz.core.interactive", "utility_viz.models.utility", "utility_viz.models.curves",
-        "utility_viz.models.consumer", "utility_viz.models.optimization", "utility_viz.models.analysis",
-        "utility_viz.enums", "utility_viz.utils", "utility_viz.cli",
+        "utility_viz.core.canvas",
+        "utility_viz.core.layout",
+        "utility_viz.core.styles.stroke",
+        "utility_viz.core.themes",
+        "utility_viz.core.config",
+        "utility_viz.core.errors",
+        "utility_viz.core.export",
+        "utility_viz.core.constants",
+        "utility_viz.core.rendering.stroke",
+        "utility_viz.core.diagrams.components",
+        "utility_viz.core.diagrams.consumer",
+        "utility_viz.core.animation",
+        "utility_viz.core.interactive",
+        "utility_viz.models.utility",
+        "utility_viz.models.curves",
+        "utility_viz.models.consumer",
+        "utility_viz.models.optimization",
+        "utility_viz.models.analysis",
+        "utility_viz.enums",
+        "utility_viz.utils",
+        "utility_viz.cli",
     ],
-)  # fmt: skip
+)
 def test_subpackages_import(module):
     importlib.import_module(module)
+
+
+def test_econviz_error_is_alias_of_utilityviz_error():
+    from utility_viz.core.errors.exceptions import EconVizError, UtilityVizError
+
+    assert EconVizError is UtilityVizError
+    assert utility_viz.EconVizError is utility_viz.UtilityVizError
+    assert issubclass(utility_viz.ParseError, utility_viz.EconVizError)

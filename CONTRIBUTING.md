@@ -33,7 +33,7 @@ Please make sure all tests pass before submitting a PR.
 
 ## Before you start — check the Project board
 
-All planned work is tracked on the **[econ-viz Roadmap](https://github.com/orgs/EconViz/projects/1)**.
+All planned work is tracked on the **[utility-viz Roadmap](https://github.com/orgs/EconViz/projects/1)**.
 
 Before picking up an issue:
 

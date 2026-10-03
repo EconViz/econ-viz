@@ -64,6 +64,10 @@ DYNAMIC_INFO_TITLE_Y = 0.88
 DYNAMIC_INFO_BODY_Y = 0.84
 
 
+# Replaced by the real frames once _build_parameter_frames is defined below.
+_PLACEHOLDER_FRAMES = np.empty(0)
+
+
 @dataclass(frozen=True)
 class UtilityAnimationSpec:
     """Configuration for one model family in the animation gallery."""
@@ -83,7 +87,7 @@ SPECS = [
         key="cobb_douglas",
         title="Cobb-Douglas",
         parameter_name="alpha",
-        parameter_frames=None,
+        parameter_frames=_PLACEHOLDER_FRAMES,
         parameter_factory=lambda alpha: CobbDouglas(alpha=alpha, beta=1.0 - alpha),
         parameter_label=lambda alpha: rf"$\alpha={alpha:.2f},\ \beta={1.0 - alpha:.2f}$",
         price_model=CobbDouglas(alpha=0.5, beta=0.5),
@@ -92,7 +96,7 @@ SPECS = [
         key="ces",
         title="CES",
         parameter_name="rho",
-        parameter_frames=None,
+        parameter_frames=_PLACEHOLDER_FRAMES,
         parameter_factory=lambda rho: CES(alpha=0.5, beta=0.5, rho=rho),
         parameter_label=lambda rho: rf"$\rho={rho:.2f}$",
         price_model=CES(alpha=0.5, beta=0.5, rho=0.4),
@@ -101,7 +105,7 @@ SPECS = [
         key="perfect_substitutes",
         title="Perfect Substitutes",
         parameter_name="a",
-        parameter_frames=None,
+        parameter_frames=_PLACEHOLDER_FRAMES,
         parameter_factory=lambda a: PerfectSubstitutes(a=a, b=1.0),
         parameter_label=lambda a: rf"$a={a:.2f},\ b=1.00$",
         price_model=PerfectSubstitutes(a=1.5, b=1.0),
@@ -111,7 +115,7 @@ SPECS = [
         key="leontief",
         title="Leontief",
         parameter_name="a",
-        parameter_frames=None,
+        parameter_frames=_PLACEHOLDER_FRAMES,
         parameter_factory=lambda a: Leontief(a=a, b=1.0),
         parameter_label=lambda a: rf"$a={a:.2f},\ b=1.00$",
         price_model=Leontief(a=1.5, b=1.0),

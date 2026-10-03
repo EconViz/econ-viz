@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import math
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 import numpy as np
 from matplotlib.collections import Collection
@@ -13,6 +13,7 @@ from matplotlib.patches import Patch
 from matplotlib.text import Text
 from matplotlib.transforms import Bbox
 
+from utility_viz.core.canvas._state import CanvasState
 from utility_viz.core.styles.legend import Legend
 from utility_viz.enums import LegendPosition
 
@@ -150,3 +151,44 @@ def _points_test(points):
 
 def _bbox_test(extent: Bbox):
     return lambda box: box.overlaps(extent)
+
+
+if TYPE_CHECKING:
+    from typing_extensions import Self
+
+
+class LegendMixin(CanvasState):
+    """``show_legend`` for :class:`~utility_viz.core.canvas.base.Canvas`."""
+
+    def show_legend(self, legend: Legend | None = None, **kwargs) -> Self:
+        """Render a legend for all labelled layers.
+
+        Collects proxy artists registered by :meth:`add_utility`,
+        :meth:`add_budget` (when a *label* is supplied), and any future
+        labelled layers.
+
+        Parameters
+        ----------
+        legend : Legend, optional
+            Position, font size, frame, and columns (default ``theme.legend``,
+            which places the legend where it covers the least of the diagram).
+        **kwargs
+            Forwarded to :meth:`matplotlib.axes.Axes.legend` instead, when
+            given: ``loc``, ``frameon``, ``fontsize``, and so on.
+
+        Returns
+        -------
+        Canvas
+            *self*, to allow method chaining.
+        """
+        budget_handles, budget_labels = self.ax.get_legend_handles_labels()
+        all_handles = self._legend_handles + budget_handles
+        if all_handles:
+            all_labels = [h.get_label() for h in self._legend_handles] + budget_labels
+            if kwargs:
+                kwargs.setdefault("frameon", False)
+                kwargs.setdefault("fontsize", 11)
+                self.ax.legend(handles=all_handles, labels=all_labels, **kwargs)
+            else:
+                place_legend(self.ax, all_handles, all_labels, (legend or Legend()).merged_over(self.theme.legend))
+        return self
