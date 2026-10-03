@@ -28,6 +28,10 @@
 
 - Add architecture and public-API tests that enforce package layering and the root facade
 
+### Changes
+
+- Make the whole repository (library, tests, examples) pass `mypy .`, split `apply_strokes` into helpers to satisfy the complexity limit, clear remaining long-line and commented-out-code lint findings, and run `mypy .` in CI (#154)
+
 ## v1.12.0 (2026-09-26)
 
 ### Features
