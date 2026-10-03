@@ -3,10 +3,10 @@
 import pytest
 
 from econ_viz import Canvas, Figure, Layout
-from econ_viz.constants.canvas import DEFAULT_DPI, MAX_DPI, MIN_DPI
-from econ_viz.constants.logging import LIBRARY_ROOT
-from econ_viz.consumer.edgeworth import EdgeworthBox
-from econ_viz.models import CobbDouglas
+from econ_viz.core.constants.canvas import DEFAULT_DPI, MAX_DPI, MIN_DPI
+from econ_viz.core.constants.logging import LIBRARY_ROOT
+from econ_viz.core.diagrams.consumer.edgeworth import EdgeworthBox
+from econ_viz.models.utility import CobbDouglas
 from econ_viz.utils.logging import get_logger
 
 

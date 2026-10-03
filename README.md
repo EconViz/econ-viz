@@ -24,7 +24,7 @@ Requires Python 3.10 or later.
 
 ```python
 from econ_viz import Canvas, levels, solve
-from econ_viz.models import CobbDouglas
+from econ_viz.models.utility import CobbDouglas
 
 model = CobbDouglas(alpha=0.5, beta=0.5)
 eq = solve(model, px=2.0, py=3.0, income=30.0)
@@ -202,7 +202,7 @@ Closed-form Marshallian demand in TeX:
 
 ```python
 from econ_viz import solution_tex
-from econ_viz.models import CobbDouglas
+from econ_viz.models.utility import CobbDouglas
 
 tex = solution_tex(CobbDouglas(alpha=0.4, beta=0.6))
 ```
@@ -211,7 +211,7 @@ Slutsky matrix:
 
 ```python
 from econ_viz import slutsky_matrix
-from econ_viz.models import CobbDouglas
+from econ_viz.models.utility import CobbDouglas
 
 S = slutsky_matrix(CobbDouglas(alpha=0.4, beta=0.6), px=2.0, py=3.0, income=60.0)
 # S.s_xx, S.s_xy, S.s_yx, S.s_yy

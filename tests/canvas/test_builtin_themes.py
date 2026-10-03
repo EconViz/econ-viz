@@ -9,8 +9,8 @@ import pytest
 from matplotlib.colors import to_hex
 
 from econ_viz import Canvas, themes
-from econ_viz.consumer.edgeworth import EdgeworthBox
-from econ_viz.models import CobbDouglas
+from econ_viz.core.diagrams.consumer.edgeworth import EdgeworthBox
+from econ_viz.models.utility import CobbDouglas
 
 MODEL = CobbDouglas(alpha=0.5, beta=0.5)
 
@@ -88,7 +88,7 @@ class TestMonochromeIsReadableWithoutColour:
         assert eq_point.get_marker() != point.get_marker()
 
     def test_decomposition_effect_arrows_differ_in_style(self):
-        from econ_viz.optimizer import decompose_price_effect
+        from econ_viz.models.optimization import decompose_price_effect
 
         dec = decompose_price_effect(MODEL, px=(2.0, 4.0), py=3.0, income=30.0)
         cvs = Canvas(x_max=20, y_max=15, theme=themes.monochrome).add_decomposition(dec)

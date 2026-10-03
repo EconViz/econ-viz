@@ -1,13 +1,12 @@
-"""Tests for econ_viz.optimizer.solver — equilibrium solver."""
+"""Tests for econ_viz.models.optimization.solver — equilibrium solver."""
 
 import dataclasses
 
 import numpy as np
 import pytest
 
-from econ_viz.exceptions import InvalidParameterError, OptimizationError
-from econ_viz.models import CES, CobbDouglas, Leontief, PerfectSubstitutes, QuasiLinear, Satiation, StoneGeary
-from econ_viz.optimizer import (
+from econ_viz.core.errors.exceptions import InvalidParameterError, OptimizationError
+from econ_viz.models.optimization import (
     ComparativeStatics,
     DecompositionMethod,
     Equilibrium,
@@ -19,6 +18,7 @@ from econ_viz.optimizer import (
     solution_tex,
     solve,
 )
+from econ_viz.models.utility import CES, CobbDouglas, Leontief, PerfectSubstitutes, QuasiLinear, Satiation, StoneGeary
 
 
 def _on_budget(eq: Equilibrium, px, py, income, rtol=1e-4):
@@ -234,7 +234,7 @@ class TestSolveEdgeCases:
         """A non-converging SLSQP result must raise OptimizationError."""
         from unittest.mock import MagicMock
 
-        import econ_viz.optimizer.solver as solver_mod
+        import econ_viz.models.optimization.solver as solver_mod
 
         fake_result = MagicMock()
         fake_result.success = False
@@ -247,7 +247,7 @@ class TestSolveEdgeCases:
     def test_slsqp_minimize_called_with_positional_args(self, monkeypatch):
         """Ensure solve() passes args to minimize correctly (regression guard)."""
         calls = []
-        import econ_viz.optimizer.solver as solver_mod
+        import econ_viz.models.optimization.solver as solver_mod
 
         original = solver_mod.minimize
 
@@ -782,7 +782,7 @@ class TestSlutskyMatrixValidationWarnings:
         assert "homogeneity" in failures
 
     def test_failed_checks_emit_warning(self, monkeypatch):
-        import econ_viz.optimizer.slutsky as slutsky_mod
+        import econ_viz.models.optimization.slutsky as slutsky_mod
 
         original_cs = slutsky_mod.comparative_statics
         original_solve = slutsky_mod.solve
@@ -837,7 +837,7 @@ class TestComparativeStaticsSignWarnings:
                 return (0.0, 0.0)
 
         # Patch solve to return a Giffen-like pattern
-        import econ_viz.optimizer.comparative as comparative_mod
+        import econ_viz.models.optimization.comparative as comparative_mod
 
         original_solve = comparative_mod.solve
 

@@ -9,10 +9,10 @@ import pytest
 from matplotlib.colors import to_hex
 
 from econ_viz import Axis, Canvas, DemandDiagram, Figure, Layout, LinearBudget, PricePath, Stroke
-from econ_viz.consumer.edgeworth import EdgeworthBox
+from econ_viz.core.diagrams.consumer.edgeworth import EdgeworthBox
+from econ_viz.core.errors.exceptions import InvalidParameterError
 from econ_viz.enums import ArrowStyle, LabelPosition, LineStyle
-from econ_viz.exceptions import InvalidParameterError
-from econ_viz.models import CobbDouglas
+from econ_viz.models.utility import CobbDouglas
 
 MODEL = CobbDouglas(alpha=0.5, beta=0.5)
 

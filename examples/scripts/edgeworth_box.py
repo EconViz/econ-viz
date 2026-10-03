@@ -9,7 +9,15 @@ matplotlib.use("Agg")
 import numpy as np
 
 from econ_viz import EdgeworthBox, EquilibriumFocusConfig, themes
-from econ_viz.models import CES, CobbDouglas, CustomUtility, Leontief, PerfectSubstitutes, QuasiLinear, StoneGeary
+from econ_viz.models.utility import (
+    CES,
+    CobbDouglas,
+    CustomUtility,
+    Leontief,
+    PerfectSubstitutes,
+    QuasiLinear,
+    StoneGeary,
+)
 
 OUTPUT_DIR = Path("examples/output/edgeworth")
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)

@@ -3,7 +3,7 @@
 from pathlib import Path
 
 from econ_viz import Figure, Layout, levels, solve
-from econ_viz.models import CobbDouglas
+from econ_viz.models.utility import CobbDouglas
 
 OUTPUT_DIR = Path("examples/output/customization")
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)

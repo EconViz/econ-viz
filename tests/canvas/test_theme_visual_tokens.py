@@ -12,8 +12,8 @@ import pytest
 from matplotlib.colors import to_hex
 
 from econ_viz import Canvas, themes
-from econ_viz.consumer.edgeworth import EdgeworthBox
-from econ_viz.models import CobbDouglas, Satiation, StoneGeary
+from econ_viz.core.diagrams.consumer.edgeworth import EdgeworthBox
+from econ_viz.models.utility import CobbDouglas, Satiation, StoneGeary
 
 MODEL = CobbDouglas(alpha=0.5, beta=0.5)
 
@@ -131,7 +131,7 @@ class TestCustomThemePropagates:
 
     def test_bliss_marker_size(self):
         from econ_viz import Marker
-        from econ_viz.themes.theme import Theme
+        from econ_viz.core.themes.theme import Theme
 
         class BigBliss(Theme):
             @property

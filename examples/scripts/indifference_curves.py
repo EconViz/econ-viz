@@ -12,8 +12,8 @@ from pathlib import Path
 
 import numpy as np
 
-from econ_viz.canvas.base import Canvas
-from econ_viz.models import CES, CobbDouglas, Leontief, PerfectSubstitutes, QuasiLinear, Satiation
+from econ_viz.core.canvas.base import Canvas
+from econ_viz.models.utility import CES, CobbDouglas, Leontief, PerfectSubstitutes, QuasiLinear, Satiation
 
 OUTPUT_DIR = "examples/output/models"
 Path(OUTPUT_DIR).mkdir(parents=True, exist_ok=True)

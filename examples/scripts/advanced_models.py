@@ -17,7 +17,7 @@ from pathlib import Path
 import numpy as np
 
 from econ_viz import Canvas, levels, solve
-from econ_viz.models import CustomUtility, MultiGoodCD
+from econ_viz.models.utility import CustomUtility, MultiGoodCD
 
 OUTPUT_DIR = "examples/output/models/advanced"
 Path(OUTPUT_DIR).mkdir(parents=True, exist_ok=True)

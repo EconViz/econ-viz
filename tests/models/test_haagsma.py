@@ -5,10 +5,10 @@ import warnings
 import numpy as np
 import pytest
 
-from econ_viz.exceptions import InvalidParameterError
-from econ_viz.models import Haagsma
-from econ_viz.optimizer import decompose_price_effect, solve
-from econ_viz.optimizer.slutsky import slutsky_matrix
+from econ_viz.core.errors.exceptions import InvalidParameterError
+from econ_viz.models.optimization import decompose_price_effect, solve
+from econ_viz.models.optimization.slutsky import slutsky_matrix
+from econ_viz.models.utility import Haagsma
 
 
 @pytest.fixture(autouse=True)

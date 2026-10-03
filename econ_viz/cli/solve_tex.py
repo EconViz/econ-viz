@@ -10,7 +10,7 @@ from econ_viz.cli.resolve import build_model
 
 def cmd_solve_tex(args: argparse.Namespace) -> None:
     """Print a closed-form Marshallian demand formula as plain TeX text."""
-    from econ_viz import solution_tex
+    from econ_viz.models.optimization import solution_tex
 
     if args.model is None and args.latex is None:
         raise CliConfigError("provide --model <name> or --latex <expr>")

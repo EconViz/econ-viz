@@ -10,7 +10,7 @@ from econ_viz.cli.errors import CliConfigError
 
 def cmd_init(args: argparse.Namespace) -> None:
     """Write the template to *args.path*, refusing to overwrite unless ``--force``."""
-    from econ_viz.config import template
+    from econ_viz.core.config.settings import template
 
     path = Path(args.path)
     if path.exists() and not args.force:

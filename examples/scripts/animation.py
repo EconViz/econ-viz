@@ -34,9 +34,9 @@ from pathlib import Path
 import numpy as np
 
 from econ_viz import Canvas, levels, solve
-from econ_viz.animation import Animator
-from econ_viz.canvas.layers import Layer
-from econ_viz.models import CES, CobbDouglas, Leontief, PerfectSubstitutes
+from econ_viz.core.animation import Animator
+from econ_viz.models.curves.layers import Layer
+from econ_viz.models.utility import CES, CobbDouglas, Leontief, PerfectSubstitutes
 
 OUTPUT_DIR = "examples/output/animation"
 PARAMETER_DIR = f"{OUTPUT_DIR}/parameter_sweeps"
@@ -432,9 +432,9 @@ def main(*, smoke: bool = False) -> None:
 
 JUPYTER_EXAMPLE = """
 # ── Paste into a Jupyter notebook cell ──────────────────────────────
-from econ_viz.interactive import WidgetViewer
+from econ_viz.core.interactive import WidgetViewer
 from econ_viz import Canvas, levels, solve
-from econ_viz.models import CobbDouglas
+from econ_viz.models.utility import CobbDouglas
 
 def draw(alpha: float, px: float) -> Canvas:
     model = CobbDouglas(alpha=alpha, beta=1.0 - alpha)
