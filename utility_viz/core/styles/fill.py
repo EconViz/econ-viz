@@ -4,10 +4,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from matplotlib.colors import is_color_like
-
 from utility_viz.core.errors.exceptions import InvalidParameterError
 from utility_viz.core.styles.opacity import check_opacity
+from utility_viz.core.styles.validation import check_color
 
 
 @dataclass(frozen=True)
@@ -29,8 +28,7 @@ class Fill:
     opacity: float | None = None
 
     def __post_init__(self) -> None:
-        if self.color is not None and not is_color_like(self.color):
-            raise InvalidParameterError(f"invalid Fill color {self.color!r}")
+        check_color("Fill", self.color)
         check_opacity("Fill", self.alpha)
         check_opacity("Fill", self.opacity)
         if self.alpha is not None and self.opacity is not None and self.alpha != self.opacity:
