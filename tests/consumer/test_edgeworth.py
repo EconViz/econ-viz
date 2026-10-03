@@ -7,7 +7,7 @@ import pytest
 from matplotlib.colors import to_hex
 
 from utility_viz import EdgeworthBox, EquilibriumFocusConfig
-from utility_viz.core.diagrams.consumer.edgeworth_plotter import plot_indifference_pair
+from utility_viz.core.diagrams.consumer.edgeworth.plotting import plot_indifference_pair
 from utility_viz.models.utility import CobbDouglas, Leontief, PerfectSubstitutes, QuasiLinear
 
 
