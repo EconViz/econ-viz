@@ -28,7 +28,7 @@ jobs:
           enable-cache: true
 
       - name: Install dependencies
-        run: uv sync --frozen --all-extras
+        run: uv sync --frozen --all-packages --all-extras
 
       - name: Run tests
         run: uv run pytest
@@ -46,7 +46,7 @@ jobs:
           enable-cache: true
 
       - name: Install dependencies
-        run: uv sync --frozen --all-extras
+        run: uv sync --frozen --all-packages --all-extras
 
       - name: Run examples from a clean output directory
         run: make examples-smoke
@@ -67,7 +67,7 @@ jobs:
           enable-cache: true
 
       - name: Install dependencies
-        run: uv sync --frozen --all-extras
+        run: uv sync --frozen --all-packages --all-extras
 
       - name: Check lint
         run: uv run ruff check .
@@ -111,10 +111,31 @@ jobs:
           enable-cache: true
 
       - name: Install dependencies
-        run: uv sync --frozen --all-extras
+        run: uv sync --frozen --all-packages --all-extras
 
-      - name: Build
-        run: uv build
+      - name: Check tag matches both distribution versions
+        run: |
+          uv run python - <<'PY'
+          import os
+          import sys
+          import tomllib
+
+          tag = os.environ["GITHUB_REF_NAME"]
+          versions = {
+              "utility-viz": tomllib.load(open("pyproject.toml", "rb"))["project"],
+              "econ-viz": tomllib.load(open("packages/econ-viz/pyproject.toml", "rb"))["project"],
+          }
+          bad = [f"{name}={p['version']}" for name, p in versions.items() if f"v{p['version']}" != tag]
+          pin = f"utility-viz=={versions['utility-viz']['version']}"
+          if pin not in versions["econ-viz"]["dependencies"]:
+              bad.append(f"econ-viz dependency is not {pin}")
+          if bad:
+              sys.exit(f"tag {tag} does not match: {', '.join(bad)}")
+          print(f"tag {tag} matches both distributions")
+          PY
+
+      - name: Build both distributions
+        run: uv build --all-packages
 
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1

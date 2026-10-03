@@ -7,7 +7,7 @@ STATIC_EXAMPLE_SCRIPTS := $(filter-out examples/scripts/animation.py,$(EXAMPLE_S
 .PHONY: sync examples examples-static examples-smoke example-animation-smoke example-ic example-eq example-themes example-latex clean test build
 
 sync:
-	$(UV) sync --frozen --all-extras
+	$(UV) sync --frozen --all-packages --all-extras
 
 examples:
 	@set -e; for script in $(EXAMPLE_SCRIPTS); do \
@@ -45,4 +45,4 @@ test:
 	$(UV) run pytest
 
 build:
-	$(UV) build
+	$(UV) build --all-packages
