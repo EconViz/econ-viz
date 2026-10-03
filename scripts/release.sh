@@ -15,7 +15,8 @@ Examples:
 What it does:
   prepare:
     - create release branch from origin/<base>
-    - bump pyproject.toml version
+    - bump BOTH distributions in lockstep: utility-viz and packages/econ-viz versions,
+      both uv.lock entries and the shim's utility-viz==<version> pin
     - ensure publish workflow has skip-existing=true
     - run tests + build
     - commit, push, create PR
@@ -65,10 +66,19 @@ ensure_remote_tag_absent() {
 bump_version() {
   local version="$1"
   # perl -i behaves the same on GNU and BSD (macOS); the first match is the project version.
-  run perl -0pi -e "s/^version = \"[^\"]+\"/version = \"${version}\"/m" pyproject.toml
-  run perl -0pi -e "s/(\nname = \"utility-viz\"\nversion = )\"[^\"]+\"/\$1\"${version}\"/" uv.lock
+  local shim=packages/econ-viz/pyproject.toml
+  run perl -0pi -e "s/^version = \"[^\"]+\"/version = \"${version}\"/m" pyproject.toml "$shim"
+  # The econ-viz shim pins utility-viz to the exact same version.
+  run perl -0pi -e "s/\"utility-viz==[^\"]+\"/\"utility-viz==${version}\"/" "$shim"
+  # uv.lock has an entry per workspace member; the econ-viz one also records the pin.
+  run perl -0pi -e "s/(\nname = \"(?:utility-viz|econ-viz)\"\nversion = )\"[^\"]+\"/\$1\"${version}\"/g; s/(name = \"utility-viz\", )specifier = \"==[^\"]+\"/\$1specifier = \"==${version}\"/g" uv.lock
   if [[ "$DRY_RUN" == "false" ]]; then
-    grep -q "^version = \"${version}\"" pyproject.toml || die "failed to bump version in pyproject.toml"
+    local file
+    for file in pyproject.toml "$shim"; do
+      grep -q "^version = \"${version}\"" "$file" || die "failed to bump version in ${file}"
+    done
+    grep -q "\"utility-viz==${version}\"" "$shim" || die "failed to bump the utility-viz pin in ${shim}"
+    [[ "$(grep -c "^version = \"${version}\"" uv.lock)" -ge 2 ]] || die "failed to bump both entries in uv.lock"
   fi
 }
 
@@ -85,13 +95,13 @@ create_pr_body() {
   local version="$1"
   cat <<EOF_BODY
 ## Summary
-- bump version to ${version} in pyproject.toml
+- bump utility-viz and econ-viz to ${version} in lockstep (both pyproject.toml files, uv.lock, econ-viz pin)
 - ensure PyPI publish workflow skips existing files
 
 ## Validation
-- uv sync --frozen --all-extras
+- uv sync --frozen --all-packages --all-extras
 - uv run pytest
-- uv build
+- uv build --all-packages
 
 ## Before merging
 - [ ] Add a v${version} section to CHANGELOG.md
@@ -116,11 +126,11 @@ prepare_release() {
   ensure_skip_existing
 
   run uv lock
-  run uv sync --frozen --all-extras
+  run uv sync --frozen --all-packages --all-extras
   run uv run pytest
-  run uv build
+  run uv build --all-packages
 
-  run git add .github/workflows/publish.yml pyproject.toml uv.lock
+  run git add .github/workflows/publish.yml pyproject.toml packages/econ-viz/pyproject.toml uv.lock
   run git commit -m "chore(release): prepare ${tag}"
   run git push -u origin "$rel_branch"
 

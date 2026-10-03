@@ -32,8 +32,6 @@ all         = ["Pillow (>=9.0.0)", "ipywidgets (>=8.0.0)", "IPython (>=8.0.0)"]
 
 [project.scripts]
 utility-viz = "utility_viz.cli:main"
-# Deprecated 1.x command: warns, then forwards to utility-viz. Removed in 3.0.
-econ-viz    = "econ_viz.cli:main"
 
 [project.urls]
 Homepage = "https://econ-viz.org"
@@ -48,11 +46,20 @@ requires = ["uv_build>=0.12.1,<0.13.0"]
 build-backend = "uv_build"
 
 [tool.uv.build-backend]
-module-name = ["utility_viz", "econ_viz"]
+module-name = "utility_viz"
 module-root = ""
+
+[tool.uv.workspace]
+# econ-viz (the deprecated 1.x name) is a separate distribution that ships the econ_viz package and the
+# econ-viz command, so upgrading it never overwrites files owned by utility-viz.
+members = ["packages/econ-viz"]
+
+[tool.uv.sources]
+econ-viz = { workspace = true }
 
 [dependency-groups]
 dev = [
+    "econ-viz",
     "mypy>=1.13.0",
     "pytest (>=8.0.0,<9.0.0)",
     "pytest-cov (>=7.1.0,<8.0.0)",
@@ -61,10 +68,10 @@ dev = [
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "--cov=utility_viz --cov=econ_viz --cov-report=term-missing --cov-report=html:htmlcov"
+addopts = "--cov=utility_viz --cov-report=term-missing --cov-report=html:htmlcov"
 
 [tool.coverage.run]
-source = ["utility_viz", "econ_viz"]
+source = ["utility_viz"]
 branch = true
 omit = ["utility_viz/logging.py"]
 
@@ -77,6 +84,8 @@ fail_under = 92
 line-length = 120
 target-version = "py310"
 exclude = ["notebook"]
+# econ_viz lives in the packages/econ-viz workspace member; keep it first-party for import sorting.
+src = [".", "packages/econ-viz"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "UP", "B", "SIM", "C901", "PLR0915"]
@@ -88,7 +97,7 @@ max-complexity = 10
 "tests/*" = ["B011"]
 
 [tool.mypy]
-packages = ["utility_viz", "econ_viz"]
+packages = ["utility_viz"]
 ignore_missing_imports = true
 warn_redundant_casts = true
 warn_unused_ignores = true
