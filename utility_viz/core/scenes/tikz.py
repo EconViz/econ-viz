@@ -11,6 +11,7 @@ canvas palette. mosaickit itself ships no TikZ renderer.
 from __future__ import annotations
 
 import math
+from typing import Any
 
 from bezierkit.bezier.path import PiecewiseBezier
 from bezierkit.export.tikz import to_tikz
@@ -19,10 +20,12 @@ from mosaickit import (
     Canvas,
     Color,
     FillLayer,
+    Layer,
     LegendLayer,
     MarkerLayer,
     Palette,
     PathLayer,
+    Stroke,
     TextLayer,
 )
 from mosaickit.scene.text import TEXT_ANCHORS
@@ -55,6 +58,91 @@ def _points(points: object) -> str:
     return " -- ".join(f"({_number(x)},{_number(y)})" for x, y in points)  # type: ignore[attr-defined]
 
 
+def _stroke_options(stroke: Stroke, placement: ArrowPlacement, colors: _Colors) -> list[str]:
+    opts = [colors.name(stroke.color), f"line width={_number(stroke.width)}pt"]  # type: ignore[arg-type]
+    dash = _DASH[stroke.dash.value]  # type: ignore[union-attr]
+    if dash:
+        opts.append(dash)
+    if stroke.opacity is not None and stroke.opacity < 1:
+        opts.append(f"opacity={_number(stroke.opacity)}")
+    if stroke.arrow is not None:
+        tip = "{Stealth[length=5pt]}"
+        opts.append(
+            {
+                ArrowPlacement.END: f"-{tip}",
+                ArrowPlacement.START: f"{tip}-",
+                ArrowPlacement.BOTH: f"{tip}-{tip}",
+            }[placement]
+        )
+    return opts
+
+
+def _path_command(layer: PathLayer, bundle: Any, colors: _Colors, clip: str) -> str:
+    stroke = layer.stroke.merged_over(bundle.stroke) if layer.stroke and bundle.stroke else bundle.stroke
+    assert stroke is not None
+    opts = _stroke_options(stroke, layer.arrow_placement, colors)
+    if isinstance(layer.model, PiecewiseBezier):
+        command = to_tikz(layer.model, options=",".join(opts))
+    else:
+        command = f"\\draw[{','.join(opts)}] {_points(layer.path)};"
+    return f"\\begin{{scope}}{clip}{command}\\end{{scope}}" if layer.clip else command
+
+
+def _fill_command(layer: FillLayer, bundle: Any, colors: _Colors) -> str:
+    fill = layer.fill.merged_over(bundle.fill) if layer.fill and bundle.fill else bundle.fill
+    assert fill is not None
+    opts = [colors.name(fill.color)]  # type: ignore[arg-type]
+    if fill.opacity is not None and fill.opacity < 1:
+        opts.append(f"opacity={_number(fill.opacity)}")
+    return f"\\fill[{','.join(opts)}] {_points(layer.boundary)} -- cycle;"
+
+
+def _marker_commands(layer: MarkerLayer, bundle: Any, colors: _Colors) -> list[str]:
+    marker = layer.marker.merged_over(bundle.marker) if layer.marker and bundle.marker else bundle.marker
+    assert marker is not None
+    radius = math.sqrt(marker.size) / 2  # type: ignore[arg-type]
+    opts = [colors.name(marker.color)]  # type: ignore[arg-type]
+    if marker.opacity is not None and marker.opacity < 1:
+        opts.append(f"opacity={_number(marker.opacity)}")
+    return [
+        f"\\fill[{','.join(opts)}] ({_number(x)},{_number(y)}) circle ({_number(radius)}pt);" for x, y in layer.points
+    ]
+
+
+def _text_command(layer: TextLayer, bundle: Any, colors: _Colors) -> str:
+    style = layer.style.merged_over(bundle.text) if layer.style and bundle.text else bundle.text
+    assert style is not None
+    horizontal, vertical = TEXT_ANCHORS[layer.anchor]
+    anchor = " ".join(part for part in (_VERTICAL[vertical], _HORIZONTAL[horizontal]) if part)
+    size = float(style.size or 12)
+    opts = [
+        f"text={colors.name(style.color)}",  # type: ignore[arg-type]
+        f"font=\\fontsize{{{_number(size)}}}{{{_number(size * 1.2)}}}\\selectfont",
+        f"xshift={_number(layer.offset[0])}pt",
+        f"yshift={_number(layer.offset[1])}pt",
+    ]
+    if anchor:
+        opts.insert(0, f"anchor={anchor}")
+    text = f"${layer.text}$" if layer.math else "".join(_ESCAPES.get(c, c) for c in str(layer.text))
+    px, py = layer.position
+    return f"\\node[{','.join(opts)}] at ({_number(px)},{_number(py)}) {{{text}}};"
+
+
+def _layer_commands(layer: Layer, bundle: Any, colors: _Colors, clip: str) -> list[str]:
+    """TikZ commands for one visible layer (none for a legend)."""
+    if isinstance(layer, PathLayer):
+        return [_path_command(layer, bundle, colors, clip)]
+    if isinstance(layer, FillLayer):
+        return [_fill_command(layer, bundle, colors)]
+    if isinstance(layer, MarkerLayer):
+        return _marker_commands(layer, bundle, colors)
+    if isinstance(layer, TextLayer):
+        return [_text_command(layer, bundle, colors)]
+    if isinstance(layer, LegendLayer):
+        return []
+    raise NotImplementedError(f"TikZ export does not support {type(layer).__name__}")
+
+
 def canvas_to_tikz(canvas: Canvas, *, standalone: bool = True) -> str:
     """TikZ source for *canvas*'s scene; a ``standalone`` document unless disabled.
 
@@ -70,67 +158,7 @@ def canvas_to_tikz(canvas: Canvas, *, standalone: bool = True) -> str:
         if not layer.visible:
             continue
         bundle = canvas.theme.resolve(layer.role, fallback_category=layer.fallback_category)
-        if isinstance(layer, PathLayer):
-            stroke = layer.stroke.merged_over(bundle.stroke) if layer.stroke and bundle.stroke else bundle.stroke
-            assert stroke is not None
-            opts = [colors.name(stroke.color), f"line width={_number(stroke.width)}pt"]  # type: ignore[arg-type]
-            dash = _DASH[stroke.dash.value]  # type: ignore[union-attr]
-            if dash:
-                opts.append(dash)
-            if stroke.opacity is not None and stroke.opacity < 1:
-                opts.append(f"opacity={_number(stroke.opacity)}")
-            if stroke.arrow is not None:
-                tip = "{Stealth[length=5pt]}"
-                placement = layer.arrow_placement
-                opts.append(
-                    {
-                        ArrowPlacement.END: f"-{tip}",
-                        ArrowPlacement.START: f"{tip}-",
-                        ArrowPlacement.BOTH: f"{tip}-{tip}",
-                    }[placement]
-                )
-            if isinstance(layer.model, PiecewiseBezier):
-                command = to_tikz(layer.model, options=",".join(opts))
-            else:
-                command = f"\\draw[{','.join(opts)}] {_points(layer.path)};"
-            body.append(f"\\begin{{scope}}{clip}{command}\\end{{scope}}" if layer.clip else command)
-        elif isinstance(layer, FillLayer):
-            fill = layer.fill.merged_over(bundle.fill) if layer.fill and bundle.fill else bundle.fill
-            assert fill is not None
-            opts = [colors.name(fill.color)]  # type: ignore[arg-type]
-            if fill.opacity is not None and fill.opacity < 1:
-                opts.append(f"opacity={_number(fill.opacity)}")
-            body.append(f"\\fill[{','.join(opts)}] {_points(layer.boundary)} -- cycle;")
-        elif isinstance(layer, MarkerLayer):
-            marker = layer.marker.merged_over(bundle.marker) if layer.marker and bundle.marker else bundle.marker
-            assert marker is not None
-            radius = math.sqrt(marker.size) / 2  # type: ignore[arg-type]
-            opts = [colors.name(marker.color)]  # type: ignore[arg-type]
-            if marker.opacity is not None and marker.opacity < 1:
-                opts.append(f"opacity={_number(marker.opacity)}")
-            for x, y in layer.points:
-                body.append(f"\\fill[{','.join(opts)}] ({_number(x)},{_number(y)}) circle ({_number(radius)}pt);")
-        elif isinstance(layer, TextLayer):
-            style = layer.style.merged_over(bundle.text) if layer.style and bundle.text else bundle.text
-            assert style is not None
-            horizontal, vertical = TEXT_ANCHORS[layer.anchor]
-            anchor = " ".join(part for part in (_VERTICAL[vertical], _HORIZONTAL[horizontal]) if part)
-            size = float(style.size or 12)
-            opts = [
-                f"text={colors.name(style.color)}",  # type: ignore[arg-type]
-                f"font=\\fontsize{{{_number(size)}}}{{{_number(size * 1.2)}}}\\selectfont",
-                f"xshift={_number(layer.offset[0])}pt",
-                f"yshift={_number(layer.offset[1])}pt",
-            ]
-            if anchor:
-                opts.insert(0, f"anchor={anchor}")
-            text = f"${layer.text}$" if layer.math else "".join(_ESCAPES.get(c, c) for c in str(layer.text))
-            px, py = layer.position
-            body.append(f"\\node[{','.join(opts)}] at ({_number(px)},{_number(py)}) {{{text}}};")
-        elif isinstance(layer, LegendLayer):
-            continue
-        else:
-            raise NotImplementedError(f"TikZ export does not support {type(layer).__name__}")
+        body.extend(_layer_commands(layer, bundle, colors, clip))
 
     defs = "\n".join(f"\\definecolor{{{name}}}{{HTML}}{{{value}}}" for name, value in sorted(colors.defined.items()))
     picture = (

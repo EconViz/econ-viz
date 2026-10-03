@@ -57,6 +57,42 @@ def _intersect(p0: np.ndarray, d0: np.ndarray, p1: np.ndarray, d1: np.ndarray) -
     return p0 + t * d0
 
 
+def _run_length(points: np.ndarray, run: tuple[int, int]) -> float:
+    return float(np.linalg.norm(points[run[1]] - points[run[0]]))
+
+
+def _short_chain(points: np.ndarray, runs: list[tuple[int, int]], i: int, cell: float) -> tuple[int, float]:
+    """End index and total length of the short runs following the long arm *i*."""
+    j = i + 1
+    chain = 0.0
+    while j < len(runs) and _run_length(points, runs[j]) < _ARM_CELLS * cell:
+        chain += _run_length(points, runs[j])
+        j += 1
+    return j, chain
+
+
+def _corner_between(
+    points: np.ndarray,
+    arm0: tuple[int, int],
+    arm1: tuple[int, int],
+    kinks: Sequence[tuple[float, float]],
+    cell: float,
+) -> np.ndarray | None:
+    """Exact corner joining two arms, or ``None`` when they do not form one."""
+    d0, d1 = points[arm0[1]] - points[arm0[0]], points[arm1[1]] - points[arm1[0]]
+    cos = float(np.dot(d0, d1) / (np.linalg.norm(d0) * np.linalg.norm(d1)))
+    if np.arccos(np.clip(cos, -1.0, 1.0)) < _MIN_TURN:
+        return None
+    found = _intersect(points[arm0[0]], d0, points[arm1[0]], d1)
+    if found is None:
+        return None
+    if kinks:
+        near = min(kinks, key=lambda k: float(np.hypot(k[0] - found[0], k[1] - found[1])))
+        if np.hypot(near[0] - found[0], near[1] - found[1]) <= _SNAP_CELLS * cell:
+            return np.array(near, dtype=float)
+    return found
+
+
 def repair_corners(
     points: np.ndarray,
     cell: float,
@@ -81,48 +117,25 @@ def repair_corners(
     if len(runs) < 3:
         return points
 
-    def length(run: tuple[int, int]) -> float:
-        return float(np.linalg.norm(points[run[1]] - points[run[0]]))
-
-    def direction(run: tuple[int, int]) -> np.ndarray:
-        return points[run[1]] - points[run[0]]
-
     out: list[np.ndarray] = []
     i = 0
     cursor = 0  # first vertex index not yet emitted
     changed = False
     while i < len(runs) - 2:
-        if length(runs[i]) < _ARM_CELLS * cell:
+        if _run_length(points, runs[i]) < _ARM_CELLS * cell:
             i += 1
             continue
-        # Chain of short runs following the long arm i.
-        j = i + 1
-        chain = 0.0
-        while j < len(runs) and length(runs[j]) < _ARM_CELLS * cell:
-            chain += length(runs[j])
-            j += 1
+        j, chain = _short_chain(points, runs, i, cell)
         if j == i + 1 or j >= len(runs) or chain > _CHAMFER_CELLS * cell:
             i = max(j, i + 1)
             continue
-        d0, d1 = direction(runs[i]), direction(runs[j])
-        cos = float(np.dot(d0, d1) / (np.linalg.norm(d0) * np.linalg.norm(d1)))
-        if np.arccos(np.clip(cos, -1.0, 1.0)) < _MIN_TURN:
-            i = j
-            continue
-        found = _intersect(points[runs[i][0]], d0, points[runs[j][0]], d1)
-        if found is None:
-            i = j
-            continue
-        corner: np.ndarray = found
-        if kinks:
-            near = min(kinks, key=lambda k: float(np.hypot(k[0] - found[0], k[1] - found[1])))
-            if np.hypot(near[0] - found[0], near[1] - found[1]) <= _SNAP_CELLS * cell:
-                corner = np.array(near, dtype=float)
-        # Vertices runs[i][1] .. runs[j][0] are the chamfer; the corner replaces them.
-        out.append(points[cursor : runs[i][1]])
-        out.append(corner[None, :])
-        cursor = runs[j][0] + 1
-        changed = True
+        corner = _corner_between(points, runs[i], runs[j], kinks, cell)
+        if corner is not None:
+            # Vertices runs[i][1] .. runs[j][0] are the chamfer; the corner replaces them.
+            out.append(points[cursor : runs[i][1]])
+            out.append(corner[None, :])
+            cursor = runs[j][0] + 1
+            changed = True
         i = j
     if not changed:
         return points
