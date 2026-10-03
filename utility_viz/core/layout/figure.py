@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Final
+from typing import Any, Final
 
 import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
@@ -119,6 +119,42 @@ class Figure:
         y_axis: Axis | None = None,
     ):
         """Create a multi-panel figure composed of injected :class:`Canvas` instances."""
+        shape, specs, theme = self._init_figure(layout, theme, font, math_font, figsize, shared_x, shared_y)
+        rows, cols = shape
+        self._add_suptitle(title, theme)
+
+        gs = GridSpec(rows, cols, figure=self.fig, hspace=hspace, wspace=wspace)
+        self.canvases: list[Canvas] = []
+        self._grid_lookup: dict[tuple[int, int], Canvas] = {}
+        canvas_kwargs: dict[str, Any] = dict(
+            x_max=x_max,
+            y_max=y_max,
+            x_label=x_label,
+            y_label=y_label,
+            title=None,
+            dpi=dpi,
+            x_label_pos=x_label_pos,
+            y_label_pos=y_label_pos,
+            x_arrow_style=x_arrow_style,
+            y_arrow_style=y_arrow_style,
+            theme=theme,
+            fig=self.fig,
+            font=self.font,
+            math_font=self.math_font,
+            x_line_style=x_line_style,
+            y_line_style=y_line_style,
+            axis_stroke=axis_stroke,
+            x_axis_stroke=x_axis_stroke,
+            y_axis_stroke=y_axis_stroke,
+            x_axis=x_axis,
+            y_axis=y_axis,
+        )
+        self._build_panels(gs, specs, canvas_kwargs)
+
+        self._apply_shared_axes(shape, specs)
+
+    def _init_figure(self, layout, theme, font, math_font, figsize, shared_x, shared_y):
+        """Resolve config defaults and create the matplotlib figure."""
         active = Config.active()
         theme = theme if theme is not None else active.theme
         font = font if font is not None else active.font
@@ -136,6 +172,10 @@ class Figure:
         self.fig.patch.set_alpha(0.0)
         if self.font or self.math_font:
             self.fig.add_artist(FontApplier(self.font, self.math_font))
+        return shape, specs, theme
+
+    def _add_suptitle(self, title: str | Label | None, theme: Theme) -> None:
+        """Add the figure super-title, honouring a :class:`Label` style."""
         title_text, title_style = split_label(title, theme.title_label)
         if title_text:
             suptitle = self.fig.suptitle(
@@ -146,14 +186,12 @@ class Figure:
             suptitle.set_visible(title_style.visible is not False)
             suptitle.set_alpha(title_style.opacity)
 
-        gs = GridSpec(rows, cols, figure=self.fig, hspace=hspace, wspace=wspace)
-        self.canvases: list[Canvas] = []
-        self._grid_lookup: dict[tuple[int, int], Canvas] = {}
+    def _build_panels(self, gs: GridSpec, specs: list[_PanelSpec], canvas_kwargs: dict[str, Any]) -> None:
+        """Create one axes and :class:`Canvas` per panel spec."""
         anchor_ax: Axes | None = None
-
         for spec in specs:
-            sharex_ax = anchor_ax if shared_x else None
-            sharey_ax = anchor_ax if shared_y else None
+            sharex_ax = anchor_ax if self.shared_x else None
+            sharey_ax = anchor_ax if self.shared_y else None
             ax = self.fig.add_subplot(
                 gs[spec.row : spec.row + spec.rowspan, spec.col : spec.col + spec.colspan],
                 sharex=sharex_ax,
@@ -161,34 +199,9 @@ class Figure:
             )
             if anchor_ax is None:
                 anchor_ax = ax
-            canvas = Canvas(
-                x_max=x_max,
-                y_max=y_max,
-                x_label=x_label,
-                y_label=y_label,
-                title=None,
-                dpi=dpi,
-                x_label_pos=x_label_pos,
-                y_label_pos=y_label_pos,
-                x_arrow_style=x_arrow_style,
-                y_arrow_style=y_arrow_style,
-                theme=theme,
-                fig=self.fig,
-                ax=ax,
-                font=self.font,
-                math_font=self.math_font,
-                x_line_style=x_line_style,
-                y_line_style=y_line_style,
-                axis_stroke=axis_stroke,
-                x_axis_stroke=x_axis_stroke,
-                y_axis_stroke=y_axis_stroke,
-                x_axis=x_axis,
-                y_axis=y_axis,
-            )
+            canvas = Canvas(ax=ax, **canvas_kwargs)
             self.canvases.append(canvas)
             self._grid_lookup[(spec.row, spec.col)] = canvas
-
-        self._apply_shared_axes(shape, specs)
 
     def _apply_shared_axes(self, shape: tuple[int, int], specs: list[_PanelSpec]) -> None:
         """Hide duplicated axis-tip labels on inner edges for shared-axis layouts."""

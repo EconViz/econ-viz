@@ -117,7 +117,6 @@ class IndifferenceCurves:
 
     def draw(self, ax, x_max: float, y_max: float, **kwargs) -> list[float]:
         """Draw curves onto *ax* and return the computed contour levels."""
-        from utility_viz.core.diagrams.components import draw_ray
         from utility_viz.models.curves.layers import Layer
 
         res = int(kwargs.pop("res", 400))
@@ -171,45 +170,51 @@ class IndifferenceCurves:
             tag(self._proxy, "curve")
 
         if self.show_ic_labels:
-            for rank, level in enumerate(computed, start=1):
-                segs = segs_by_level[level]
-                best_x, best_y = -1.0, None
-                best_angle = 0.0
-                for seg in segs:
-                    if len(seg) == 0:
-                        continue
-                    mask = (seg[:, 0] < x_max * 0.97) & (seg[:, 1] < y_max * 0.97)
-                    seg = seg[mask]
-                    if len(seg) == 0:
-                        continue
-                    idx = np.argmax(seg[:, 0])
-                    if seg[idx, 0] > best_x:
-                        best_x, best_y = seg[idx, 0], seg[idx, 1]
-                        best_angle = _label_angle(ax, seg, int(idx))
-                if best_y is not None:
-                    text_str = f"$u_{{{rank}}}$" if self.label_style == "ordinal" else self.ic_label_fmt.format(level)
-                    text = ax.annotate(
-                        text_str,
-                        (best_x, best_y),
-                        textcoords="offset points",
-                        xytext=(4, 0),
-                        color=color_by_level[level],
-                        fontsize=9,
-                        ha="left",
-                        va="center",
-                        rotation=best_angle,
-                        rotation_mode="anchor",
-                        annotation_clip=True,
-                    )
-                    role = "ic_label" if level in focal_levels else "secondary_ic_label"
-                    tag(text, role)
-                    tag_attr(text, "_ev_label_default", Label(position=LabelPosition.RIGHT, offset=4))
+            self._draw_ic_labels(ax, computed, segs_by_level, color_by_level, focal_levels, x_max, y_max)
 
-        if self.show_rays and hasattr(self.func, "utility_type") and self.func.utility_type is UtilityType.KINKED:
+        self._draw_kinked_decorations(ax, computed, x_max, y_max)
+
+        if hasattr(self.func, "subsistence_lines"):
+            sub_x, sub_y = self.func.subsistence_lines()
+            style = dict(color=self.subsistence_color, linewidth=self.subsistence_linewidth, linestyle="--", alpha=0.6)
+            tag(ax.axvline(x=sub_x, **style), "subsistence")
+            tag(ax.axhline(y=sub_y, **style), "subsistence")
+
+        return computed
+
+    def _draw_ic_labels(self, ax, computed, segs_by_level, color_by_level, focal_levels, x_max, y_max) -> None:
+        for rank, level in enumerate(computed, start=1):
+            found = _rightmost_point(ax, segs_by_level[level], x_max, y_max)
+            if found is None:
+                continue
+            best_x, best_y, best_angle = found
+            text_str = f"$u_{{{rank}}}$" if self.label_style == "ordinal" else self.ic_label_fmt.format(level)
+            text = ax.annotate(
+                text_str,
+                (best_x, best_y),
+                textcoords="offset points",
+                xytext=(4, 0),
+                color=color_by_level[level],
+                fontsize=9,
+                ha="left",
+                va="center",
+                rotation=best_angle,
+                rotation_mode="anchor",
+                annotation_clip=True,
+            )
+            role = "ic_label" if level in focal_levels else "secondary_ic_label"
+            tag(text, role)
+            tag_attr(text, "_ev_label_default", Label(position=LabelPosition.RIGHT, offset=4))
+
+    def _draw_kinked_decorations(self, ax, computed, x_max: float, y_max: float) -> None:
+        from utility_viz.core.diagrams.components import draw_ray
+
+        if getattr(self.func, "utility_type", None) is not UtilityType.KINKED:
+            return
+        if self.show_rays:
             for slope in self.func.ray_slopes():
                 draw_ray(ax, slope, x_max, y_max, color=self.ray_color, linewidth=self.ray_linewidth)
-
-        if self.show_kinks and hasattr(self.func, "utility_type") and self.func.utility_type is UtilityType.KINKED:
+        if self.show_kinks:
             for x, y in self.func.kink_points(computed):
                 (kink,) = ax.plot(
                     x,
@@ -221,10 +226,22 @@ class IndifferenceCurves:
                 )
                 tag(kink, "kink")
 
-        if hasattr(self.func, "subsistence_lines"):
-            sub_x, sub_y = self.func.subsistence_lines()
-            style = dict(color=self.subsistence_color, linewidth=self.subsistence_linewidth, linestyle="--", alpha=0.6)
-            tag(ax.axvline(x=sub_x, **style), "subsistence")
-            tag(ax.axhline(y=sub_y, **style), "subsistence")
 
-        return computed
+def _rightmost_point(ax, segs, x_max: float, y_max: float):
+    """Return ``(x, y, angle)`` of the right-most visible point over *segs*, or None."""
+    best_x, best_y = -1.0, None
+    best_angle = 0.0
+    for seg in segs:
+        if len(seg) == 0:
+            continue
+        mask = (seg[:, 0] < x_max * 0.97) & (seg[:, 1] < y_max * 0.97)
+        seg = seg[mask]
+        if len(seg) == 0:
+            continue
+        idx = np.argmax(seg[:, 0])
+        if seg[idx, 0] > best_x:
+            best_x, best_y = seg[idx, 0], seg[idx, 1]
+            best_angle = _label_angle(ax, seg, int(idx))
+    if best_y is None:
+        return None
+    return best_x, best_y, best_angle
