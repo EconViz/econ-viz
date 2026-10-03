@@ -114,7 +114,9 @@ def _register_plot(sub) -> argparse.ArgumentParser:
             "Theme name: default, nord, paper, monochrome, presentation, dark (default: default, or the config's base)."
         ),
     )
-    p.add_argument("--config", type=str, default=None, metavar="FILE", help="TOML settings file (see 'utility-viz init').")
+    p.add_argument(
+        "--config", type=str, default=None, metavar="FILE", help="TOML settings file (see 'utility-viz init')."
+    )
 
     p.add_argument(
         "--n-curves", dest="n_curves", type=int, default=5, help="Number of indifference curves (default 5)."
@@ -139,6 +141,11 @@ def _register_init(sub) -> argparse.ArgumentParser:
     p = sub.add_parser("init", help="Write a commented utility-viz.toml settings template.")
     p.add_argument("path", nargs="?", default="utility-viz.toml", help="File to write (default: utility-viz.toml).")
     p.add_argument("--force", action="store_true", help="Overwrite an existing file.")
+    p.add_argument(
+        "--migrate",
+        action="store_true",
+        help="Create utility-viz.toml from the legacy econ-viz.toml in the same directory (the old file is kept).",
+    )
     return p
 
 
