@@ -77,12 +77,15 @@ class Config:
 
         With an explicit *path* that file is read (and must exist). With no
         *path*, :func:`find_config_file` decides: ``utility-viz.toml``, then the
-        legacy ``econ-viz.toml`` (with a deprecation warning), then the
-        built-in defaults.
+        legacy ``econ-viz.toml`` (with a deprecation warning). As in 1.x,
+        :class:`InvalidParameterError` is raised when neither exists; use
+        :meth:`discover` to fall back to the built-in defaults instead.
         """
         if path is None:
             found = find_config_file(stacklevel=3)
-            return cls() if found is None else cls._read(found)
+            if found is None:
+                raise InvalidParameterError(f"config file not found: {DEFAULT_FILE}")
+            return cls._read(found)
         return cls._read(Path(path))
 
     @classmethod
