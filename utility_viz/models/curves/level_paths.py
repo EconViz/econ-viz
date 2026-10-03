@@ -1,79 +1,58 @@
-"""Backend-neutral level-curve geometry (numpy only, no plotting library)."""
+"""Backend-neutral level curves: bezierkit traces them, utility-viz chooses the levels."""
 
 from __future__ import annotations
 
-from collections.abc import Callable
+import math
+from collections.abc import Callable, Sequence
+from typing import Any
 
 import numpy as np
+from bezierkit.bezier.path import PiecewiseBezier
+from bezierkit.implicit import ContourSet, trace_implicit
+from bezierkit.sampling.uniform import UniformSampler
 
 Point = tuple[float, float]
 
-
-def _bisect(
-    func: Callable[[np.ndarray, np.ndarray], np.ndarray],
-    fixed: np.ndarray,
-    lo: float,
-    hi: float,
-    level: float,
-    *,
-    vary_y: bool,
-    iterations: int = 60,
-) -> tuple[np.ndarray, np.ndarray]:
-    """Root of ``func == level`` along one axis for every value of ``fixed``.
-
-    Assumes *func* is non-decreasing along the varied axis. Returns the roots and a
-    mask of the entries whose bracket ``[lo, hi]`` actually contains the level.
-    """
-
-    def evaluate(t: np.ndarray) -> np.ndarray:
-        with np.errstate(divide="ignore", invalid="ignore"):
-            return np.asarray(func(fixed, t) if vary_y else func(t, fixed), dtype=float)
-
-    low = np.full_like(fixed, lo, dtype=float)
-    high = np.full_like(fixed, hi, dtype=float)
-    f_low, f_high = evaluate(low), evaluate(high)
-    valid = np.isfinite(f_low) & np.isfinite(f_high) & (f_low <= level) & (level <= f_high)
-    for _ in range(iterations):
-        mid = (low + high) / 2.0
-        below = evaluate(mid) < level
-        low = np.where(below, mid, low)
-        high = np.where(below, high, mid)
-    return (low + high) / 2.0, valid
+# Value substituted where a utility is undefined (e.g. Stone-Geary below subsistence), so
+# the marching-squares grid stays finite. It is far below any real level, so a level
+# crossing only ever lands next to the finite side of an undefined cell.
+_UNDEFINED = -1e12
 
 
-def level_curve_path(
-    func: Callable[[np.ndarray, np.ndarray], np.ndarray],
-    level: float,
+def trace_level_sets(
+    func: Callable[..., Any],
+    levels: Sequence[float],
     x_range: tuple[float, float],
     y_range: tuple[float, float],
-    res: int = 400,
-) -> list[Point]:
-    """Trace the curve ``func(x, y) == level`` inside a rectangle as one polyline.
+    *,
+    resolution: tuple[int, int] = (161, 161),
+    tolerance: float = 0.005,
+) -> ContourSet:
+    """Trace ``func(x, y) == level`` for each level as cubic Bezier paths.
 
-    The curve is located by bisection along columns and rows, so *func* must be
-    non-decreasing in each good (true for the smooth, monotone preferences used
-    by the Cobb-Douglas slice). Points are ordered by increasing ``x``. An empty
-    list means the level never occurs inside the rectangle. Piecewise or
-    non-monotone utilities need a dedicated tracer and are not handled here.
+    Wraps :func:`bezierkit.implicit.trace_implicit`. Level *selection* stays with the
+    caller (``percentile_levels`` and friends); this only converts levels to geometry.
+    Handles non-monotone and kinked utilities (Leontief kinks are rounded to within
+    *tolerance*; a level that is not present inside the box gives an empty path tuple).
+    Disconnected components come back as separate paths.
     """
-    xs = np.linspace(x_range[0], x_range[1], res)
-    ys = np.linspace(y_range[0], y_range[1], res)
 
-    col_y, col_ok = _bisect(func, xs, y_range[0], y_range[1], level, vary_y=True)
-    row_x, row_ok = _bisect(func, ys, x_range[0], x_range[1], level, vary_y=False)
+    def field(x: float, y: float) -> float:
+        with np.errstate(all="ignore"):
+            value = float(func(np.float64(x), np.float64(y)))
+        return value if math.isfinite(value) else _UNDEFINED
 
-    points = np.concatenate(
-        [
-            np.column_stack([xs[col_ok], col_y[col_ok]]),
-            np.column_stack([row_x[row_ok], ys[row_ok]]),
-        ]
+    return trace_implicit(
+        field,
+        levels=list(levels),
+        viewport=(x_range[0], x_range[1], y_range[0], y_range[1]),
+        resolution=resolution,
+        tolerance=tolerance,
     )
-    if len(points) < 2:
-        return []
-    order = np.lexsort((-points[:, 1], points[:, 0]))
-    ordered = points[order]
-    keep = np.concatenate([[True], np.any(np.diff(ordered, axis=0) != 0, axis=1)])
-    ordered = ordered[keep]
-    if len(ordered) < 2:
-        return []
-    return [(float(x), float(y)) for x, y in ordered]
+
+
+def sample_path(path: PiecewiseBezier, points_per_segment: int = 16) -> list[Point]:
+    """Sample a Bezier path to an ordered polyline (what a raster backend draws)."""
+    count = max(2, points_per_segment * len(path.segments))
+    sample = UniformSampler(count).sample(path)
+    return [(float(x), float(y)) for x, y in zip(sample.x, sample.y, strict=True)]

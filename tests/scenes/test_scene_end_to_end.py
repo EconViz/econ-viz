@@ -5,9 +5,14 @@ import subprocess
 
 import pytest
 from mosaickit import Canvas, CanvasSpec, LegendLayer, Scene, quadrant_axes
-from tikz_probe import scene_to_tikz
 
-from utility_viz.core.scenes import UTILITY_THEME, budget_layers, equilibrium_layers, indifference_layers
+from utility_viz.core.scenes import (
+    UTILITY_THEME,
+    budget_layers,
+    canvas_to_tikz,
+    equilibrium_layers,
+    indifference_layers,
+)
 from utility_viz.models import CobbDouglas, solve
 
 PX, PY, INCOME = 2.0, 3.0, 30.0
@@ -53,16 +58,17 @@ def test_matplotlib_render_to_svg_uses_theme_colors(canvas, tmp_path):
         assert color in text
 
 
-def test_tikz_probe_source_has_every_layer_kind(canvas):
-    tex = scene_to_tikz(canvas.snapshot(), canvas.theme)
+def test_tikz_source_uses_native_bezier_and_theme_colors(canvas):
+    tex = canvas_to_tikz(canvas)
     assert "\\draw[" in tex and "\\fill[" in tex and "\\node[" in tex
+    assert ".. controls" in tex
     assert "377EB8" in tex and "984EA3" in tex and "E41A1C" in tex
 
 
 @pytest.mark.skipif(shutil.which("pdflatex") is None, reason="pdflatex is not installed")
-def test_tikz_probe_compiles_with_pdflatex(canvas, tmp_path):
+def test_tikz_compiles_with_pdflatex(canvas, tmp_path):
     tex = tmp_path / "cd.tex"
-    tex.write_text(scene_to_tikz(canvas.snapshot(), canvas.theme), encoding="utf-8")
+    tex.write_text(canvas_to_tikz(canvas), encoding="utf-8")
     result = subprocess.run(
         ["pdflatex", "-interaction=nonstopmode", "-halt-on-error", tex.name],
         cwd=tmp_path,

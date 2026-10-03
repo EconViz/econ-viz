@@ -11,8 +11,8 @@ from utility_viz.core.scenes import (
     equilibrium_layers,
     indifference_layers,
 )
-from utility_viz.models import CobbDouglas, solve
-from utility_viz.models.curves import level_curve_path
+from utility_viz.models import CES, CobbDouglas, Leontief, PerfectSubstitutes, QuasiLinear, StoneGeary, solve
+from utility_viz.models.curves import sample_path, trace_level_sets
 
 
 def test_budget_layers_geometry_and_ids():
@@ -59,13 +59,33 @@ def test_equilibrium_optional_layers_omitted():
     assert [layer.id for layer in layers] == ["equilibrium"]
 
 
-def test_level_curve_path_cobb_douglas_is_on_the_level_set():
-    func = CobbDouglas(0.4, 0.6)
-    path = level_curve_path(func, 4.0, (0.1, 12.0), (0.1, 12.0))
-    xs, ys = np.array(path).T
-    assert np.all(np.diff(xs) >= 0)
-    assert np.allclose(func(xs, ys), 4.0, rtol=1e-6)
-    assert level_curve_path(func, 1e6, (0.1, 12.0), (0.1, 12.0)) == []
+@pytest.mark.parametrize(
+    ("func", "level", "tol"),
+    [
+        (CobbDouglas(0.4, 0.6), 4.0, 0.02),
+        (CES(), 5.0, 0.02),
+        (QuasiLinear(), 6.0, 0.1),
+        (PerfectSubstitutes(), 12.0, 1e-9),
+        (Leontief(), 3.5, 0.05),
+        (StoneGeary(), 5.0, 0.05),
+    ],
+)
+def test_trace_level_sets_follows_the_level_set(func, level, tol):
+    (path,) = trace_level_sets(func, [level], (0.1, 15.0), (0.1, 10.0)).for_level(level)
+    xs, ys = np.array(sample_path(path)).T
+    assert np.abs(np.asarray(func(xs, ys)) - level).max() < tol
+
+
+def test_trace_level_sets_empty_for_absent_level():
+    assert trace_level_sets(CobbDouglas(), [1e6], (0.1, 12.0), (0.1, 12.0)).for_level(1e6) == ()
+
+
+def test_indifference_layer_keeps_source_bezier():
+    from bezierkit.bezier.path import PiecewiseBezier
+
+    layers, _ = indifference_layers(CobbDouglas(), [4.0], 12, 12)
+    (layer,) = layers
+    assert isinstance(layer.model, PiecewiseBezier)
 
 
 def test_indifference_layers_levels_ids_and_labels():
@@ -73,7 +93,7 @@ def test_indifference_layers_levels_ids_and_labels():
     layers, levels = indifference_layers(func, 3, 15, 10, show_labels=True)
     assert len(levels) == 3 and levels == sorted(levels)
     ids = [layer.id for layer in layers]
-    assert ids == ["ic.1", "ic.1.label", "ic.2", "ic.2.label", "ic.3", "ic.3.label"]
+    assert ids == ["ic.1", "ic.1.label", "ic.2", "ic.2.label", "ic.3", "ic.3.label"], ids
     assert all(layer.role == Indifference.MAIN for layer in layers if isinstance(layer, PathLayer))
     first_label = layers[1]
     assert isinstance(first_label, TextLayer) and first_label.text == f"{levels[0]:.2g}"

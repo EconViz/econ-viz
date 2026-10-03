@@ -3,7 +3,8 @@
 Each factory turns a solved/derived economic object into immutable mosaickit layers with
 concept-local roles (``utility.budget``, ``utility.equilibrium``, ``utility.indifference``).
 Nothing here imports Matplotlib or the legacy drawing modules; rendering is done by
-mosaickit (``Canvas.save``) with :data:`UTILITY_THEME`.
+mosaickit (``Canvas.save``) with :data:`UTILITY_THEME`, or export TikZ with
+:func:`canvas_to_tikz` (curves are native Bezier paths from bezierkit).
 """
 
 from utility_viz.core.scenes.budget import budget_layers
@@ -17,6 +18,7 @@ from utility_viz.core.scenes.theme import (
     utility_roles,
     utility_theme,
 )
+from utility_viz.core.scenes.tikz import canvas_to_tikz
 
 __all__ = [
     "UTILITY_THEME",
@@ -25,6 +27,7 @@ __all__ = [
     "Indifference",
     "UtilityColors",
     "budget_layers",
+    "canvas_to_tikz",
     "equilibrium_layers",
     "indifference_layers",
     "register_utility_theme",

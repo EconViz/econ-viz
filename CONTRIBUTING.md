@@ -82,8 +82,8 @@ New and migrated economic components build backend-neutral
 indifference curves):
 
 1. **Economics stays in utility-viz.** Solving, contour-level selection and curve tracing
-   live under `models/` (numpy only, e.g. `models.curves.level_curve_path`,
-   `percentile_levels`). A scene factory only receives results.
+   live under `models/` (no plotting library: bezierkit's `trace_implicit` via
+   `models.curves.trace_level_sets`, `percentile_levels` for level choice). A scene factory only receives results.
 2. **One factory per component** in `core/scenes/<component>.py`, returning a tuple of
    immutable layers (`PathLayer`, `FillLayer`, `MarkerLayer`, `TextLayer`) with stable ids
    (`budget`, `budget.fill`, `equilibrium.drop`, `ic.2.label`) so callers can `Canvas.remove`
@@ -104,9 +104,13 @@ indifference curves):
 5. **Test** the factory's layers (ids, roles, geometry) and add the component to the
    end-to-end scene in `tests/scenes/test_scene_end_to_end.py`.
 
-TikZ: mosaickit 0.5.1 has no TikZ renderer (domain packages own TikZ export). The test-only
-`tests/scenes/tikz_probe.py` shows the layers carry enough information for one; it is not a
-public exporter, and the legacy `core.export.backend_tikz` still serves 1.x-style figures.
+Geometry belongs to bezierkit and mosaickit stays curve-agnostic: curves are traced as
+`PiecewiseBezier` paths, sampled to points for the mosaickit `PathLayer`, and the source path
+is kept as `layer.model`. `core.scenes.canvas_to_tikz(canvas)` exports the same scene to TikZ
+(native `.. controls ..` paths via `bezierkit.export.tikz`, theme-resolved styles); mosaickit
+0.5.1 itself has no TikZ renderer. Limits: the traced field must be finite (undefined values
+are floored), Leontief kinks are rounded to within the tracing tolerance, and only path, fill,
+marker and text layers are exported.
 
 ## Code style
 

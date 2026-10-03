@@ -1,7 +1,9 @@
 """Indifference curves as backend-neutral mosaickit layers.
 
-Contour *level selection* (``percentile_levels``) and the curve tracing both live in
-``utility_viz.models.curves``; this module only wraps the resulting polylines in layers.
+Contour *level selection* (``percentile_levels``) stays in ``utility_viz.models.curves``;
+bezierkit traces the curves as cubic Bezier paths. Each layer's points are sampled from
+that path and the source ``PiecewiseBezier`` is kept as ``layer.model`` so other
+backends (TikZ) draw the very same curve.
 """
 
 from __future__ import annotations
@@ -14,7 +16,7 @@ from mosaickit import Layer, PathLayer, Stroke, TextLayer
 from utility_viz.core.constants.canvas import CONTOUR_DOMAIN_MIN
 from utility_viz.core.scenes.roles import Indifference
 from utility_viz.models.curves import Layer as ContourGrid
-from utility_viz.models.curves import level_curve_path, percentile_levels
+from utility_viz.models.curves import percentile_levels, sample_path, trace_level_sets
 
 
 def indifference_layers(
@@ -23,7 +25,9 @@ def indifference_layers(
     x_max: float,
     y_max: float,
     *,
-    res: int = 400,
+    res: int = 100,
+    resolution: tuple[int, int] = (161, 161),
+    tolerance: float = 0.005,
     layer_id: str = "ic",
     highlight_level: float | None = None,
     show_labels: bool = False,
@@ -41,8 +45,10 @@ def indifference_layers(
     with *show_labels*, a ``<layer_id>.<rank>.label`` :class:`~mosaickit.TextLayer` sits at
     the curve's right end. When *highlight_level* is given only the nearest level uses
     the ``utility.indifference`` role, the rest the subdued ``.secondary`` role.
-    *legend* names the first (focal) curve only. Curve tracing assumes a utility that is
-    non-decreasing in both goods (see :func:`~utility_viz.models.curves.level_curve_path`).
+    *legend* names the first (focal) curve only. A level with several disconnected
+    components yields ``<layer_id>.<rank>`` plus ``<layer_id>.<rank>.c2``, ``.c3``, ...
+    Tracing is bezierkit's marching squares, so it also covers non-monotone and kinked
+    utilities; ``layer.model`` holds each curve's source ``PiecewiseBezier``.
     """
     domain = (CONTOUR_DOMAIN_MIN, x_max), (CONTOUR_DOMAIN_MIN, y_max)
     if isinstance(levels, int):
@@ -55,11 +61,10 @@ def indifference_layers(
     if highlight_level is not None and computed:
         focal = int(np.argmin(np.abs(np.array(computed) - highlight_level)))
 
+    traced = trace_level_sets(func, computed, domain[0], domain[1], resolution=resolution, tolerance=tolerance)
+
     layers: list[Layer] = []
-    for index, level in enumerate(computed):
-        path = level_curve_path(func, level, domain[0], domain[1], res=res)
-        if not path:
-            continue
+    for index, (level, contour) in enumerate(zip(computed, traced.contours, strict=True)):
         rank = index + 1
         is_focal = focal is None or index == focal
         main, label_role = (
@@ -67,18 +72,23 @@ def indifference_layers(
             if is_focal
             else (Indifference.SECONDARY, Indifference.SECONDARY_LABEL)
         )
-        layers.append(
-            PathLayer(
-                path,
-                stroke=stroke if is_focal else None,
-                id=f"{layer_id}.{rank}",
-                role=main.value,
-                legend=legend if (legend and index == (focal or 0)) else None,
-                z_index=z_index,
+        sampled = []
+        for k, bezier in enumerate(contour.paths):
+            points = sample_path(bezier)
+            sampled.append(points)
+            layers.append(
+                PathLayer(
+                    points,
+                    stroke=stroke if is_focal else None,
+                    id=f"{layer_id}.{rank}" if k == 0 else f"{layer_id}.{rank}.c{k + 1}",
+                    role=main.value,
+                    legend=legend if (legend and k == 0 and index == (focal or 0)) else None,
+                    model=bezier,
+                    z_index=z_index,
+                )
             )
-        )
         if show_labels:
-            anchor = _label_anchor(path, x_max, y_max)
+            anchor = _label_anchor([p for points in sampled for p in points], x_max, y_max)
             if anchor is not None:
                 text = f"u_{{{rank}}}" if label_style == "ordinal" else label_fmt.format(level)
                 layers.append(
