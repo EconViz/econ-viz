@@ -28,6 +28,10 @@
 
 - Add architecture and public-API tests that enforce package layering and the root facade
 
+### Bug fixes
+
+- Indifference curves of kinked utilities (Leontief, piecewise `min`/`max` `CustomUtility`, ...) now keep exact right-angle corners instead of a chamfered diagonal, in Matplotlib and TikZ output; the TikZ exporter also drops repeated consecutive vertices
+
 ## v1.12.0 (2026-09-26)
 
 ### Features
