@@ -32,6 +32,10 @@
 
 - Split `core/canvas/base.py` into cohesive modules (`style`, `layers`, `decomposition`, `legend`, `output`) and break long methods into private helpers; `Canvas` and its public API are unchanged (#154)
 
+### Bug fixes
+
+- Indifference curves of kinked utilities (Leontief, piecewise `min`/`max` `CustomUtility`, ...) now keep exact right-angle corners instead of a chamfered diagonal, in Matplotlib and TikZ output; the TikZ exporter also drops repeated consecutive vertices
+
 ## v1.12.0 (2026-09-26)
 
 ### Features
