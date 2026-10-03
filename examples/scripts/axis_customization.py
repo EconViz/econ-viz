@@ -4,7 +4,7 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 
-from econ_viz import ArrowStyle, Canvas, LabelPosition, LineStyle
+from utility_viz import ArrowStyle, Canvas, LabelPosition, LineStyle
 
 OUTPUT_DIR = Path("examples/output/customization")
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)

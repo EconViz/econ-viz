@@ -1,4 +1,4 @@
-# Contributing to econ-viz
+# Contributing to utility-viz
 
 Thank you for your interest in contributing! This guide covers everything you need to get started.
 
@@ -6,7 +6,7 @@ Thank you for your interest in contributing! This guide covers everything you ne
 
 ```bash
 git clone https://github.com/EconViz/econ-viz.git
-cd econ-viz
+cd utility-viz
 uv sync --all-extras
 ```
 
@@ -16,7 +16,7 @@ Run the complete local quality gate:
 uv run pytest
 uv run ruff check .
 uv run ruff format --check .
-uv run mypy econ_viz
+uv run mypy utility_viz
 ```
 
 Tests are grouped by package domain under `tests/`. The default command
@@ -54,11 +54,11 @@ must point **down** the layer table below (enforced by `tests/test_architecture.
 which also forbids cycles and relative imports).
 
 ```
-econ_viz/
+utility_viz/
   __init__.py      root facade (public API, lazy)               layer 10
   cli/             command-line interface                       layer 9
   models/          facade re-exporting the economic models      layer 9
-    utility/ curves/ consumer/ optimization/ analysis/          layers 2-4  (never import econ_viz.core drawing code)
+    utility/ curves/ consumer/ optimization/ analysis/          layers 2-4  (never import utility_viz.core drawing code)
   core/            drawing, styling, export, runtime (advanced/internal API)
     errors/ constants/                                          layer 0
     styles/ themes/ export/ config/ rendering/                  layers 2-4
@@ -68,8 +68,8 @@ econ_viz/
   enums/ utils/    shared internal areas                        layer 1
 ```
 
-- Public API = the root facade (`from econ_viz import Canvas, ...`) and `econ_viz.models`.
-  Deep `econ_viz.core.*` imports are advanced/internal and may move between minor releases.
+- Public API = the root facade (`from utility_viz import Canvas, ...`) and `utility_viz.models`.
+  Deep `utility_viz.core.*` imports are advanced/internal and may move between minor releases.
 - Helpers live beside the feature that owns them and are underscore-prefixed
   (`_color.py`, `_require_pillow`). Do not add a generic top-level `helper/` package.
 - Adding a subpackage? Register it (with a layer) in `tests/test_architecture.py`.
@@ -78,7 +78,7 @@ econ_viz/
 
 - Python 3.10+
 - Ruff enforces lint rules and formatting
-- Mypy checks the `econ_viz` package
+- Mypy checks the `utility_viz` package
 - Add tests for any new behaviour
 
 ## Releasing

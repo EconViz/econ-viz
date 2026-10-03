@@ -11,9 +11,9 @@ import numpy as np
 import pytest
 from matplotlib.colors import to_hex
 
-from econ_viz import Canvas, themes
-from econ_viz.core.diagrams.consumer.edgeworth import EdgeworthBox
-from econ_viz.models.utility import CobbDouglas, Satiation, StoneGeary
+from utility_viz import Canvas, themes
+from utility_viz.core.diagrams.consumer.edgeworth import EdgeworthBox
+from utility_viz.models.utility import CobbDouglas, Satiation, StoneGeary
 
 MODEL = CobbDouglas(alpha=0.5, beta=0.5)
 
@@ -130,8 +130,8 @@ class TestCustomThemePropagates:
         assert point.get_markersize() == pytest.approx(6.0)
 
     def test_bliss_marker_size(self):
-        from econ_viz import Marker
-        from econ_viz.core.themes.theme import Theme
+        from utility_viz import Marker
+        from utility_viz.core.themes.theme import Theme
 
         class BigBliss(Theme):
             @property
@@ -170,7 +170,7 @@ class TestExplicitArgumentStillWins:
 
 class TestConfigOverridesReachNewRoles:
     def test_core_and_price_via_config(self):
-        from econ_viz import Config
+        from utility_viz import Config
 
         config = Config.from_dict(
             {
@@ -188,7 +188,7 @@ class TestConfigOverridesReachNewRoles:
         assert to_hex(_role(box.ax, "walrasian")[0].get_markerfacecolor()) == to_hex("#ABABAB")
 
     def test_subsistence_and_core_point_via_config(self):
-        from econ_viz import Config
+        from utility_viz import Config
 
         config = Config.from_dict(
             {

@@ -10,9 +10,9 @@ matplotlib.use("Agg")
 
 import numpy as np
 
-from econ_viz import Canvas
-from econ_viz.models.optimization import DecompositionMethod, decompose_price_effect
-from econ_viz.models.utility import (
+from utility_viz import Canvas
+from utility_viz.models.optimization import DecompositionMethod, decompose_price_effect
+from utility_viz.models.utility import (
     CES,
     CobbDouglas,
     Leontief,
@@ -21,7 +21,7 @@ from econ_viz.models.utility import (
     StoneGeary,
     Translog,
 )
-from econ_viz.models.utility.advanced import CustomUtility
+from utility_viz.models.utility.advanced import CustomUtility
 
 OUTPUT_DIR = Path("examples/output/decom")
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)

@@ -9,13 +9,13 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import pytest
 
-from econ_viz import Canvas, DemandDiagram, Legend, LinearBudget, PricePath
-from econ_viz.core.canvas.legend import place_legend
-from econ_viz.core.diagrams.consumer.edgeworth import EdgeworthBox
-from econ_viz.core.errors.exceptions import InvalidParameterError
-from econ_viz.enums import LegendPosition
-from econ_viz.models.optimization import decompose_price_effect
-from econ_viz.models.utility import CobbDouglas, Haagsma
+from utility_viz import Canvas, DemandDiagram, Legend, LinearBudget, PricePath
+from utility_viz.core.canvas.legend import place_legend
+from utility_viz.core.diagrams.consumer.edgeworth import EdgeworthBox
+from utility_viz.core.errors.exceptions import InvalidParameterError
+from utility_viz.enums import LegendPosition
+from utility_viz.models.optimization import decompose_price_effect
+from utility_viz.models.utility import CobbDouglas, Haagsma
 
 MODEL = CobbDouglas(alpha=0.5, beta=0.5)
 DEC = decompose_price_effect(MODEL, px=(2.0, 4.0), py=3.0, income=30.0)
@@ -232,6 +232,6 @@ class TestOtherDiagrams:
 
 
 def test_legend_is_exported():
-    import econ_viz
+    import utility_viz
 
-    assert econ_viz.Legend is Legend
+    assert utility_viz.Legend is Legend

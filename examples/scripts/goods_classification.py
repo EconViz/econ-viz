@@ -20,9 +20,9 @@ matplotlib.use("Agg")
 
 import numpy as np
 
-from econ_viz import Canvas, Effect
-from econ_viz.models.optimization import DecompositionMethod, decompose_price_effect
-from econ_viz.models.utility import CobbDouglas, Haagsma, QuasiLinear
+from utility_viz import Canvas, Effect
+from utility_viz.models.optimization import DecompositionMethod, decompose_price_effect
+from utility_viz.models.utility import CobbDouglas, Haagsma, QuasiLinear
 
 OUTPUT_DIR = Path("examples/output/decom/goods")
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)

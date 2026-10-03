@@ -2,12 +2,12 @@
 
 import pytest
 
-from econ_viz import Canvas, Figure, Layout
-from econ_viz.core.constants.canvas import DEFAULT_DPI, MAX_DPI, MIN_DPI
-from econ_viz.core.constants.logging import LIBRARY_ROOT
-from econ_viz.core.diagrams.consumer.edgeworth import EdgeworthBox
-from econ_viz.models.utility import CobbDouglas
-from econ_viz.utils.logging import get_logger
+from utility_viz import Canvas, Figure, Layout
+from utility_viz.core.constants.canvas import DEFAULT_DPI, MAX_DPI, MIN_DPI
+from utility_viz.core.constants.logging import LIBRARY_ROOT
+from utility_viz.core.diagrams.consumer.edgeworth import EdgeworthBox
+from utility_viz.models.utility import CobbDouglas
+from utility_viz.utils.logging import get_logger
 
 
 def _edgeworth(**kwargs) -> EdgeworthBox:

@@ -7,12 +7,12 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import pytest
 
-from econ_viz import Axis, Canvas, Effect, Fill, Label, Legend, Marker, Stroke, solve
-from econ_viz.core.diagrams.consumer.edgeworth import EdgeworthBox
-from econ_viz.core.errors.exceptions import InvalidParameterError
-from econ_viz.enums import ArrowStyle
-from econ_viz.models.optimization import decompose_price_effect
-from econ_viz.models.utility import CobbDouglas
+from utility_viz import Axis, Canvas, Effect, Fill, Label, Legend, Marker, Stroke, solve
+from utility_viz.core.diagrams.consumer.edgeworth import EdgeworthBox
+from utility_viz.core.errors.exceptions import InvalidParameterError
+from utility_viz.enums import ArrowStyle
+from utility_viz.models.optimization import decompose_price_effect
+from utility_viz.models.utility import CobbDouglas
 
 MODEL = CobbDouglas(alpha=0.5, beta=0.5)
 EQ = solve(MODEL, px=2.0, py=3.0, income=30.0)
@@ -125,7 +125,7 @@ class TestApplied:
         assert all(t.get_alpha() == 0.5 for t in legend.get_texts())
 
     def test_edgeworth(self):
-        from econ_viz import Axis as A
+        from utility_viz import Axis as A
 
         box = EdgeworthBox(
             MODEL,

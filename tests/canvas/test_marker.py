@@ -8,11 +8,11 @@ import matplotlib.pyplot as plt
 import pytest
 from matplotlib.colors import to_hex
 
-from econ_viz import Canvas, DemandDiagram, LinearBudget, Marker, PricePath, solve
-from econ_viz.core.diagrams.consumer.edgeworth import EdgeworthBox
-from econ_viz.core.errors.exceptions import InvalidParameterError
-from econ_viz.models.optimization import decompose_price_effect
-from econ_viz.models.utility import CobbDouglas, Leontief, Satiation
+from utility_viz import Canvas, DemandDiagram, LinearBudget, Marker, PricePath, solve
+from utility_viz.core.diagrams.consumer.edgeworth import EdgeworthBox
+from utility_viz.core.errors.exceptions import InvalidParameterError
+from utility_viz.models.optimization import decompose_price_effect
+from utility_viz.models.utility import CobbDouglas, Leontief, Satiation
 
 MODEL = CobbDouglas(alpha=0.5, beta=0.5)
 EQ = solve(MODEL, px=2.0, py=3.0, income=30.0)
@@ -165,6 +165,6 @@ class TestOtherDiagrams:
 
 
 def test_marker_is_exported():
-    import econ_viz
+    import utility_viz
 
-    assert econ_viz.Marker is Marker
+    assert utility_viz.Marker is Marker

@@ -8,12 +8,12 @@ import matplotlib.pyplot as plt
 import pytest
 from matplotlib.colors import to_hex
 
-from econ_viz import Canvas, Config, Figure, Layout, themes
-from econ_viz.core.config.settings import template
-from econ_viz.core.diagrams.consumer.edgeworth import EdgeworthBox
-from econ_viz.core.errors.exceptions import InvalidParameterError
-from econ_viz.enums import LabelPosition, LegendPosition, LineStyle
-from econ_viz.models.utility import CobbDouglas
+from utility_viz import Canvas, Config, Figure, Layout, themes
+from utility_viz.core.config.settings import template
+from utility_viz.core.diagrams.consumer.edgeworth import EdgeworthBox
+from utility_viz.core.errors.exceptions import InvalidParameterError
+from utility_viz.enums import LabelPosition, LegendPosition, LineStyle
+from utility_viz.models.utility import CobbDouglas
 
 EXAMPLE = """
 base = "default"
@@ -60,7 +60,7 @@ def reset_config():
 
 @pytest.fixture
 def example(tmp_path):
-    path = tmp_path / "econ-viz.toml"
+    path = tmp_path / "utility-viz.toml"
     path.write_text(EXAMPLE, encoding="utf-8")
     return path
 
@@ -131,7 +131,7 @@ class TestUse:
         assert not next(a for a in cvs.ax.texts if getattr(a, "_ev_role", None) == "origin_label").get_visible()
 
     def test_config_markers_and_strokes_are_drawn(self, example):
-        from econ_viz import solve
+        from utility_viz import solve
 
         Config.load(example).use()
         eq = solve(CobbDouglas(), px=2.0, py=3.0, income=30.0)
@@ -140,7 +140,7 @@ class TestUse:
         assert point.get_markersize() == 7
 
     def test_explicit_stroke_beats_config(self, example):
-        from econ_viz import Stroke
+        from utility_viz import Stroke
 
         Config.load(example).use()
         cvs = Canvas().add_budget(2, 3, 30, stroke=Stroke(width=1.0))
@@ -174,7 +174,7 @@ class TestUse:
 
 class TestTemplate:
     def test_template_loads_and_changes_nothing(self, tmp_path):
-        path = tmp_path / "econ-viz.toml"
+        path = tmp_path / "utility-viz.toml"
         path.write_text(template(), encoding="utf-8")
         t = Config.load(path).theme
         for name in ("budget_stroke", "eq_marker", "point_label", "budget_fill", "legend"):
@@ -187,13 +187,13 @@ class TestTemplate:
 
 class TestCli:
     def _run(self, monkeypatch, *argv):
-        from econ_viz.cli.main import main
+        from utility_viz.cli.main import main
 
-        monkeypatch.setattr("sys.argv", ["econ-viz", *argv])
+        monkeypatch.setattr("sys.argv", ["utility-viz", *argv])
         main()
 
     def test_init_writes_and_refuses_to_overwrite(self, tmp_path, monkeypatch, capsys):
-        path = tmp_path / "econ-viz.toml"
+        path = tmp_path / "utility-viz.toml"
         self._run(monkeypatch, "init", str(path))
         assert path.read_text(encoding="utf-8") == template()
         with pytest.raises(SystemExit):

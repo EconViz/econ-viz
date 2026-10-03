@@ -8,14 +8,14 @@ import matplotlib.pyplot as plt
 import pytest
 from matplotlib.colors import to_hex
 
-from econ_viz import Canvas, DemandDiagram, Label, LinearBudget, Marker, PricePath, solve
-from econ_viz.core.diagrams.consumer.edgeworth import EdgeworthBox
-from econ_viz.core.errors.exceptions import InvalidParameterError
-from econ_viz.core.rendering.labels import placement
-from econ_viz.core.styles.label import split_label
-from econ_viz.enums import LabelPosition
-from econ_viz.models.optimization import decompose_price_effect
-from econ_viz.models.utility import CobbDouglas, Satiation
+from utility_viz import Canvas, DemandDiagram, Label, LinearBudget, Marker, PricePath, solve
+from utility_viz.core.diagrams.consumer.edgeworth import EdgeworthBox
+from utility_viz.core.errors.exceptions import InvalidParameterError
+from utility_viz.core.rendering.labels import placement
+from utility_viz.core.styles.label import split_label
+from utility_viz.enums import LabelPosition
+from utility_viz.models.optimization import decompose_price_effect
+from utility_viz.models.utility import CobbDouglas, Satiation
 
 MODEL = CobbDouglas(alpha=0.5, beta=0.5)
 EQ = solve(MODEL, px=2.0, py=3.0, income=30.0)
@@ -201,7 +201,7 @@ class TestOtherDiagrams:
 
 
 def test_theme_defaults_apply():
-    from econ_viz.core.themes.theme import Theme
+    from utility_viz.core.themes.theme import Theme
 
     class Big(Theme):
         @property
@@ -215,6 +215,6 @@ def test_theme_defaults_apply():
 
 
 def test_label_is_exported():
-    import econ_viz
+    import utility_viz
 
-    assert econ_viz.Label is Label
+    assert utility_viz.Label is Label

@@ -8,9 +8,9 @@ import matplotlib.pyplot as plt
 import pytest
 from matplotlib.colors import to_hex
 
-from econ_viz import Canvas, themes
-from econ_viz.core.diagrams.consumer.edgeworth import EdgeworthBox
-from econ_viz.models.utility import CobbDouglas
+from utility_viz import Canvas, themes
+from utility_viz.core.diagrams.consumer.edgeworth import EdgeworthBox
+from utility_viz.models.utility import CobbDouglas
 
 MODEL = CobbDouglas(alpha=0.5, beta=0.5)
 
@@ -33,13 +33,13 @@ class TestThemesAreRegistered:
 
     @pytest.mark.parametrize("name", ["paper", "monochrome", "presentation", "dark"])
     def test_resolvable_by_cli(self, name):
-        from econ_viz.cli.resolve import resolve_theme
+        from utility_viz.cli.resolve import resolve_theme
 
         assert resolve_theme(name).name == name
 
     @pytest.mark.parametrize("name", ["paper", "monochrome", "presentation", "dark"])
     def test_usable_as_config_base(self, name):
-        from econ_viz import Config
+        from utility_viz import Config
 
         assert Config.from_dict({"base": name}).theme.name == name
 
@@ -79,7 +79,7 @@ class TestMonochromeIsReadableWithoutColour:
         assert len(styles) == 3, f"expected three distinct line styles, got {styles}"
 
     def test_equilibrium_and_point_use_different_marker_shapes(self):
-        from econ_viz import solve
+        from utility_viz import solve
 
         eq = solve(MODEL, px=2.0, py=3.0, income=30.0)
         cvs = Canvas(x_max=20, y_max=15, theme=themes.monochrome).add_equilibrium(eq).add_point(3, 2, label="A")
@@ -88,7 +88,7 @@ class TestMonochromeIsReadableWithoutColour:
         assert eq_point.get_marker() != point.get_marker()
 
     def test_decomposition_effect_arrows_differ_in_style(self):
-        from econ_viz.models.optimization import decompose_price_effect
+        from utility_viz.models.optimization import decompose_price_effect
 
         dec = decompose_price_effect(MODEL, px=(2.0, 4.0), py=3.0, income=30.0)
         cvs = Canvas(x_max=20, y_max=15, theme=themes.monochrome).add_decomposition(dec)

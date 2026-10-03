@@ -2,9 +2,9 @@
 
 import pytest
 
-from econ_viz import Canvas
-from econ_viz.models.consumer.paths import LinearBudget, PricePath
-from econ_viz.models.utility import CobbDouglas
+from utility_viz import Canvas
+from utility_viz.models.consumer.paths import LinearBudget, PricePath
+from utility_viz.models.utility import CobbDouglas
 
 
 @pytest.fixture()
