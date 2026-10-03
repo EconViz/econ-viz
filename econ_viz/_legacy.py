@@ -42,6 +42,20 @@ _WARN_ON_ACCESS: dict[str, str] = {
 _shim_cache: dict[str, type] = {}
 
 
+class _LegacyMeta(type):
+    """Make ``isinstance``/``issubclass`` symmetric between a shim and its 2.x base class."""
+
+    def __instancecheck__(cls, instance: Any) -> bool:
+        if cls.__dict__.get("_legacy_shim"):
+            return isinstance(instance, cls.__mro__[1])
+        return type.__instancecheck__(cls, instance)
+
+    def __subclasscheck__(cls, subclass: Any) -> bool:
+        if cls.__dict__.get("_legacy_shim"):
+            return issubclass(subclass, cls.__mro__[1])
+        return type.__subclasscheck__(cls, subclass)
+
+
 def shim(name: str) -> type:
     """Return the cached deprecated subclass for a legacy class *name*."""
     if name in _shim_cache:
@@ -55,7 +69,11 @@ def shim(name: str) -> type:
         base.__init__(self, *args, **kwargs)
 
     __init__.__doc__ = base.__init__.__doc__
-    cls = type(name, (base,), {"__init__": __init__, "__module__": LEGACY, "__doc__": base.__doc__})
+    cls = _LegacyMeta(
+        name,
+        (base,),
+        {"__init__": __init__, "__module__": LEGACY, "__doc__": base.__doc__, "_legacy_shim": True},
+    )
     _shim_cache[name] = cls
     return cls
 
