@@ -330,12 +330,10 @@ class QuasiLinear:
         return UtilityType.SMOOTH
 
     def __call__(self, x, y):
+        # Quasilinear: utility is v_func of one good plus the other good.
         if self.linear_in == "y":
-            # f(x) plus y.
             return self.v_func(x) + y
-        else:
-            # x plus f(y).
-            return x + self.v_func(y)
+        return x + self.v_func(y)
 
     def ray_slopes(self) -> list[float]:
         return []

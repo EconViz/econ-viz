@@ -203,3 +203,26 @@ def test_utility_viz_never_depends_on_the_legacy_package():
             if any(n == "econ_viz" or n.startswith("econ_viz.") for n in names):
                 offenders.append(module)
     assert not offenders, offenders
+
+
+PURE_DATA_UNITS = ("core.styles", "core.themes")
+
+
+def _third_party_roots(path: Path) -> set[str]:
+    roots: set[str] = set()
+    for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+        if isinstance(node, ast.ImportFrom) and node.module:
+            roots.add(node.module.split(".")[0])
+        elif isinstance(node, ast.Import):
+            roots.update(a.name.split(".")[0] for a in node.names)
+    return roots
+
+
+def test_styles_and_themes_are_pure_data_without_matplotlib():
+    """Styles and themes describe a look; only the drawing layers may import Matplotlib."""
+    offenders = [
+        module
+        for module, path in _modules()
+        if _unit_of_module(module) in PURE_DATA_UNITS and "matplotlib" in _third_party_roots(path)
+    ]
+    assert not offenders, f"matplotlib imported by pure-data modules: {offenders}"

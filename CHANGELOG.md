@@ -18,7 +18,11 @@
 
 - `utility-viz plot` without `--config` now reads `utility-viz.toml` (or legacy `econ-viz.toml`, with a warning; the new file wins if both exist) from the current directory, otherwise uses the defaults. An explicit `--config` still wins. Previously no file was read unless `--config` was passed
 
+- `core/styles` no longer imports Matplotlib: `Fill` colour and `Marker` shape checks are now registered by the rendering layer, and an architecture test keeps styles and themes Matplotlib-free (#154)
+
 ### Features
+
+- Add `UtilityVizError` as the canonical base exception; `EconVizError` remains as an alias of the same class (#154)
 
 - Add `UtilityVizDeprecationWarning` (a `FutureWarning`) stating deprecated-since, removal version, and replacement
 
@@ -31,6 +35,10 @@
 ### Changes
 
 - Make the whole repository (library, tests, examples) pass `mypy .`, split `apply_strokes` into helpers to satisfy the complexity limit, clear remaining long-line and commented-out-code lint findings, and run `mypy .` in CI (#154)
+
+### Maintenance
+
+- Split `core/canvas/base.py` into cohesive modules (`style`, `layers`, `decomposition`, `legend`, `output`) and break long methods into private helpers; `Canvas` and its public API are unchanged (#154)
 
 ### Bug fixes
 
