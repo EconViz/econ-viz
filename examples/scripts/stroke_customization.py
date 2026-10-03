@@ -5,7 +5,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 
 from utility_viz import ArrowStyle, Canvas, Stroke, levels, solve
-from utility_viz.models.utility import CobbDouglas
+from utility_viz.models import CobbDouglas
 
 OUTPUT_DIR = Path("examples/output/customization")
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)

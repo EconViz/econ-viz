@@ -24,7 +24,7 @@ Requires Python 3.10 or later.
 
 ```python
 from utility_viz import Canvas, levels, solve
-from utility_viz.models.utility import CobbDouglas
+from utility_viz.models import CobbDouglas
 
 model = CobbDouglas(alpha=0.5, beta=0.5)
 eq = solve(model, px=2.0, py=3.0, income=30.0)
@@ -202,7 +202,7 @@ Closed-form Marshallian demand in TeX:
 
 ```python
 from utility_viz import solution_tex
-from utility_viz.models.utility import CobbDouglas
+from utility_viz.models import CobbDouglas
 
 tex = solution_tex(CobbDouglas(alpha=0.4, beta=0.6))
 ```
@@ -211,7 +211,7 @@ Slutsky matrix:
 
 ```python
 from utility_viz import slutsky_matrix
-from utility_viz.models.utility import CobbDouglas
+from utility_viz.models import CobbDouglas
 
 S = slutsky_matrix(CobbDouglas(alpha=0.4, beta=0.6), px=2.0, py=3.0, income=60.0)
 # S.s_xx, S.s_xy, S.s_yx, S.s_yy
@@ -264,6 +264,39 @@ utility-viz plot --model cobb-douglas --alpha 0.5 --beta 0.5 \
               --fill --show-ray \
               --output cobb_douglas.png
 ```
+
+## Migrating from econ-viz
+
+`econ-viz` was renamed to **utility-viz** in 2.0.0.
+
+| | 1.x | 2.x |
+|---|---|---|
+| Distribution | `pip install econ-viz` | `pip install utility-viz` |
+| Import | `import econ_viz` | `import utility_viz` |
+| CLI | `econ-viz` | `utility-viz` |
+| Config file | `econ-viz.toml` | `utility-viz.toml` (section names unchanged) |
+
+**Compatibility layer.** Throughout 2.x the `utility-viz` distribution also ships an
+`econ_viz` package and an `econ-viz` command so documented 1.x code keeps working:
+
+- `from econ_viz import ...` and the documented sub-modules (`econ_viz.models`, `econ_viz.optimizer`,
+  `econ_viz.themes`, ...) resolve to their `utility_viz` equivalents. Names that did not change are the
+  very same objects.
+- Constructing `econ_viz.Canvas`, `econ_viz.Figure` or `econ_viz.animation.Animator`, or accessing
+  `econ_viz.Layout`, emits a `utility_viz.UtilityVizDeprecationWarning` (a `FutureWarning`) stating
+  "deprecated since 2.0.0, removed in 3.0.0" and the replacement. `Figure`, `Layout` and `Animator` map to
+  their current 2.x equivalents; their declarative replacements (`CanvasGrid`, `Animation`) are planned and
+  named in the message as such.
+- Config lookup: explicit path, then `utility-viz.toml`, then legacy `econ-viz.toml` (with a warning), then
+  defaults. If both files exist the new one wins and the legacy one is ignored with a warning.
+  `Config.load()` with no argument follows this order; `Config.load("file.toml")` reads exactly that file.
+- The `econ-viz` command prints a deprecation warning and forwards to `utility-viz`.
+- `utility-viz init --migrate` writes `utility-viz.toml` from `econ-viz.toml` and keeps the old file.
+
+**Removal boundary (3.0.0).** The `econ_viz` package, the `econ-viz` command and `econ-viz.toml` lookup are
+removed in 3.0.0, not 2.0.0. Only the documented 1.x public API is covered; undocumented deep module paths
+(for example `econ_viz.canvas.renderers.*`) resolve on a best-effort basis and may disappear at any time.
+Internal `utility_viz.core.*` modules are advanced APIs and not part of the compatibility contract.
 
 ## Documentation
 

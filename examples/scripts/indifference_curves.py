@@ -13,7 +13,7 @@ from pathlib import Path
 import numpy as np
 
 from utility_viz.core.canvas.base import Canvas
-from utility_viz.models.utility import CES, CobbDouglas, Leontief, PerfectSubstitutes, QuasiLinear, Satiation
+from utility_viz.models import CES, CobbDouglas, Leontief, PerfectSubstitutes, QuasiLinear, Satiation
 
 OUTPUT_DIR = "examples/output/models"
 Path(OUTPUT_DIR).mkdir(parents=True, exist_ok=True)
