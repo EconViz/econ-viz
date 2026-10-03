@@ -2,6 +2,24 @@
 
 <!-- version list -->
 
+## Unreleased
+
+### Breaking changes
+
+- Rename the distribution to `utility-viz`, the import package to `utility_viz`, the CLI to `utility-viz`, and the default config file to `utility-viz.toml`; a 2.x `econ_viz` compatibility package, `econ-viz` command, and `econ-viz.toml` lookup remain until 3.0.0 (#132)
+
+- Reorganise internals into `core/` (styles, themes, rendering, canvas, layout, diagrams, export, config, errors, constants, animation, interactive) and `models/` (utility, curves, consumer, optimization, analysis); deep `core` imports are advanced/internal APIs (#131)
+
+### Features
+
+- Add `UtilityVizDeprecationWarning` (a `FutureWarning`) stating deprecated-since, removal version, and replacement
+
+- Add `Config.discover()` and a lookup order of explicit path, `utility-viz.toml`, legacy `econ-viz.toml`, defaults
+
+- Add `utility-viz init --migrate`
+
+- Add architecture and public-API tests that enforce package layering and the root facade
+
 ## v1.12.0 (2026-09-26)
 
 ### Features

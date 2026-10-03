@@ -35,8 +35,8 @@ import numpy as np
 
 from utility_viz import Canvas, levels, solve
 from utility_viz.core.animation import Animator
+from utility_viz.models import CES, CobbDouglas, Leontief, PerfectSubstitutes
 from utility_viz.models.curves.layers import Layer
-from utility_viz.models.utility import CES, CobbDouglas, Leontief, PerfectSubstitutes
 
 OUTPUT_DIR = "examples/output/animation"
 PARAMETER_DIR = f"{OUTPUT_DIR}/parameter_sweeps"
@@ -434,7 +434,7 @@ JUPYTER_EXAMPLE = """
 # ── Paste into a Jupyter notebook cell ──────────────────────────────
 from utility_viz.core.interactive import WidgetViewer
 from utility_viz import Canvas, levels, solve
-from utility_viz.models.utility import CobbDouglas
+from utility_viz.models import CobbDouglas
 
 def draw(alpha: float, px: float) -> Canvas:
     model = CobbDouglas(alpha=alpha, beta=1.0 - alpha)
