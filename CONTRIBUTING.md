@@ -33,7 +33,7 @@ Please make sure all tests pass before submitting a PR.
 
 ## Before you start — check the Project board
 
-All planned work is tracked on the **[econ-viz Roadmap](https://github.com/orgs/EconViz/projects/1)**.
+All planned work is tracked on the **[utility-viz Roadmap](https://github.com/orgs/EconViz/projects/1)**.
 
 Before picking up an issue:
 
@@ -62,7 +62,7 @@ utility_viz/
   core/            drawing, styling, export, runtime (advanced/internal API)
     errors/ constants/                                          layer 0
     styles/ themes/ export/ config/ rendering/                  layers 2-4
-    diagrams/components/                                        layer 5
+    diagrams/components/ scenes/                                layer 5
     canvas/ layout/                                             layers 6-7
     diagrams/consumer/ animation/ interactive/                  layer 8
   enums/ utils/    shared internal areas                        layer 1
@@ -73,6 +73,44 @@ utility_viz/
 - Helpers live beside the feature that owns them and are underscore-prefixed
   (`_color.py`, `_require_pillow`). Do not add a generic top-level `helper/` package.
 - Adding a subpackage? Register it (with a layer) in `tests/test_architecture.py`.
+
+## Adding a component on mosaickit scenes (2.0 pattern)
+
+New and migrated economic components build backend-neutral
+[mosaickit](https://pypi.org/project/mosaickit/) layers instead of mutating Matplotlib axes.
+`utility_viz/core/scenes/` is the reference slice (budget, equilibrium, Cobb-Douglas
+indifference curves):
+
+1. **Economics stays in utility-viz.** Solving, contour-level selection and curve tracing
+   live under `models/` (no plotting library: bezierkit's `trace_implicit` via
+   `models.curves.trace_level_sets`, `percentile_levels` for level choice). A scene factory only receives results.
+2. **One factory per component** in `core/scenes/<component>.py`, returning a tuple of
+   immutable layers (`PathLayer`, `FillLayer`, `MarkerLayer`, `TextLayer`) with stable ids
+   (`budget`, `budget.fill`, `equilibrium.drop`, `ic.2.label`) so callers can `Canvas.remove`
+   or reference them in a legend. Attach the economic object via `model=`. Take sparse
+   `Stroke`/`Marker`/`Fill` overrides, never colours as positional arguments.
+3. **Concept-local dotted roles** in `core/scenes/roles.py` (`utility.budget`,
+   `utility.budget.compensated`, ...). A child role inherits its parent's fields, so only
+   state what differs. Defaults go in `core/scenes/theme.py` (`utility_roles`), restating the
+   legacy theme values; `tests/scenes/test_scene_theme.py` pins the parity.
+4. **No Matplotlib, no legacy drawing imports** in `core/scenes` or `models/curves`
+   (`tests/test_architecture.py` enforces it). Render with mosaickit:
+
+   ```python
+   canvas = Canvas(CanvasSpec(x_range=(0, 18), y_range=(0, 12)), theme=UTILITY_THEME)
+   canvas.extend(quadrant_axes(18, 12)).extend(budget_layers(2, 3, 30, fill=True))
+   canvas.save("diagram.png")
+   ```
+5. **Test** the factory's layers (ids, roles, geometry) and add the component to the
+   end-to-end scene in `tests/scenes/test_scene_end_to_end.py`.
+
+Geometry belongs to bezierkit and mosaickit stays curve-agnostic: curves are traced as
+`PiecewiseBezier` paths, sampled to points for the mosaickit `PathLayer`, and the source path
+is kept as `layer.model`. `core.scenes.canvas_to_tikz(canvas)` exports the same scene to TikZ
+(native `.. controls ..` paths via `bezierkit.export.tikz`, theme-resolved styles); mosaickit
+0.5.1 itself has no TikZ renderer. Limits: the traced field must be finite (undefined values
+are floored), Leontief kinks are rounded to within the tracing tolerance, and only path, fill,
+marker and text layers are exported.
 
 ## Code style
 

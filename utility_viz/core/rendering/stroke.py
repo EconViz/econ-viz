@@ -128,49 +128,64 @@ def apply_strokes(ax, artists: Iterable, strokes: Mapping[str, Stroke | None]) -
         if stroke is None:
             continue
         if isinstance(artist, Annotation) and artist.arrow_patch is not None:
-            _style_patch(artist.arrow_patch, stroke)
-            if stroke.arrow is ArrowStyle.WEDGE and artist.xycoords == artist.anncoords:
-                # The annotation keeps a plain shaft; the wedge covers only its tip, as on other lines.
-                add_arrowhead(
-                    ax,
-                    [artist.xyann, artist.xy],
-                    ArrowStyle.WEDGE,
-                    color=artist.arrow_patch.get_edgecolor(),
-                    width=artist.arrow_patch.get_linewidth(),
-                    transform=ax.transData if artist.xycoords == "data" else artist.xycoords,
-                    role=role,
-                    opacity=stroke.opacity,
-                )
+            _stroke_annotation(ax, artist, stroke, role)
         elif isinstance(artist, Line2D) and _is_line(artist):
-            _style_line(artist, stroke)
-            if stroke.arrow:
+            _stroke_line2d(ax, artist, stroke, role)
+        elif isinstance(artist, Collection) and not isinstance(artist, PolyCollection):
+            _stroke_collection(ax, artist, stroke, role)
+
+
+def _stroke_annotation(ax, artist: Annotation, stroke: Stroke, role: str) -> None:
+    patch = artist.arrow_patch
+    if patch is None:
+        return
+    _style_patch(patch, stroke)
+    if stroke.arrow is ArrowStyle.WEDGE and artist.xycoords == artist.anncoords:
+        # The annotation keeps a plain shaft; the wedge covers only its tip, as on other lines.
+        add_arrowhead(
+            ax,
+            [artist.xyann, artist.xy],
+            ArrowStyle.WEDGE,
+            color=patch.get_edgecolor(),
+            width=patch.get_linewidth(),
+            transform=ax.transData if artist.xycoords == "data" else artist.xycoords,
+            role=role,
+            opacity=stroke.opacity,
+        )
+
+
+def _stroke_line2d(ax, artist: Line2D, stroke: Stroke, role: str) -> None:
+    _style_line(artist, stroke)
+    if stroke.arrow:
+        add_arrowhead(
+            ax,
+            artist.get_xydata(),
+            cast(ArrowStyle, stroke.arrow),
+            color=artist.get_color(),
+            width=artist.get_linewidth(),
+            transform=artist.get_transform(),
+            role=role,
+            opacity=stroke.opacity,
+        )
+
+
+def _stroke_collection(ax, artist: Collection, stroke: Stroke, role: str) -> None:
+    _style_collection(artist, stroke)
+    if stroke.arrow:
+        color = artist.get_edgecolor()[0]
+        width = float(np.ravel(artist.get_linewidth())[0])
+        for path in artist.get_paths():
+            for segment in path.to_polygons(closed_only=False):
                 add_arrowhead(
                     ax,
-                    artist.get_xydata(),
+                    segment,
                     cast(ArrowStyle, stroke.arrow),
-                    color=artist.get_color(),
-                    width=artist.get_linewidth(),
+                    color=color,
+                    width=width,
                     transform=artist.get_transform(),
                     role=role,
                     opacity=stroke.opacity,
                 )
-        elif isinstance(artist, Collection) and not isinstance(artist, PolyCollection):
-            _style_collection(artist, stroke)
-            if stroke.arrow:
-                color = artist.get_edgecolor()[0]
-                width = float(np.ravel(artist.get_linewidth())[0])
-                for path in artist.get_paths():
-                    for segment in path.to_polygons(closed_only=False):
-                        add_arrowhead(
-                            ax,
-                            segment,
-                            cast(ArrowStyle, stroke.arrow),
-                            color=color,
-                            width=width,
-                            transform=artist.get_transform(),
-                            role=role,
-                            opacity=stroke.opacity,
-                        )
 
 
 def apply_markers(artists: Iterable, markers: Mapping[str, Marker | None]) -> None:

@@ -17,7 +17,7 @@ from utility_viz import Canvas, levels, parse_latex, solve
 OUTPUT_DIR = "examples/output/latex"
 Path(OUTPUT_DIR).mkdir(parents=True, exist_ok=True)
 
-# (output_name, latex_string)
+# Each case pairs an output file name with a LaTeX utility string.
 cases = [
     ("latex_cobb_douglas", r"x^{0.4} y^{0.6}"),
     ("latex_cobb_douglas_u", r"U(x,y) = x^{0.5} y^{0.5}"),
