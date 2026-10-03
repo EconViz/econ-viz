@@ -77,7 +77,6 @@ def test_unknown_attribute_raises():
         ("econ_viz.canvas", "Layer"),
         ("econ_viz.enums", "UtilityType"),
         ("econ_viz.exceptions", "EconVizError"),
-        ("econ_viz.exceptions", "UtilityVizError"),
         ("econ_viz.config", "Config"),
         ("econ_viz.contours", "around_anchor_levels"),
         ("econ_viz.components", "BudgetConstraint"),

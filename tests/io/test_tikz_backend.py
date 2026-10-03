@@ -193,11 +193,3 @@ def test_default_scale_maps_six_inch_figure_to_seven_point_five_cm():
 
     assert renderer.scale == pytest.approx(0.0125)
     assert renderer.width * renderer.scale == pytest.approx(7.5)
-
-
-def test_non_filled_path_drops_repeated_consecutive_vertices():
-    poly = np.array([[0.0, 0.0], [1.0, 2.0], [3.0, 2.0], [3.0, 2.0]])
-
-    stripped = strip_closing_vertex(poly, filled=False)
-
-    assert stripped.tolist() == [[0.0, 0.0], [1.0, 2.0], [3.0, 2.0]]

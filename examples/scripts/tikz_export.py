@@ -84,7 +84,7 @@ def _build_case(
     level_spec: int | list[float] | None = None,
     show_budget: bool = True,
     configure: Callable[[Canvas], None] | None = None,
-) -> Canvas:
+) -> None:
     canvas = Canvas(x_max=x_max, y_max=y_max, x_label="Pizza", y_label="Cola", title=title)
     if level_spec is None:
         if show_budget:

@@ -46,6 +46,47 @@ def render_decomposition(
     effect_label: Label | None = None,
 ) -> None:
     """Render A/B/C bundles, budget lines, and effect arrows."""
+    _draw_budget_lines(
+        ax,
+        decomposition,
+        original=(original_budget_color, original_budget_linewidth, original_budget_linestyle),
+        compensated=(compensated_budget_color, compensated_budget_linewidth, compensated_budget_linestyle),
+        final=(final_budget_color, final_budget_linewidth, final_budget_linestyle),
+    )
+
+    _draw_bundles(ax, decomposition, point_color, point_markersize, point_marker_shape)
+
+    if not show_arrows:
+        return
+
+    if arrows_below_axis or show_x_projections:
+        _draw_x_projections(
+            ax,
+            decomposition=decomposition,
+            substitution_color=substitution_color,
+            income_color=income_color,
+            linewidth=max(0.8, effect_arrow_linewidth * 0.7),
+            substitution_effect=substitution_effect,
+            income_effect=income_effect,
+            effect_label=effect_label,
+        )
+        return
+
+    _draw_data_space_arrows(
+        ax,
+        decomposition,
+        substitution=(substitution_color, substitution_linestyle, substitution_effect),
+        income=(income_color, income_linestyle, income_effect),
+        linewidth=effect_arrow_linewidth,
+        effect_label=effect_label,
+    )
+
+
+def _draw_budget_lines(ax, decomposition, *, original, compensated, final) -> None:
+    """Draw the original, compensated and final budget lines (each a colour/width/style triple)."""
+    original_budget_color, original_budget_linewidth, original_budget_linestyle = original
+    compensated_budget_color, compensated_budget_linewidth, compensated_budget_linestyle = compensated
+    final_budget_color, final_budget_linewidth, final_budget_linestyle = final
     for px, income, color, linewidth, linestyle, role in (
         (
             decomposition.px_before,
@@ -85,33 +126,6 @@ def render_decomposition(
             fill_alpha=0.0,
         )
         _retag_last_budget(ax, role)
-
-    _draw_bundles(ax, decomposition, point_color, point_markersize, point_marker_shape)
-
-    if not show_arrows:
-        return
-
-    if arrows_below_axis or show_x_projections:
-        _draw_x_projections(
-            ax,
-            decomposition=decomposition,
-            substitution_color=substitution_color,
-            income_color=income_color,
-            linewidth=max(0.8, effect_arrow_linewidth * 0.7),
-            substitution_effect=substitution_effect,
-            income_effect=income_effect,
-            effect_label=effect_label,
-        )
-        return
-
-    _draw_data_space_arrows(
-        ax,
-        decomposition,
-        substitution=(substitution_color, substitution_linestyle, substitution_effect),
-        income=(income_color, income_linestyle, income_effect),
-        linewidth=effect_arrow_linewidth,
-        effect_label=effect_label,
-    )
 
 
 def _draw_data_space_arrows(ax, decomposition, *, substitution, income, linewidth, effect_label) -> None:
