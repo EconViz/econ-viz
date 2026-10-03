@@ -36,9 +36,9 @@ utility-viz = "utility_viz.cli:main"
 [project.urls]
 Homepage = "https://econ-viz.org"
 Documentation = "https://econ-viz.org"
-Repository = "https://github.com/EconViz/econ-viz"
-"Bug Tracker" = "https://github.com/EconViz/econ-viz/issues"
-Changelog = "https://github.com/EconViz/econ-viz/blob/main/CHANGELOG.md"
+Repository = "https://github.com/EconViz/utility-viz"
+"Bug Tracker" = "https://github.com/EconViz/utility-viz/issues"
+Changelog = "https://github.com/EconViz/utility-viz/blob/main/CHANGELOG.md"
 
 
 [build-system]

@@ -24,8 +24,8 @@ econ-viz = "econ_viz.cli:main"
 
 [project.urls]
 Homepage = "https://econ-viz.org"
-Repository = "https://github.com/EconViz/econ-viz"
-Changelog = "https://github.com/EconViz/econ-viz/blob/main/CHANGELOG.md"
+Repository = "https://github.com/EconViz/utility-viz"
+Changelog = "https://github.com/EconViz/utility-viz/blob/main/CHANGELOG.md"
 
 [build-system]
 requires = ["uv_build>=0.12.1,<0.13.0"]
