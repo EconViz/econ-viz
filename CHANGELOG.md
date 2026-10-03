@@ -32,6 +32,10 @@
 
 - Make the whole repository (library, tests, examples) pass `mypy .`, split `apply_strokes` into helpers to satisfy the complexity limit, clear remaining long-line and commented-out-code lint findings, and run `mypy .` in CI (#154)
 
+### Bug fixes
+
+- Indifference curves of kinked utilities (Leontief, piecewise `min`/`max` `CustomUtility`, ...) now keep exact right-angle corners instead of a chamfered diagonal, in Matplotlib and TikZ output; the TikZ exporter also drops repeated consecutive vertices
+
 ## v1.12.0 (2026-09-26)
 
 ### Features

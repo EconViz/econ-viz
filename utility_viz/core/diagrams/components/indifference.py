@@ -5,6 +5,7 @@ from __future__ import annotations
 import numpy as np
 
 from utility_viz.core.constants.canvas import CONTOUR_DOMAIN_MIN
+from utility_viz.core.diagrams.components._corners import repair_contour_set
 from utility_viz.core.rendering.stroke import tag, tag_attr
 from utility_viz.core.styles.label import Label
 from utility_viz.enums import LabelPosition, UtilityType
@@ -104,6 +105,16 @@ class IndifferenceCurves:
         self.secondary_opacity = secondary_opacity
         self.label_style = label_style
 
+    def _kinks(self, levels: list[float]) -> list[tuple[float, float]]:
+        """Exact model kink points used to snap reconstructed corners, if available."""
+        kink_points = getattr(self.func, "kink_points", None)
+        if kink_points is None:
+            return []
+        try:
+            return [(float(x), float(y)) for x, y in kink_points(levels)]
+        except Exception:  # noqa: BLE001 - an unusable kink hook must not break drawing
+            return []
+
     def draw(self, ax, x_max: float, y_max: float, **kwargs) -> list[float]:
         """Draw curves onto *ax* and return the computed contour levels."""
         from utility_viz.core.diagrams.components import draw_ray
@@ -126,7 +137,11 @@ class IndifferenceCurves:
         focal_levels = computed if focal_idx is None else [computed[focal_idx]]
         secondary_levels = [] if focal_idx is None else [lv for i, lv in enumerate(computed) if i != focal_idx]
 
+        cell = float(np.hypot(X[0, 1] - X[0, 0], Y[1, 0] - Y[0, 0]))
+        kinks = self._kinks(computed)
+
         cs = ax.contour(X, Y, Z, levels=focal_levels, colors=self.color, linewidths=self.linewidth, **kwargs)
+        repair_contour_set(cs, cell, kinks)
         tag(cs, "curve")
 
         segs_by_level: dict[float, tuple] = dict(zip(focal_levels, cs.allsegs, strict=True))
@@ -143,6 +158,7 @@ class IndifferenceCurves:
                 alpha=self.secondary_opacity,
                 **kwargs,
             )
+            repair_contour_set(cs2, cell, kinks)
             tag(cs2, "secondary_curve")
             segs_by_level.update(zip(secondary_levels, cs2.allsegs, strict=True))
             color_by_level.update(dict.fromkeys(secondary_levels, self.secondary_color))
