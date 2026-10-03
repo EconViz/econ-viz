@@ -9,7 +9,7 @@ from pathlib import Path
 import numpy as np
 
 from utility_viz import Canvas, IncomePath, LinearBudget, PricePath
-from utility_viz.models.utility import CES, CobbDouglas, Leontief, PerfectSubstitutes, QuasiLinear, StoneGeary
+from utility_viz.models import CES, CobbDouglas, Leontief, PerfectSubstitutes, QuasiLinear, StoneGeary
 
 OUTPUT_DIR = "examples/output/paths"
 Path(OUTPUT_DIR).mkdir(parents=True, exist_ok=True)

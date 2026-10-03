@@ -13,7 +13,7 @@ import numpy as np
 
 from utility_viz import Canvas, levels, solve
 from utility_viz.core.export.backend_tikz import figure_to_tikz
-from utility_viz.models.utility import (
+from utility_viz.models import (
     CES,
     CobbDouglas,
     CustomUtility,

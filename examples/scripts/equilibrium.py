@@ -11,7 +11,7 @@ matplotlib.use("Agg")
 from pathlib import Path
 
 from utility_viz import Canvas, levels, solve
-from utility_viz.models.utility import CES, CobbDouglas, Leontief, PerfectSubstitutes
+from utility_viz.models import CES, CobbDouglas, Leontief, PerfectSubstitutes
 
 OUTPUT_DIR = "examples/output/equilibrium"
 Path(OUTPUT_DIR).mkdir(parents=True, exist_ok=True)

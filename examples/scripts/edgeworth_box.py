@@ -9,7 +9,7 @@ matplotlib.use("Agg")
 import numpy as np
 
 from utility_viz import EdgeworthBox, EquilibriumFocusConfig, themes
-from utility_viz.models.utility import (
+from utility_viz.models import (
     CES,
     CobbDouglas,
     CustomUtility,

@@ -7,7 +7,7 @@ matplotlib.use("Agg")
 from pathlib import Path
 
 from utility_viz import Figure, Layout, levels, solve
-from utility_viz.models.utility import CobbDouglas
+from utility_viz.models import CobbDouglas
 
 OUTPUT_DIR = "examples/output/layouts"
 Path(OUTPUT_DIR).mkdir(parents=True, exist_ok=True)
