@@ -235,12 +235,31 @@ def _pyproject() -> dict:
     return tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
 
 
+def _shim_pyproject() -> dict:
+    if sys.version_info >= (3, 11):
+        import tomllib
+    else:  # pragma: no cover
+        import tomli as tomllib
+    return tomllib.loads((ROOT / "packages" / "econ-viz" / "pyproject.toml").read_text(encoding="utf-8"))
+
+
 def test_pyproject_uses_canonical_names():
     data = _pyproject()
     assert data["project"]["name"] == "utility-viz"
     assert data["project"]["scripts"]["utility-viz"] == "utility_viz.cli:main"
-    assert data["project"]["scripts"]["econ-viz"] == "econ_viz.cli:main"  # 2.x forwarder
-    assert data["tool"]["uv"]["build-backend"]["module-name"] == ["utility_viz", "econ_viz"]
+    # utility-viz ships only utility_viz: the econ_viz package and econ-viz command live in packages/econ-viz.
+    assert "econ-viz" not in data["project"]["scripts"]
+    assert data["tool"]["uv"]["build-backend"]["module-name"] == "utility_viz"
+    assert data["tool"]["uv"]["workspace"]["members"] == ["packages/econ-viz"]
+
+
+def test_econ_viz_distribution_is_a_lockstep_shim():
+    shim, root = _shim_pyproject(), _pyproject()
+    assert shim["project"]["name"] == "econ-viz"
+    assert shim["project"]["scripts"]["econ-viz"] == "econ_viz.cli:main"  # 2.x forwarder
+    assert shim["tool"]["uv"]["build-backend"]["module-name"] == "econ_viz"
+    assert shim["project"]["version"] == root["project"]["version"]
+    assert shim["project"]["dependencies"] == [f"utility-viz=={root['project']['version']}"]
 
 
 def test_installed_distribution_metadata():

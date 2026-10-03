@@ -8,6 +8,12 @@ resolution-markers = [
     "python_full_version < '3.11'",
 ]
 
+[manifest]
+members = [
+    "econ-viz",
+    "utility-viz",
+]
+
 [[package]]
 name = "ast-serialize"
 version = "0.11.2"
@@ -502,6 +508,17 @@ sdist = { url = "https://files.pythonhosted.org/packages/60/8b/32f9823da46cde7df
 wheels = [
     { url = "https://files.pythonhosted.org/packages/05/7f/798705f5296a58ca505d600456748d1be48078eac8a7050d8a98bc9edb89/decorator-5.3.1-py3-none-any.whl", hash = "sha256:f47fe6fdbd2edd623ecfe36875d37aba411624e2670dd395dddae1358689bb3c", size = 10365, upload-time = "2026-05-18T06:03:26.517Z" },
 ]
+
+[[package]]
+name = "econ-viz"
+version = "2.0.0b1"
+source = { editable = "packages/econ-viz" }
+dependencies = [
+    { name = "utility-viz" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "utility-viz", editable = "." }]
 
 [[package]]
 name = "exceptiongroup"
@@ -2155,7 +2172,7 @@ wheels = [
 
 [[package]]
 name = "utility-viz"
-version = "1.12.0"
+version = "2.0.0b1"
 source = { editable = "." }
 dependencies = [
     { name = "bezierkit" },
@@ -2190,6 +2207,7 @@ interactive = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "econ-viz" },
     { name = "mypy" },
     { name = "pytest" },
     { name = "pytest-cov" },
@@ -2216,6 +2234,7 @@ provides-extras = ["animation", "interactive", "all"]
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "econ-viz", editable = "packages/econ-viz" },
     { name = "mypy", specifier = ">=1.13.0" },
     { name = "pytest", specifier = ">=8.0.0,<9.0.0" },
     { name = "pytest-cov", specifier = ">=7.1.0,<8.0.0" },
