@@ -34,6 +34,8 @@
 
 - Add architecture and public-API tests that enforce package layering and the root facade
 
+- Split long functions and the Edgeworth box module into private helpers and `edgeworth_style`, `edgeworth_focus` and `edgeworth_exchange` modules without changing the public API or rendered output (#154)
+
 ### Changes
 
 - Make the whole repository (library, tests, examples) pass `mypy .`, split `apply_strokes` into helpers to satisfy the complexity limit, clear remaining long-line and commented-out-code lint findings, and run `mypy .` in CI (#154)

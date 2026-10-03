@@ -46,46 +46,112 @@ def render_decomposition(
     effect_label: Label | None = None,
 ) -> None:
     """Render A/B/C bundles, budget lines, and effect arrows."""
-    render_budget(
-        ax,
-        px=decomposition.px_before,
-        py=decomposition.py,
-        income=decomposition.income,
-        color=original_budget_color,
-        linewidth=original_budget_linewidth,
-        linestyle=original_budget_linestyle,
-        label=None,
-        fill=False,
-        fill_alpha=0.0,
-    )
-    _retag_last_budget(ax, "original_budget")
-    render_budget(
-        ax,
-        px=decomposition.px_after,
-        py=decomposition.py,
-        income=decomposition.compensated_income,
-        color=compensated_budget_color,
-        linewidth=compensated_budget_linewidth,
-        linestyle=compensated_budget_linestyle,
-        label=None,
-        fill=False,
-        fill_alpha=0.0,
-    )
-    _retag_last_budget(ax, "compensated_budget")
-    render_budget(
-        ax,
-        px=decomposition.px_after,
-        py=decomposition.py,
-        income=decomposition.income,
-        color=final_budget_color,
-        linewidth=final_budget_linewidth,
-        linestyle=final_budget_linestyle,
-        label=None,
-        fill=False,
-        fill_alpha=0.0,
-    )
-    _retag_last_budget(ax, "final_budget")
+    for px, income, color, linewidth, linestyle, role in (
+        (
+            decomposition.px_before,
+            decomposition.income,
+            original_budget_color,
+            original_budget_linewidth,
+            original_budget_linestyle,
+            "original_budget",
+        ),
+        (
+            decomposition.px_after,
+            decomposition.compensated_income,
+            compensated_budget_color,
+            compensated_budget_linewidth,
+            compensated_budget_linestyle,
+            "compensated_budget",
+        ),
+        (
+            decomposition.px_after,
+            decomposition.income,
+            final_budget_color,
+            final_budget_linewidth,
+            final_budget_linestyle,
+            "final_budget",
+        ),
+    ):
+        render_budget(
+            ax,
+            px=px,
+            py=decomposition.py,
+            income=income,
+            color=color,
+            linewidth=linewidth,
+            linestyle=linestyle,
+            label=None,
+            fill=False,
+            fill_alpha=0.0,
+        )
+        _retag_last_budget(ax, role)
 
+    _draw_bundles(ax, decomposition, point_color, point_markersize, point_marker_shape)
+
+    if not show_arrows:
+        return
+
+    if arrows_below_axis or show_x_projections:
+        _draw_x_projections(
+            ax,
+            decomposition=decomposition,
+            substitution_color=substitution_color,
+            income_color=income_color,
+            linewidth=max(0.8, effect_arrow_linewidth * 0.7),
+            substitution_effect=substitution_effect,
+            income_effect=income_effect,
+            effect_label=effect_label,
+        )
+        return
+
+    _draw_data_space_arrows(
+        ax,
+        decomposition,
+        substitution=(substitution_color, substitution_linestyle, substitution_effect),
+        income=(income_color, income_linestyle, income_effect),
+        linewidth=effect_arrow_linewidth,
+        effect_label=effect_label,
+    )
+
+
+def _draw_data_space_arrows(ax, decomposition, *, substitution, income, linewidth, effect_label) -> None:
+    """Draw the A->B and B->C arrows (and labels) in data coordinates."""
+    substitution_color, substitution_linestyle, substitution_effect = substitution
+    income_color, income_linestyle, income_effect = income
+    effect_arrow_linewidth = linewidth
+    a, b, c = ((eq.x, eq.y) for eq in (decomposition.A, decomposition.B, decomposition.C))
+    for start, end, color, linestyle, role, effect in (
+        (a, b, substitution_color, substitution_linestyle, "substitution", substitution_effect),
+        (b, c, income_color, income_linestyle, "income", income_effect),
+    ):
+        _draw_effect_arrow(
+            ax,
+            start=start,
+            end=end,
+            color=color,
+            linewidth=effect_arrow_linewidth,
+            linestyle=linestyle,
+            role=role,
+            opacity=_opacity(effect),
+        )
+    for start, end, effect, color, role in (
+        (a, b, substitution_effect, substitution_color, "substitution_label"),
+        (b, c, income_effect, income_color, "income_label"),
+    ):
+        _draw_effect_label(
+            ax,
+            start=start,
+            end=end,
+            effect=effect,
+            color=color,
+            transform=ax.transData,
+            role=role,
+            default=effect_label,
+        )
+
+
+def _draw_bundles(ax, decomposition, point_color: str, point_markersize: float, point_marker_shape: str) -> None:
+    """Plot bundles A/B/C and their (merged-when-overlapping) labels."""
     points = [
         ("A", decomposition.A),
         ("B", decomposition.B),
@@ -117,64 +183,6 @@ def render_decomposition(
             role="bundle_label",
             default=Label(position=LabelPosition.TOP_RIGHT, offset=6),
         )
-
-    if not show_arrows:
-        return
-
-    if arrows_below_axis or show_x_projections:
-        _draw_x_projections(
-            ax,
-            decomposition=decomposition,
-            substitution_color=substitution_color,
-            income_color=income_color,
-            linewidth=max(0.8, effect_arrow_linewidth * 0.7),
-            substitution_effect=substitution_effect,
-            income_effect=income_effect,
-            effect_label=effect_label,
-        )
-        return
-
-    _draw_effect_arrow(
-        ax,
-        start=(decomposition.A.x, decomposition.A.y),
-        end=(decomposition.B.x, decomposition.B.y),
-        color=substitution_color,
-        linewidth=effect_arrow_linewidth,
-        linestyle=substitution_linestyle,
-        role="substitution",
-        opacity=_opacity(substitution_effect),
-    )
-    _draw_effect_arrow(
-        ax,
-        start=(decomposition.B.x, decomposition.B.y),
-        end=(decomposition.C.x, decomposition.C.y),
-        color=income_color,
-        linewidth=effect_arrow_linewidth,
-        linestyle=income_linestyle,
-        role="income",
-        opacity=_opacity(income_effect),
-    )
-    a, b, c = ((eq.x, eq.y) for eq in (decomposition.A, decomposition.B, decomposition.C))
-    _draw_effect_label(
-        ax,
-        start=a,
-        end=b,
-        effect=substitution_effect,
-        color=substitution_color,
-        transform=ax.transData,
-        role="substitution_label",
-        default=effect_label,
-    )
-    _draw_effect_label(
-        ax,
-        start=b,
-        end=c,
-        effect=income_effect,
-        color=income_color,
-        transform=ax.transData,
-        role="income_label",
-        default=effect_label,
-    )
 
 
 def _draw_effect_arrow(
@@ -230,27 +238,7 @@ def _draw_x_projections(
     # Guides reach just past the lowest range arrow.
     projection_bottom = min(sub_y, inc_y) - 0.01
 
-    for eq in (decomposition.A, decomposition.B, decomposition.C):
-        (projection,) = ax.plot(
-            [eq.x, eq.x],
-            [0.0, eq.y],
-            color="#888888",
-            linestyle=":",
-            linewidth=0.8,
-            zorder=5,
-        )
-        tag(projection, "projection")
-        (guide,) = ax.plot(
-            [eq.x, eq.x],
-            [0.0, projection_bottom],
-            transform=xaxis_t,
-            color="#777777",
-            linestyle="--",
-            linewidth=0.8,
-            zorder=6,
-            clip_on=False,
-        )
-        tag(guide, "guide")
+    _draw_projection_guides(ax, decomposition, xaxis_t, projection_bottom)
 
     x0, x1 = ax.get_xlim()
     # A zero effect has no range; an arrow there would be a bare head.
@@ -260,27 +248,8 @@ def _draw_x_projections(
         (b_x, c_x, inc_y, income_color, _opacity(income_effect)),
     )
     for start_x, end_x, y, color, opacity in ranges:
-        if abs(end_x - start_x) <= min_length:
-            continue
-        effect_range = ax.annotate(
-            "",
-            xy=(end_x, y),
-            xytext=(start_x, y),
-            xycoords=xaxis_t,
-            textcoords=xaxis_t,
-            arrowprops={
-                "arrowstyle": "->",
-                "color": color,
-                "linewidth": linewidth,
-                "linestyle": "--",
-                "shrinkA": 0.0,
-                "shrinkB": 0.0,
-                "alpha": opacity,
-            },
-            zorder=9,
-            clip_on=False,
-        )
-        tag(effect_range, "range")
+        if abs(end_x - start_x) > min_length:
+            _draw_range_arrow(ax, xaxis_t, start_x, end_x, y, color, linewidth, opacity)
     _draw_effect_label(
         ax,
         start=(a_x, sub_y),
@@ -303,6 +272,53 @@ def _draw_x_projections(
         beyond_ends=True,
         default=effect_label,
     )
+
+
+def _draw_projection_guides(ax, decomposition, xaxis_t, projection_bottom: float) -> None:
+    """Dotted drops to the x axis and dashed guides down to the range arrows."""
+    for eq in (decomposition.A, decomposition.B, decomposition.C):
+        (projection,) = ax.plot(
+            [eq.x, eq.x],
+            [0.0, eq.y],
+            color="#888888",
+            linestyle=":",
+            linewidth=0.8,
+            zorder=5,
+        )
+        tag(projection, "projection")
+        (guide,) = ax.plot(
+            [eq.x, eq.x],
+            [0.0, projection_bottom],
+            transform=xaxis_t,
+            color="#777777",
+            linestyle="--",
+            linewidth=0.8,
+            zorder=6,
+            clip_on=False,
+        )
+        tag(guide, "guide")
+
+
+def _draw_range_arrow(ax, xaxis_t, start_x, end_x, y, color, linewidth, opacity) -> None:
+    effect_range = ax.annotate(
+        "",
+        xy=(end_x, y),
+        xytext=(start_x, y),
+        xycoords=xaxis_t,
+        textcoords=xaxis_t,
+        arrowprops={
+            "arrowstyle": "->",
+            "color": color,
+            "linewidth": linewidth,
+            "linestyle": "--",
+            "shrinkA": 0.0,
+            "shrinkB": 0.0,
+            "alpha": opacity,
+        },
+        zorder=9,
+        clip_on=False,
+    )
+    tag(effect_range, "range")
 
 
 def _opacity(effect: Effect | None) -> float | None:

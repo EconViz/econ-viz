@@ -137,52 +137,64 @@ class DemandDiagram(Figure):
                 **self._utility_draw_options(),
             )
 
-            for idx, (price, solved) in enumerate(zip(price_markers, selected_equilibria, strict=True)):
-                budget, eq = solved
-                line_style = "-" if idx == 0 else "--"
-                point_text = self._marker_label(idx)
-                price_symbol = _PRICE_SYMBOL[self.path.parameter_name]
-                line_label = f"{point_text}: {price_symbol}={price:.2g}"
-                self.utility_canvas.add_budget(
-                    px=budget.px,
-                    py=budget.py,
-                    income=budget.income,
-                    linestyle=line_style,
-                    label=line_label,
-                )
-                self.utility_canvas.add_equilibrium(eq, label=point_text)
-                quantity = eq.x if quantity_axis == "x" else eq.y
-                self.demand_canvas.add_point(quantity, price, label=point_text)
-                if show_demand_guides:
-                    self._add_demand_guides(quantity=quantity, price=price)
+            self._draw_price_markers(price_markers, selected_equilibria, quantity_axis, show_demand_guides)
 
             self._add_demand_curve(label="Marshallian demand")
             if show_pcc:
                 self.utility_canvas.add_path(self.path, label="PCC", show_points=False)
         if show_legend:
             self.utility_canvas.show_legend(legend=legend)
-            handles = [
-                mlines.Line2D([], [], color=self.demand_canvas.theme.ic_color, label="Marshallian demand"),
-                mlines.Line2D(
-                    [], [], color=self.demand_canvas.theme.ic_color, linestyle="--", label="corner / boundary"
-                ),
-            ]
-            if demand_stroke is not None:
-                for handle in handles:
-                    tag(handle, "demand")
-                apply_strokes(self.demand_canvas.ax, handles, bottom)
-            place_legend(
-                self.demand_canvas.ax,
-                handles,
-                [str(h.get_label()) for h in handles],
-                (legend or Legend()).merged_over(self.demand_canvas.theme.legend),
-            )
+            self._place_demand_legend(legend, demand_stroke, bottom)
         else:
             for ax in (self.utility_canvas.ax, self.demand_canvas.ax):
                 existing = ax.get_legend()
                 if existing is not None:
                     existing.remove()
         return self
+
+    def _draw_price_markers(
+        self,
+        price_markers: list[float],
+        selected_equilibria: list[tuple[LinearBudget, Equilibrium]],
+        quantity_axis: QuantityAxis,
+        show_demand_guides: bool,
+    ) -> None:
+        """Draw one budget line, equilibrium and demand point per price marker."""
+        for idx, (price, solved) in enumerate(zip(price_markers, selected_equilibria, strict=True)):
+            budget, eq = solved
+            line_style = "-" if idx == 0 else "--"
+            point_text = self._marker_label(idx)
+            price_symbol = _PRICE_SYMBOL[self.path.parameter_name]
+            line_label = f"{point_text}: {price_symbol}={price:.2g}"
+            self.utility_canvas.add_budget(
+                px=budget.px,
+                py=budget.py,
+                income=budget.income,
+                linestyle=line_style,
+                label=line_label,
+            )
+            self.utility_canvas.add_equilibrium(eq, label=point_text)
+            quantity = eq.x if quantity_axis == "x" else eq.y
+            self.demand_canvas.add_point(quantity, price, label=point_text)
+            if show_demand_guides:
+                self._add_demand_guides(quantity=quantity, price=price)
+
+    def _place_demand_legend(self, legend: Legend | None, demand_stroke: Stroke | None, bottom: dict) -> None:
+        """Build and place the demand-panel legend."""
+        handles = [
+            mlines.Line2D([], [], color=self.demand_canvas.theme.ic_color, label="Marshallian demand"),
+            mlines.Line2D([], [], color=self.demand_canvas.theme.ic_color, linestyle="--", label="corner / boundary"),
+        ]
+        if demand_stroke is not None:
+            for handle in handles:
+                tag(handle, "demand")
+            apply_strokes(self.demand_canvas.ax, handles, bottom)
+        place_legend(
+            self.demand_canvas.ax,
+            handles,
+            [str(h.get_label()) for h in handles],
+            (legend or Legend()).merged_over(self.demand_canvas.theme.legend),
+        )
 
     def _quantity_axis(self) -> QuantityAxis:
         return "x" if self.path.parameter_name == "px" else "y"
