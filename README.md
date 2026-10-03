@@ -45,7 +45,7 @@ cvs.save("cobb_douglas.tex", tikz_scale=0.0125)
 
 The default TikZ scale maps a 6 inch wide Matplotlib figure to about 7.5 cm.
 
-![Cobb-Douglas indifference map with budget line and equilibrium point](https://raw.githubusercontent.com/EconViz/econ-viz/a8423043789ee7dba19b2d71fa6cc5071601181a/cobb_douglas_eq.png)
+![Cobb-Douglas indifference map with budget line and equilibrium point](https://raw.githubusercontent.com/EconViz/utility-viz/a8423043789ee7dba19b2d71fa6cc5071601181a/cobb_douglas_eq.png)
 
 ## Notebook
 

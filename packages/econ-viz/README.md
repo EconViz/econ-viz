@@ -10,4 +10,4 @@ either emits a deprecation warning. Both are removed in 3.0.
 pip install utility-viz          # use this name from now on (no econ_viz, no econ-viz command)
 ```
 
-See the migration guide: https://github.com/EconViz/econ-viz#migrating-from-econ-viz
+See the migration guide: https://github.com/EconViz/utility-viz#migrating-from-econ-viz
