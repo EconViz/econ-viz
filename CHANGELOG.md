@@ -28,6 +28,8 @@
 
 - Add architecture and public-API tests that enforce package layering and the root facade
 
+- Split long functions and the Edgeworth box module into private helpers and `edgeworth_style`, `edgeworth_focus` and `edgeworth_exchange` modules without changing the public API or rendered output (#154)
+
 ## v1.12.0 (2026-09-26)
 
 ### Features

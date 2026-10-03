@@ -104,6 +104,21 @@ def render_decomposition(
         )
         return
 
+    _draw_data_space_arrows(
+        ax,
+        decomposition,
+        substitution=(substitution_color, substitution_linestyle, substitution_effect),
+        income=(income_color, income_linestyle, income_effect),
+        linewidth=effect_arrow_linewidth,
+        effect_label=effect_label,
+    )
+
+
+def _draw_data_space_arrows(ax, decomposition, *, substitution, income, linewidth, effect_label) -> None:
+    """Draw the A->B and B->C arrows (and labels) in data coordinates."""
+    substitution_color, substitution_linestyle, substitution_effect = substitution
+    income_color, income_linestyle, income_effect = income
+    effect_arrow_linewidth = linewidth
     a, b, c = ((eq.x, eq.y) for eq in (decomposition.A, decomposition.B, decomposition.C))
     for start, end, color, linestyle, role, effect in (
         (a, b, substitution_color, substitution_linestyle, "substitution", substitution_effect),

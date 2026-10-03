@@ -11,6 +11,12 @@ import numpy as np
 from utility_viz.core.canvas.legend import place_legend
 from utility_viz.core.config.settings import Config
 from utility_viz.core.constants.canvas import DEFAULT_DPI, MAX_DPI, MIN_DPI
+from utility_viz.core.diagrams.consumer.edgeworth_exchange import (
+    check_allocation,
+    core_allocations,
+    locate_walrasian,
+)
+from utility_viz.core.diagrams.consumer.edgeworth_focus import apply_equilibrium_focus, should_include_endowment_ic
 from utility_viz.core.diagrams.consumer.edgeworth_plotter import (
     plot_contract_curve,
     plot_core,
@@ -19,6 +25,7 @@ from utility_viz.core.diagrams.consumer.edgeworth_plotter import (
     plot_indifference_pair,
     plot_price_line,
 )
+from utility_viz.core.diagrams.consumer.edgeworth_style import apply_base_style
 from utility_viz.core.errors.exceptions import InvalidParameterError
 from utility_viz.core.export import save_figure
 from utility_viz.core.rendering.stroke import styled
@@ -36,7 +43,6 @@ from utility_viz.models.consumer.edgeworth_compute import (
     line_box_intersections,
     mrs,
     unique_points,
-    walrasian_equilibrium_point,
 )
 from utility_viz.models.consumer.edgeworth_state import EdgeworthState
 from utility_viz.models.curves import around_anchor_levels, percentile_levels
@@ -180,60 +186,7 @@ class EdgeworthBox:
         return self
 
     def _apply_base_style(self) -> None:
-        t = self.theme
-        if t.background_color is not None:
-            self.fig.patch.set_facecolor(t.background_color)
-            self.fig.patch.set_alpha(1.0)
-            self.ax.patch.set_facecolor(t.background_color)
-            self.ax.patch.set_alpha(1.0)
-        self.ax.set_xlim(0.0, self.total_x)
-        self.ax.set_ylim(0.0, self.total_y)
-        self.ax.set_xticks([])
-        self.ax.set_yticks([])
-
-        for side in ("top", "right", "bottom", "left"):
-            stroke = self.x_side_stroke if side in ("top", "bottom") else self.y_side_stroke
-            self.ax.spines[side].set_visible(True)
-            self.ax.spines[side].set_color(stroke.color)
-            self.ax.spines[side].set_linewidth(stroke.width)
-            self.ax.spines[side].set_linestyle(cast(LineStyle, stroke.style).value)
-            self.ax.spines[side].set_alpha(stroke.opacity)
-
-        def styled_text(text, style: Label):
-            text.set_color(style.color or t.label_color)
-            if style.fontsize is not None:
-                text.set_fontsize(style.fontsize)
-            text.set_visible(style.visible is not False)
-            text.set_alpha(style.opacity)
-            return text
-
-        styled_text(self.ax.set_xlabel(rf"${self.x_label}_A$"), self.x_label_style)
-        styled_text(self.ax.set_ylabel(rf"${self.y_label}_A$"), self.y_label_style)
-        styled_text(self.ax.text(0.0, 0.0, r"$O_A$", ha="right", va="top"), self.origin_style)
-        styled_text(self.ax.text(self.total_x, self.total_y, r"$O_B$", ha="left", va="bottom"), self.origin_style)
-        styled_text(
-            self.ax.text(
-                self.total_x * 0.98,
-                self.total_y * -0.06,
-                rf"${self.x_label}_B$",
-                ha="right",
-                va="top",
-            ),
-            self.x_label_style,
-        )
-        styled_text(
-            self.ax.text(
-                self.total_x * -0.04,
-                self.total_y * 0.98,
-                rf"${self.y_label}_B$",
-                ha="right",
-                va="top",
-                rotation=90,
-            ),
-            self.y_label_style,
-        )
-        if self.title:
-            styled_text(self.ax.set_title(self.title), self.title_style)
+        apply_base_style(self)
 
     def _grid(self, *, res: int) -> tuple[np.ndarray, np.ndarray]:
         x = np.linspace(_EPS, self.total_x - _EPS, res)
@@ -596,83 +549,11 @@ class EdgeworthBox:
         Draws a bounded number of ICs per agent around ``X*`` (default: 3-5).
         Endowment ICs are optional and, when included, compete for the same cap.
         """
-        cfg = config or EquilibriumFocusConfig()
-        if self.walrasian_equilibrium is None:
-            self.add_walrasian_equilibrium(px=px, py=py)
-
-        min_curves = max(1, int(cfg.min_curves_per_agent))
-        max_curves = max(min_curves, int(cfg.max_curves_per_agent))
-        min_curves = max(3, min_curves)
-        max_curves = min(5, max_curves)
-        if min_curves > max_curves:
-            min_curves = max_curves
-
-        include = cfg.include_endowment_indifference
-        if include == "auto":
-            include = self._should_include_endowment_ic(min_relative_gap=cfg.min_relative_gap)
-
-        if self.walrasian_equilibrium is None:
-            raise ValueError("Walrasian equilibrium is required for equilibrium-focused rendering.")
-        x_star, y_star = self.walrasian_equilibrium
-        ua_star = self._eval_ua(x_star, y_star)
-        ub_star = self._eval_ub(x_star, y_star)
-
-        ua_e: float | None = None
-        ub_e: float | None = None
-        if bool(include) and self.endowment is not None:
-            ex, ey = self.endowment
-            ua_e = self._eval_ua(ex, ey)
-            ub_e = self._eval_ub(ex, ey)
-
-        target_n = min_curves + (1 if bool(include) and min_curves < max_curves else 0)
-
-        X, Y = self._grid(res=cfg.res)
-        U_a = self.utility_a(X, Y)
-        U_b = self.utility_b(self.total_x - X, self.total_y - Y)
-        ua_levels = self._focus_levels(
-            anchor=ua_star,
-            u_min=float(np.nanmin(U_a)),
-            u_max=float(np.nanmax(U_a)),
-            n=target_n,
-            spread=cfg.equilibrium_spread,
-            extra=ua_e if bool(include) else None,
-        )
-        ub_levels = self._focus_levels(
-            anchor=ub_star,
-            u_min=float(np.nanmin(U_b)),
-            u_max=float(np.nanmax(U_b)),
-            n=target_n,
-            spread=cfg.equilibrium_spread,
-            extra=ub_e if bool(include) else None,
-        )
-
-        lw_eq = cfg.equilibrium_linewidth
-        if lw_eq is None:
-            lw_eq = cfg.endowment_linewidth
-        levels_a = ua_levels[:max_curves]
-        levels_b = ub_levels[:max_curves]
-        self.equilibrium_focus_levels_a = levels_a
-        self.equilibrium_focus_levels_b = levels_b
-        self.add_indifference_curves(
-            levels_a=levels_a,
-            levels_b=levels_b,
-            linewidth=lw_eq,
-            res=cfg.res,
-        )
+        apply_equilibrium_focus(self, px, py, config or EquilibriumFocusConfig())
         return self
 
     def _should_include_endowment_ic(self, *, min_relative_gap: float) -> bool:
-        if self.endowment is None or self.walrasian_equilibrium is None:
-            return False
-        ex, ey = self.endowment
-        x_star, y_star = self.walrasian_equilibrium
-        ua_e = self._eval_ua(ex, ey)
-        ub_e = self._eval_ub(ex, ey)
-        ua_s = self._eval_ua(x_star, y_star)
-        ub_s = self._eval_ub(x_star, y_star)
-        gap_a = abs(ua_s - ua_e) / (abs(ua_s) + 1e-9)
-        gap_b = abs(ub_s - ub_e) / (abs(ub_s) + 1e-9)
-        return max(gap_a, gap_b) >= max(min_relative_gap, 0.0)
+        return should_include_endowment_ic(self, min_relative_gap=min_relative_gap)
 
     def add_core(
         self,
@@ -703,19 +584,7 @@ class EdgeworthBox:
         """
         t = self.theme
         with styled(self, {"core": stroke}, markers={"core_point": marker}):
-            if self.endowment is None:
-                raise ValueError("Endowment is required. Call add_endowment(...) first.")
-            if len(self.contract_curve_points) == 0:
-                raise ValueError("Contract curve is required. Call add_contract_curve(...) first.")
-
-            ex, ey = self.endowment
-            ua_e = self._eval_ua(ex, ey)
-            ub_e = self._eval_ub(ex, ey)
-
-            core: list[tuple[float, float]] = []
-            for x, y in self.contract_curve_points:
-                if self._eval_ua(float(x), float(y)) >= ua_e - tol and self._eval_ub(float(x), float(y)) >= ub_e - tol:
-                    core.append((float(x), float(y)))
+            core = core_allocations(self, tol)
 
             self.core_points = self._unique_points(core)
             plot_core(
@@ -830,25 +699,7 @@ class EdgeworthBox:
             markers={"walrasian": marker_style},
             labels={"walrasian_label": label_style},
         ):
-            if px <= 0 or py <= 0:
-                raise ValueError("px and py must be positive.")
-            if self.endowment is None:
-                raise ValueError("Endowment is required. Call add_endowment(...) first.")
-            if len(self.contract_curve_points) == 0:
-                self.add_contract_curve()
-
-            ex, ey = self.endowment
-            income = px * ex + py * ey
-
-            candidates = self.contract_curve_points
-            x_star, y_star = walrasian_equilibrium_point(
-                candidates=candidates,
-                px=px,
-                py=py,
-                income=income,
-                mrs_a_fn=lambda x, y: self._mrs(self.utility_a, x, y),
-                mrs_b_fn=lambda x, y: self._mrs(self.utility_b, self.total_x - x, self.total_y - y),
-            )
+            x_star, y_star = locate_walrasian(self, px, py)
 
             self.walrasian_equilibrium = (x_star, y_star)
             plot_equilibrium_marker(
@@ -874,31 +725,7 @@ class EdgeworthBox:
         tol: float = 1e-3,
     ) -> dict[str, bool]:
         """Return key checklist conditions at a candidate allocation."""
-        checks: dict[str, bool] = {}
-        checks["market_clearing"] = abs((x + (self.total_x - x)) - self.total_x) <= tol
-
-        if self.endowment is not None:
-            ex, ey = self.endowment
-            checks["individual_rationality"] = (
-                self._eval_ua(x, y) >= self._eval_ua(ex, ey) - tol
-                and self._eval_ub(x, y) >= self._eval_ub(ex, ey) - tol
-            )
-        else:
-            checks["individual_rationality"] = False
-
-        if px is not None and py is not None and self.endowment is not None:
-            ex, ey = self.endowment
-            income = px * ex + py * ey
-            checks["budget_balance"] = abs(px * x + py * y - income) <= tol * max(income, 1.0)
-        else:
-            checks["budget_balance"] = False
-
-        mrs_a = self._mrs(self.utility_a, x, y)
-        mrs_b = self._mrs(self.utility_b, self.total_x - x, self.total_y - y)
-        checks["mrs_equal"] = (
-            np.isfinite(mrs_a) and np.isfinite(mrs_b) and mrs_a > 0 and mrs_b > 0 and abs(np.log(mrs_a / mrs_b)) <= 0.08
-        )
-        return checks
+        return check_allocation(self, x, y, px, py, tol)
 
     def show_legend(self, legend: Legend | None = None, **kwargs) -> EdgeworthBox:
         """Draw the legend.

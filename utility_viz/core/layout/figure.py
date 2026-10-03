@@ -119,23 +119,8 @@ class Figure:
         y_axis: Axis | None = None,
     ):
         """Create a multi-panel figure composed of injected :class:`Canvas` instances."""
-        active = Config.active()
-        theme = theme if theme is not None else active.theme
-        font = font if font is not None else active.font
-        math_font = math_font if math_font is not None else active.math_font
-        self.layout = layout
-        self.shared_x = shared_x
-        self.shared_y = shared_y
-        self.font = resolve_font(font)
-        self.math_font = resolve_math_font(math_font)
-        shape, specs = _LAYOUT_SPECS[layout]
+        shape, specs, theme = self._init_figure(layout, theme, font, math_font, figsize, shared_x, shared_y)
         rows, cols = shape
-        width = 6.0 * cols
-        height = 6.0 * rows
-        self.fig: MplFigure = plt.figure(figsize=figsize or (width, height))
-        self.fig.patch.set_alpha(0.0)
-        if self.font or self.math_font:
-            self.fig.add_artist(FontApplier(self.font, self.math_font))
         self._add_suptitle(title, theme)
 
         gs = GridSpec(rows, cols, figure=self.fig, hspace=hspace, wspace=wspace)
@@ -167,6 +152,27 @@ class Figure:
         self._build_panels(gs, specs, canvas_kwargs)
 
         self._apply_shared_axes(shape, specs)
+
+    def _init_figure(self, layout, theme, font, math_font, figsize, shared_x, shared_y):
+        """Resolve config defaults and create the matplotlib figure."""
+        active = Config.active()
+        theme = theme if theme is not None else active.theme
+        font = font if font is not None else active.font
+        math_font = math_font if math_font is not None else active.math_font
+        self.layout = layout
+        self.shared_x = shared_x
+        self.shared_y = shared_y
+        self.font = resolve_font(font)
+        self.math_font = resolve_math_font(math_font)
+        shape, specs = _LAYOUT_SPECS[layout]
+        rows, cols = shape
+        width = 6.0 * cols
+        height = 6.0 * rows
+        self.fig: MplFigure = plt.figure(figsize=figsize or (width, height))
+        self.fig.patch.set_alpha(0.0)
+        if self.font or self.math_font:
+            self.fig.add_artist(FontApplier(self.font, self.math_font))
+        return shape, specs, theme
 
     def _add_suptitle(self, title: str | Label | None, theme: Theme) -> None:
         """Add the figure super-title, honouring a :class:`Label` style."""
