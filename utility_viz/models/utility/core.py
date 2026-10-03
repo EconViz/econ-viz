@@ -331,10 +331,10 @@ class QuasiLinear:
 
     def __call__(self, x, y):
         if self.linear_in == "y":
-            # U = f(x) + y
+            # f(x) plus y.
             return self.v_func(x) + y
         else:
-            # U = x + f(y)
+            # x plus f(y).
             return x + self.v_func(y)
 
     def ray_slopes(self) -> list[float]:

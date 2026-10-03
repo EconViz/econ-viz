@@ -80,7 +80,7 @@ class TestReturnsToScaleFromDegree:
 
 
 # ---------------------------------------------------------------------------
-# HomogeneityAnalyzer.degree()
+# Tests for HomogeneityAnalyzer.HomogeneityAnalyzer.degree
 # ---------------------------------------------------------------------------
 
 
@@ -137,7 +137,7 @@ class TestDegree:
 
 
 # ---------------------------------------------------------------------------
-# HomogeneityAnalyzer.euler_check()
+# Tests for HomogeneityAnalyzer.HomogeneityAnalyzer.euler_check
 # ---------------------------------------------------------------------------
 
 
@@ -158,7 +158,7 @@ class TestEulerCheck:
 
 
 # ---------------------------------------------------------------------------
-# HomogeneityAnalyzer.is_homothetic()
+# Tests for HomogeneityAnalyzer.HomogeneityAnalyzer.is_homothetic
 # ---------------------------------------------------------------------------
 
 
@@ -178,7 +178,7 @@ class TestIsHomothetic:
 
 
 # ---------------------------------------------------------------------------
-# HomogeneityAnalyzer.demand_degree_zero()
+# Tests for HomogeneityAnalyzer.HomogeneityAnalyzer.demand_degree_zero
 # ---------------------------------------------------------------------------
 
 
