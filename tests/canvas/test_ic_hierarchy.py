@@ -7,8 +7,8 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import pytest
 
-from econ_viz import Canvas, Stroke, themes
-from econ_viz.models.utility import CobbDouglas, Leontief, PerfectSubstitutes, Satiation
+from utility_viz import Canvas, Stroke, themes
+from utility_viz.models.utility import CobbDouglas, Leontief, PerfectSubstitutes, Satiation
 
 MODEL = CobbDouglas(alpha=0.5, beta=0.5)
 

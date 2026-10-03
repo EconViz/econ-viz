@@ -1,9 +1,9 @@
-"""Tests for econ_viz.models.analysis.levels — utility level spacing strategies."""
+"""Tests for utility_viz.models.analysis.levels — utility level spacing strategies."""
 
 import numpy as np
 import pytest
 
-from econ_viz import levels
+from utility_viz import levels
 
 
 class TestAround:

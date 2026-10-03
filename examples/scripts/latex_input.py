@@ -12,7 +12,7 @@ matplotlib.use("Agg")
 
 from pathlib import Path
 
-from econ_viz import Canvas, levels, parse_latex, solve
+from utility_viz import Canvas, levels, parse_latex, solve
 
 OUTPUT_DIR = "examples/output/latex"
 Path(OUTPUT_DIR).mkdir(parents=True, exist_ok=True)

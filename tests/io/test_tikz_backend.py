@@ -6,12 +6,12 @@ from matplotlib.font_manager import FontProperties
 from matplotlib.path import Path
 from matplotlib.transforms import IdentityTransform
 
-from econ_viz import Canvas
-from econ_viz.core.export import save_figure
-from econ_viz.core.export.backend_tikz import TikzRenderer
-from econ_viz.core.export.backend_tikz._document import assemble
-from econ_viz.core.export.backend_tikz._path import dash_spec, path_to_polylines, strip_closing_vertex
-from econ_viz.models.utility import CobbDouglas
+from utility_viz import Canvas
+from utility_viz.core.export import save_figure
+from utility_viz.core.export.backend_tikz import TikzRenderer
+from utility_viz.core.export.backend_tikz._document import assemble
+from utility_viz.core.export.backend_tikz._path import dash_spec, path_to_polylines, strip_closing_vertex
+from utility_viz.models.utility import CobbDouglas
 
 
 class _GC:
@@ -169,7 +169,7 @@ def test_save_figure_tex_passes_tikz_options(monkeypatch, tmp_path):
         calls["scale"] = scale
         calls["standalone"] = standalone
 
-    monkeypatch.setattr("econ_viz.core.export.backend_tikz.save_tikz", fake_save_tikz)
+    monkeypatch.setattr("utility_viz.core.export.backend_tikz.save_tikz", fake_save_tikz)
     fig = object()
 
     save_figure(

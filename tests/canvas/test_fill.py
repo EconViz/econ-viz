@@ -8,9 +8,9 @@ import matplotlib.pyplot as plt
 import pytest
 from matplotlib.colors import to_hex
 
-from econ_viz import Canvas, Fill, Stroke
-from econ_viz.core.errors.exceptions import InvalidParameterError
-from econ_viz.core.themes.theme import Theme
+from utility_viz import Canvas, Fill, Stroke
+from utility_viz.core.errors.exceptions import InvalidParameterError
+from utility_viz.core.themes.theme import Theme
 
 
 @pytest.fixture(autouse=True)
@@ -96,6 +96,6 @@ class TestBudgetFill:
 
 
 def test_fill_is_exported():
-    import econ_viz
+    import utility_viz
 
-    assert econ_viz.Fill is Fill
+    assert utility_viz.Fill is Fill

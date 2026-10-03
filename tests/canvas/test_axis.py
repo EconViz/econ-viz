@@ -8,11 +8,11 @@ import matplotlib.pyplot as plt
 import pytest
 from matplotlib.colors import to_hex
 
-from econ_viz import Axis, Canvas, DemandDiagram, Figure, Layout, LinearBudget, PricePath, Stroke
-from econ_viz.core.diagrams.consumer.edgeworth import EdgeworthBox
-from econ_viz.core.errors.exceptions import InvalidParameterError
-from econ_viz.enums import ArrowStyle, LabelPosition, LineStyle
-from econ_viz.models.utility import CobbDouglas
+from utility_viz import Axis, Canvas, DemandDiagram, Figure, Layout, LinearBudget, PricePath, Stroke
+from utility_viz.core.diagrams.consumer.edgeworth import EdgeworthBox
+from utility_viz.core.errors.exceptions import InvalidParameterError
+from utility_viz.enums import ArrowStyle, LabelPosition, LineStyle
+from utility_viz.models.utility import CobbDouglas
 
 MODEL = CobbDouglas(alpha=0.5, beta=0.5)
 
@@ -123,6 +123,6 @@ class TestOtherDiagrams:
 
 
 def test_axis_is_exported():
-    import econ_viz
+    import utility_viz
 
-    assert econ_viz.Axis is Axis
+    assert utility_viz.Axis is Axis

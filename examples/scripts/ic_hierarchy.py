@@ -10,8 +10,8 @@ matplotlib.use("Agg")
 
 from pathlib import Path
 
-from econ_viz import Canvas, levels, solve
-from econ_viz.models.utility import CobbDouglas
+from utility_viz import Canvas, levels, solve
+from utility_viz.models.utility import CobbDouglas
 
 OUTPUT_DIR = "examples/output/ic_hierarchy"
 Path(OUTPUT_DIR).mkdir(parents=True, exist_ok=True)

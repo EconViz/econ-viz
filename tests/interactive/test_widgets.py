@@ -1,4 +1,4 @@
-"""Tests for the econ_viz.core.interactive submodule (issue #45).
+"""Tests for the utility_viz.core.interactive submodule (issue #45).
 
 Since ipywidgets and IPython are optional runtime dependencies, the tests
 that inspect widget internals use mocks where full Jupyter integration is
@@ -7,7 +7,7 @@ not available.
 
 import pytest
 
-from econ_viz import Canvas
+from utility_viz import Canvas
 
 # ------------------------------------------------------------------
 # WidgetViewer initialisation
@@ -18,13 +18,13 @@ class TestWidgetViewerInit:
     """WidgetViewer constructor validation."""
 
     def test_no_slider_specs_raises(self):
-        from econ_viz.core.interactive import WidgetViewer
+        from utility_viz.core.interactive import WidgetViewer
 
         with pytest.raises(ValueError, match="at least one slider spec"):
             WidgetViewer(lambda **kw: Canvas())
 
     def test_stores_specs(self):
-        from econ_viz.core.interactive import WidgetViewer
+        from utility_viz.core.interactive import WidgetViewer
 
         def _draw(p1: float) -> Canvas:
             return Canvas()
@@ -34,7 +34,7 @@ class TestWidgetViewerInit:
         assert viewer._slider_specs["p1"] == (1.0, 10.0, 0.5)
 
     def test_multiple_specs(self):
-        from econ_viz.core.interactive import WidgetViewer
+        from utility_viz.core.interactive import WidgetViewer
 
         viewer = WidgetViewer(
             lambda p1, income, **kw: Canvas(),
@@ -54,7 +54,7 @@ class TestBuildSliders:
 
     @pytest.fixture()
     def viewer(self):
-        from econ_viz.core.interactive import WidgetViewer
+        from utility_viz.core.interactive import WidgetViewer
 
         return WidgetViewer(lambda p1: Canvas(), p1=(2.0, 10.0, 2.0))
 
@@ -83,7 +83,7 @@ class TestValueInputs:
 
     @pytest.fixture()
     def viewer(self):
-        from econ_viz.core.interactive import WidgetViewer
+        from utility_viz.core.interactive import WidgetViewer
 
         return WidgetViewer(lambda p1: Canvas(), p1=(2.0, 10.0, 2.0))
 
@@ -129,7 +129,7 @@ class TestRequireWidgets:
 
         monkeypatch.setattr(builtins, "__import__", _mock_import)
 
-        from econ_viz.core.interactive.widgets import _require_widgets
+        from utility_viz.core.interactive.widgets import _require_widgets
 
         with pytest.raises(ImportError, match="ipywidgets"):
             _require_widgets()
@@ -146,7 +146,7 @@ class TestRequireWidgets:
 
         monkeypatch.setattr(builtins, "__import__", _mock_import)
 
-        from econ_viz.core.interactive.widgets import _require_widgets
+        from utility_viz.core.interactive.widgets import _require_widgets
 
         with pytest.raises(ImportError, match="IPython"):
             _require_widgets()
@@ -172,7 +172,7 @@ class TestWidgetViewerShow:
 
         monkeypatch.setattr(builtins, "__import__", _mock_import)
 
-        from econ_viz.core.interactive import WidgetViewer
+        from utility_viz.core.interactive import WidgetViewer
 
         viewer = WidgetViewer(lambda p1: Canvas(), p1=(1.0, 5.0, 1.0))
 
@@ -186,7 +186,7 @@ class TestWidgetViewerShow:
         monkeypatch.setattr("IPython.display.display", display_calls.append)
         monkeypatch.setattr("IPython.display.clear_output", lambda **kwargs: None)
 
-        from econ_viz.core.interactive import WidgetViewer
+        from utility_viz.core.interactive import WidgetViewer
 
         viewer = WidgetViewer(lambda p1: Canvas(), p1=(1.0, 5.0, 1.0))
         viewer.show()
