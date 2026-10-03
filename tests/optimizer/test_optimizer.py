@@ -18,7 +18,15 @@ from utility_viz.models.optimization import (
     solution_tex,
     solve,
 )
-from utility_viz.models.utility import CES, CobbDouglas, Leontief, PerfectSubstitutes, QuasiLinear, Satiation, StoneGeary
+from utility_viz.models.utility import (
+    CES,
+    CobbDouglas,
+    Leontief,
+    PerfectSubstitutes,
+    QuasiLinear,
+    Satiation,
+    StoneGeary,
+)
 
 
 def _on_budget(eq: Equilibrium, px, py, income, rtol=1e-4):
