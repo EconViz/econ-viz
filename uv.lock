@@ -1212,6 +1212,23 @@ wheels = [
 ]
 
 [[package]]
+name = "mosaickit"
+version = "0.5.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "matplotlib", version = "3.10.9", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "matplotlib", version = "3.11.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*'" },
+    { name = "numpy", version = "2.5.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "tomli", marker = "python_full_version < '3.11'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/1c/92/7faa0663d7550d1954fb477eb246dfbb88912871405b895d7c3ceb7eedcf/mosaickit-0.5.1.tar.gz", hash = "sha256:e46fd1ea961ef06efbf9ba10e1685e3e89c57261f9ed743f1b84d5efbca27ca0", size = 233475, upload-time = "2026-10-03T09:37:44.459Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/5e/b4/840c230cc81dc3209ced4ff561101a29fd3cae01a4c1614584f8551ca9e5/mosaickit-0.5.1-py3-none-any.whl", hash = "sha256:9c767e5730c125f86c038efa2c9a44f4cd98d8b2c110d13c4926133335d1919b", size = 91666, upload-time = "2026-10-03T09:37:43.18Z" },
+]
+
+[[package]]
 name = "mpmath"
 version = "1.3.0"
 source = { registry = "https://pypi.org/simple" }
@@ -2129,6 +2146,7 @@ source = { editable = "." }
 dependencies = [
     { name = "matplotlib", version = "3.10.9", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "matplotlib", version = "3.11.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "mosaickit" },
     { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*'" },
     { name = "numpy", version = "2.5.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
@@ -2170,6 +2188,7 @@ requires-dist = [
     { name = "ipywidgets", marker = "extra == 'all'", specifier = ">=8.0.0" },
     { name = "ipywidgets", marker = "extra == 'interactive'", specifier = ">=8.0.0" },
     { name = "matplotlib", specifier = ">=3.6.0,<4.0.0" },
+    { name = "mosaickit", specifier = ">=0.5.1,<0.6.0" },
     { name = "numpy", specifier = ">=1.24.0" },
     { name = "pillow", marker = "extra == 'all'", specifier = ">=9.0.0" },
     { name = "pillow", marker = "extra == 'animation'", specifier = ">=9.0.0" },
