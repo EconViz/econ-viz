@@ -1,0 +1,39 @@
+[project]
+name = "econ-viz"
+# Kept in lockstep with utility-viz (scripts/release.sh bumps both; CI checks them against the tag).
+version = "2.0.0b1"
+description = "econ-viz was renamed to utility-viz. This package adds the deprecated econ_viz import name and econ-viz command."
+readme = "README.md"
+authors = [{ name = "Pin Yue Sung", email = "contact@econ-viz.org" }]
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.10,<4.0"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Operating System :: OS Independent",
+]
+dependencies = ["utility-viz==2.0.0b1"]
+
+[project.scripts]
+# Deprecated 1.x command: warns, then forwards to utility-viz. Removed in 3.0.
+econ-viz = "econ_viz.cli:main"
+
+[project.urls]
+Homepage = "https://econ-viz.org"
+Repository = "https://github.com/EconViz/econ-viz"
+Changelog = "https://github.com/EconViz/econ-viz/blob/main/CHANGELOG.md"
+
+[build-system]
+requires = ["uv_build>=0.12.1,<0.13.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "econ_viz"
+module-root = ""
+
+[tool.uv.sources]
+utility-viz = { workspace = true }
