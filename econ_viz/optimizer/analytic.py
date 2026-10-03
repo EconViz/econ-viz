@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from ..models import CobbDouglas, Leontief, PerfectSubstitutes, StoneGeary
+from econ_viz.models import CobbDouglas, Leontief, PerfectSubstitutes, StoneGeary
 
 
 def _tex_atom(value: str | float | int) -> str:

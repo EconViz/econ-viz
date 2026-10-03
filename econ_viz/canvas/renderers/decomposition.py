@@ -6,15 +6,15 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 from typing import cast
 
-from ...canvas.stroke import tag
-from ...constants.canvas import INCOME_RANGE_Y, SUBSTITUTION_RANGE_Y
-from ...enums import LabelPosition
-from ...optimizer.solver import Equilibrium
-from ...themes.label import Label
-from ..effect import Effect
-from ..labels import placement
-from ..primitives import annotate_math, plot_point
-from .budget import render_budget
+from econ_viz.canvas.stroke import tag
+from econ_viz.constants.canvas import INCOME_RANGE_Y, SUBSTITUTION_RANGE_Y
+from econ_viz.enums import LabelPosition
+from econ_viz.optimizer.solver import Equilibrium
+from econ_viz.themes.label import Label
+from econ_viz.canvas.effect import Effect
+from econ_viz.canvas.labels import placement
+from econ_viz.canvas.primitives import annotate_math, plot_point
+from econ_viz.canvas.renderers.budget import render_budget
 
 
 def render_decomposition(

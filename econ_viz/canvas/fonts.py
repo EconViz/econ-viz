@@ -8,8 +8,8 @@ from matplotlib.artist import Artist
 from matplotlib.font_manager import FontProperties, findfont
 from matplotlib.text import Text
 
-from ..exceptions import InvalidParameterError
-from .stroke import tag_attr
+from econ_viz.exceptions import InvalidParameterError
+from econ_viz.canvas.stroke import tag_attr
 
 GENERIC_FAMILIES = frozenset({"serif", "sans-serif", "monospace", "cursive", "fantasy"})
 MATH_FONTS = ("dejavusans", "dejavuserif", "cm", "stix", "stixsans")

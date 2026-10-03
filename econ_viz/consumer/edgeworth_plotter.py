@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import numpy as np
 
-from ..canvas.stroke import tag, tag_attr
-from ..enums import LabelPosition
-from ..themes.label import Label
+from econ_viz.canvas.stroke import tag, tag_attr
+from econ_viz.enums import LabelPosition
+from econ_viz.themes.label import Label
 
 
 def plot_endowment(

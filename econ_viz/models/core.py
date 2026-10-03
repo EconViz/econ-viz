@@ -30,8 +30,8 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
-from ..enums import UtilityType
-from ..exceptions import InvalidParameterError
+from econ_viz.enums import UtilityType
+from econ_viz.exceptions import InvalidParameterError
 
 
 def _require_positive(model: str, **parameters: float) -> None:

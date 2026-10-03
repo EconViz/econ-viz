@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import argparse
 
-from .errors import CliConfigError
-from .resolve import build_model, resolve_theme
+from econ_viz.cli.errors import CliConfigError
+from econ_viz.cli.resolve import build_model, resolve_theme
 
 
 def cmd_plot(args: argparse.Namespace) -> None:

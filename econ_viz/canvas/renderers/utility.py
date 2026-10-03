@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from ...canvas.stroke import tag, tag_attr
-from ...components.indifference import IndifferenceCurves
-from ...enums import LabelPosition
-from ...themes.label import Label
+from econ_viz.canvas.stroke import tag, tag_attr
+from econ_viz.components.indifference import IndifferenceCurves
+from econ_viz.enums import LabelPosition
+from econ_viz.themes.label import Label
 
 
 def render_utility(

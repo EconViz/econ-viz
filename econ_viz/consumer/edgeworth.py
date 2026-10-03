@@ -8,21 +8,21 @@ from typing import cast
 import matplotlib.pyplot as plt
 import numpy as np
 
-from ..canvas.legend import place_legend
-from ..canvas.stroke import styled
-from ..config import Config
-from ..constants.canvas import DEFAULT_DPI, MAX_DPI, MIN_DPI
-from ..contours import around_anchor_levels, percentile_levels
-from ..enums import LineStyle
-from ..exceptions import InvalidParameterError
-from ..io import save_figure
-from ..themes.axis import Axis
-from ..themes.label import Label, split_label
-from ..themes.legend import Legend
-from ..themes.marker import Marker
-from ..themes.stroke import Stroke
-from ..themes.theme import Theme
-from .edgeworth_compute import (
+from econ_viz.canvas.legend import place_legend
+from econ_viz.canvas.stroke import styled
+from econ_viz.config import Config
+from econ_viz.constants.canvas import DEFAULT_DPI, MAX_DPI, MIN_DPI
+from econ_viz.contours import around_anchor_levels, percentile_levels
+from econ_viz.enums import LineStyle
+from econ_viz.exceptions import InvalidParameterError
+from econ_viz.io import save_figure
+from econ_viz.themes.axis import Axis
+from econ_viz.themes.label import Label, split_label
+from econ_viz.themes.legend import Legend
+from econ_viz.themes.marker import Marker
+from econ_viz.themes.stroke import Stroke
+from econ_viz.themes.theme import Theme
+from econ_viz.consumer.edgeworth_compute import (
     contract_curve_mrs,
     contract_curve_pareto,
     focus_levels,
@@ -31,7 +31,7 @@ from .edgeworth_compute import (
     unique_points,
     walrasian_equilibrium_point,
 )
-from .edgeworth_plotter import (
+from econ_viz.consumer.edgeworth_plotter import (
     plot_contract_curve,
     plot_core,
     plot_endowment,
@@ -39,7 +39,7 @@ from .edgeworth_plotter import (
     plot_indifference_pair,
     plot_price_line,
 )
-from .edgeworth_state import EdgeworthState
+from econ_viz.consumer.edgeworth_state import EdgeworthState
 
 _EPS = 1e-3
 

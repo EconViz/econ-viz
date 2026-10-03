@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from ...components.equilibrium import EquilibriumPoint
+from econ_viz.components.equilibrium import EquilibriumPoint
 
 
 def render_equilibrium(

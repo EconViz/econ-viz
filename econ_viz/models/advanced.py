@@ -17,9 +17,9 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from ..enums import UtilityType
-from ..exceptions import InvalidParameterError
-from ..utils.logging import get_logger
+from econ_viz.enums import UtilityType
+from econ_viz.exceptions import InvalidParameterError
+from econ_viz.utils.logging import get_logger
 
 logger = get_logger(__name__)
 

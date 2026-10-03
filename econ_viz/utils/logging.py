@@ -15,7 +15,7 @@ Developers can lower the threshold to ``DEBUG`` for full numerical traces::
 
 import logging
 
-from ..constants.logging import LIBRARY_ROOT
+from econ_viz.constants.logging import LIBRARY_ROOT
 
 # Attach a NullHandler so that library consumers who have not configured
 # logging do not see "No handler found" warnings.

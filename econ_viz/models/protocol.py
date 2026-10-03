@@ -10,7 +10,7 @@ from typing import Protocol, runtime_checkable
 
 import numpy as np
 
-from ..enums import UtilityType
+from econ_viz.enums import UtilityType
 
 
 @runtime_checkable

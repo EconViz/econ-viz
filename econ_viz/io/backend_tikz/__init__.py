@@ -23,8 +23,8 @@ from pathlib import Path
 
 from matplotlib.figure import Figure as MplFigure
 
-from ._document import assemble
-from .renderer import TikzRenderer
+from econ_viz.io.backend_tikz._document import assemble
+from econ_viz.io.backend_tikz.renderer import TikzRenderer
 
 
 def save_tikz(

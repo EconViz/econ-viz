@@ -8,7 +8,7 @@ from typing import Any, Literal
 
 import numpy as np
 
-from ..optimizer import Equilibrium, solve
+from econ_viz.optimizer import Equilibrium, solve
 
 SweepParameter = Literal["px", "py", "income"]
 PriceParameter = Literal["px", "py"]

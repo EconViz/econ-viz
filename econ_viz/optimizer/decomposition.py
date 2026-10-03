@@ -8,9 +8,9 @@ from enum import Enum
 import numpy as np
 from scipy.optimize import minimize
 
-from ..exceptions import InvalidParameterError, OptimizationError
-from .slutsky import SlutskyMatrix, slutsky_matrix
-from .solver import Equilibrium, solve
+from econ_viz.exceptions import InvalidParameterError, OptimizationError
+from econ_viz.optimizer.slutsky import SlutskyMatrix, slutsky_matrix
+from econ_viz.optimizer.solver import Equilibrium, solve
 
 _EPS = 1e-12
 _BOUNDARY_TOL = 1e-7

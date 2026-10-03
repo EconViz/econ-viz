@@ -7,19 +7,19 @@ from typing import Any, TypedDict, cast
 import matplotlib.lines as mlines
 import numpy as np
 
-from ..canvas.figure import Figure
-from ..canvas.legend import place_legend
-from ..canvas.stroke import apply_strokes, styled, tag
-from ..enums import Layout, UtilityType
-from ..models import PerfectSubstitutes
-from ..optimizer import solve
-from ..optimizer.solver import Equilibrium
-from ..themes.axis import Axis
-from ..themes.label import Label, split_label
-from ..themes.legend import Legend
-from ..themes.marker import Marker
-from ..themes.stroke import Stroke
-from .paths import LinearBudget, PricePath, QuantityAxis
+from econ_viz.canvas.figure import Figure
+from econ_viz.canvas.legend import place_legend
+from econ_viz.canvas.stroke import apply_strokes, styled, tag
+from econ_viz.enums import Layout, UtilityType
+from econ_viz.models import PerfectSubstitutes
+from econ_viz.optimizer import solve
+from econ_viz.optimizer.solver import Equilibrium
+from econ_viz.themes.axis import Axis
+from econ_viz.themes.label import Label, split_label
+from econ_viz.themes.legend import Legend
+from econ_viz.themes.marker import Marker
+from econ_viz.themes.stroke import Stroke
+from econ_viz.consumer.paths import LinearBudget, PricePath, QuantityAxis
 
 _GOODS_SPACE_PADDING = 1.18
 _PRICE_SYMBOL = {

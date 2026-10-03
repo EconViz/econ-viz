@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from matplotlib.figure import Figure as MplFigure
 
-from ..constants.io import SAVEFIG_BBOX_INCHES
-from ..enums import ExportFormat
-from ..exceptions import ExportError
+from econ_viz.constants.io import SAVEFIG_BBOX_INCHES
+from econ_viz.enums import ExportFormat
+from econ_viz.exceptions import ExportError
 
 
 def save_figure(
@@ -32,7 +32,7 @@ def save_figure(
 
     try:
         if fmt is ExportFormat.TEX:
-            from .backend_tikz import save_tikz
+            from econ_viz.io.backend_tikz import save_tikz
 
             save_tikz(
                 fig,

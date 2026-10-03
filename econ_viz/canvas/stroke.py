@@ -12,12 +12,12 @@ from matplotlib.lines import Line2D
 from matplotlib.patches import FancyArrowPatch
 from matplotlib.text import Annotation, Text
 
-from ..constants.canvas import ARROW_HEAD_ONLY_FRAC, ARROW_WEDGE_FRAC
-from ..enums import ArrowStyle, LabelPosition, LineStyle
-from ..themes.label import Label
-from ..themes.marker import Marker
-from ..themes.stroke import Stroke
-from .labels import placement
+from econ_viz.constants.canvas import ARROW_HEAD_ONLY_FRAC, ARROW_WEDGE_FRAC
+from econ_viz.enums import ArrowStyle, LabelPosition, LineStyle
+from econ_viz.themes.label import Label
+from econ_viz.themes.marker import Marker
+from econ_viz.themes.stroke import Stroke
+from econ_viz.canvas.labels import placement
 
 
 def tag(artist, role: str):

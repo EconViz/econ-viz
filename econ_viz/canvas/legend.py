@@ -13,8 +13,8 @@ from matplotlib.patches import Patch
 from matplotlib.text import Text
 from matplotlib.transforms import Bbox
 
-from ..enums import LegendPosition
-from ..themes.legend import Legend
+from econ_viz.enums import LegendPosition
+from econ_viz.themes.legend import Legend
 
 # Order tried by automatic placement; ties keep the earlier corner.
 _CORNERS = (

@@ -6,8 +6,8 @@ axis styling, layer composition, and export, as well as the :class:`Layer`
 helper that handles numerical evaluation of contour data.
 """
 
-from .base import Canvas
-from .figure import Figure
-from .layers import Layer
+from econ_viz.canvas.base import Canvas
+from econ_viz.canvas.figure import Figure
+from econ_viz.canvas.layers import Layer
 
 __all__ = ["Canvas", "Figure", "Layer"]

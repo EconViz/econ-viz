@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from ..enums import LabelPosition
-from .label import Label, to_position
-from .stroke import Stroke
+from econ_viz.enums import LabelPosition
+from econ_viz.themes.label import Label, to_position
+from econ_viz.themes.stroke import Stroke
 
 
 @dataclass(frozen=True)

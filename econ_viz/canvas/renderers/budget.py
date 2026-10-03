@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from ...components.budget import BudgetConstraint
+from econ_viz.components.budget import BudgetConstraint
 
 
 def render_budget(
