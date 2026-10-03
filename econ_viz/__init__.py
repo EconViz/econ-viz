@@ -4,6 +4,7 @@ The project was renamed to ``utility-viz`` in 2.0.0. This package keeps the
 documented 1.x public API importable throughout the 2.x series and **will be
 removed in 3.0.0**.
 
+* ``import econ_viz`` emits one :class:`utility_viz.UtilityVizDeprecationWarning` per process.
 * Names unchanged in 2.x are re-exported as the very same objects.
 * ``Canvas``, ``Figure`` and ``Animator`` are thin subclasses that emit one
   :class:`utility_viz.UtilityVizDeprecationWarning` (a ``FutureWarning``) per
@@ -21,8 +22,13 @@ from typing import Any
 
 import utility_viz as _utility_viz
 from econ_viz import _legacy
+from utility_viz.core.errors.deprecation import warn_deprecated
 
 _legacy.install_finder()
+
+# Module bodies run once per process, so this warns once; stacklevel=2 blames the importing line
+# (importlib's internal frames are skipped by the warnings machinery).
+warn_deprecated("the `econ_viz` package", "`utility_viz` (`import utility_viz`)", stacklevel=2)
 
 __all__ = list(_utility_viz.__all__)
 
