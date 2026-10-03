@@ -115,63 +115,11 @@ def comparative_statics(
     base = {"px": px, "py": py, "income": income}
     eq_base = solve(func, **base)
 
-    def _try_solve(parameters: dict[str, float]):
-        if any(value <= 0 for value in parameters.values()):
-            return None
-        try:
-            return solve(func, **parameters)
-        except InvalidParameterError:
-            return None
+    dx_dpx, dy_dpx = _derivative(func, base, eq_base, "px", h)
+    dx_dpy, dy_dpy = _derivative(func, base, eq_base, "py", h)
+    dx_dI, dy_dI = _derivative(func, base, eq_base, "income", h)
 
-    def _deriv(param: str) -> tuple[float, float]:
-        """Return a boundary-safe finite difference for both demands."""
-        val = base[param]
-        step = max(h * val, h)
-
-        lo = {**base, param: val - step}
-        hi = {**base, param: val + step}
-
-        eq_lo = _try_solve(lo)
-        eq_hi = _try_solve(hi)
-
-        if eq_lo is not None and eq_hi is not None:
-            denominator = 2 * step
-            dx = (eq_hi.x - eq_lo.x) / denominator
-            dy = (eq_hi.y - eq_lo.y) / denominator
-            return dx, dy
-
-        if eq_hi is not None:
-            dx = (eq_hi.x - eq_base.x) / step
-            dy = (eq_hi.y - eq_base.y) / step
-            return dx, dy
-
-        if eq_lo is not None:
-            dx = (eq_base.x - eq_lo.x) / step
-            dy = (eq_base.y - eq_lo.y) / step
-            return dx, dy
-
-        raise InvalidParameterError(
-            f"Cannot estimate derivative with respect to {param}: both perturbations are outside the feasible domain."
-        )
-
-    dx_dpx, dy_dpx = _deriv("px")
-    dx_dpy, dy_dpy = _deriv("py")
-    dx_dI, dy_dI = _deriv("income")
-
-    logger.debug(
-        "ComparativeStatics at (px=%.4g, py=%.4g, I=%.4g): "
-        "dx/dpx=%.4g  dx/dpy=%.4g  dx/dI=%.4g  "
-        "dy/dpx=%.4g  dy/dpy=%.4g  dy/dI=%.4g",
-        px,
-        py,
-        income,
-        dx_dpx,
-        dx_dpy,
-        dx_dI,
-        dy_dpx,
-        dy_dpy,
-        dy_dI,
-    )
+    _log_result(px, py, income, (dx_dpx, dx_dpy, dx_dI, dy_dpx, dy_dpy, dy_dI))
 
     cs = ComparativeStatics(
         dx_dpx=dx_dpx,
@@ -184,6 +132,51 @@ def comparative_statics(
 
     _warn_sign_violations(cs)
     return cs
+
+
+def _try_solve(func, parameters: dict[str, float]):
+    """Solve at *parameters*, or return None when they are infeasible."""
+    if any(value <= 0 for value in parameters.values()):
+        return None
+    try:
+        return solve(func, **parameters)
+    except InvalidParameterError:
+        return None
+
+
+def _derivative(func, base: dict[str, float], eq_base, param: str, h: float) -> tuple[float, float]:
+    """Return a boundary-safe finite difference of both demands in *param*."""
+    val = base[param]
+    step = max(h * val, h)
+
+    eq_lo = _try_solve(func, {**base, param: val - step})
+    eq_hi = _try_solve(func, {**base, param: val + step})
+
+    if eq_lo is not None and eq_hi is not None:
+        denominator = 2 * step
+        return (eq_hi.x - eq_lo.x) / denominator, (eq_hi.y - eq_lo.y) / denominator
+
+    if eq_hi is not None:
+        return (eq_hi.x - eq_base.x) / step, (eq_hi.y - eq_base.y) / step
+
+    if eq_lo is not None:
+        return (eq_base.x - eq_lo.x) / step, (eq_base.y - eq_lo.y) / step
+
+    raise InvalidParameterError(
+        f"Cannot estimate derivative with respect to {param}: both perturbations are outside the feasible domain."
+    )
+
+
+def _log_result(px: float, py: float, income: float, derivs: tuple[float, ...]) -> None:
+    logger.debug(
+        "ComparativeStatics at (px=%.4g, py=%.4g, I=%.4g): "
+        "dx/dpx=%.4g  dx/dpy=%.4g  dx/dI=%.4g  "
+        "dy/dpx=%.4g  dy/dpy=%.4g  dy/dI=%.4g",
+        px,
+        py,
+        income,
+        *derivs,
+    )
 
 
 def _warn_sign_violations(cs: ComparativeStatics) -> None:
