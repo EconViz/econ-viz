@@ -17,7 +17,7 @@ AGREED_ROOT_EXPORTS = [
     # enums
     "UtilityType", "ExportFormat", "Layout", "ArrowStyle", "LabelPosition", "LineStyle",
     # public exceptions
-    "EconVizError", "ExportError", "InvalidParameterError", "OptimizationError", "ParseError",
+    "UtilityVizError", "EconVizError", "ExportError", "InvalidParameterError", "OptimizationError", "ParseError",
     # diagrams
     "IndifferenceCurves", "BudgetConstraint", "EquilibriumPoint", "DemandDiagram", "EdgeworthBox",
     # economics (also available from utility_viz.models)
@@ -80,3 +80,11 @@ def test_models_facade_has_no_drawing_dependency():
 )  # fmt: skip
 def test_subpackages_import(module):
     importlib.import_module(module)
+
+
+def test_econviz_error_is_alias_of_utilityviz_error():
+    from utility_viz.core.errors.exceptions import EconVizError, UtilityVizError
+
+    assert EconVizError is UtilityVizError
+    assert utility_viz.EconVizError is utility_viz.UtilityVizError
+    assert issubclass(utility_viz.ParseError, utility_viz.EconVizError)

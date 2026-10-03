@@ -7,12 +7,14 @@ from utility_viz.core.errors.exceptions import (
     InvalidParameterError,
     OptimizationError,
     ParseError,
+    UtilityVizError,
 )
 
 __all__ = [
     "UtilityVizDeprecationWarning",
     "deprecation_message",
     "warn_deprecated",
+    "UtilityVizError",
     "EconVizError",
     "ExportError",
     "InvalidParameterError",
