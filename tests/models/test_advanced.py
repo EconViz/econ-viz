@@ -1,11 +1,11 @@
-"""Tests for econ_viz.models.utility.advanced — CustomUtility and MultiGoodCD."""
+"""Tests for utility_viz.models.utility.advanced — CustomUtility and MultiGoodCD."""
 
 import numpy as np
 import pytest
 
-from econ_viz.core.errors.exceptions import InvalidParameterError
-from econ_viz.enums import UtilityType
-from econ_viz.models.utility import CustomUtility, MultiGoodCD
+from utility_viz.core.errors.exceptions import InvalidParameterError
+from utility_viz.enums import UtilityType
+from utility_viz.models.utility import CustomUtility, MultiGoodCD
 
 
 class TestCustomUtility:

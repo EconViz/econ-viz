@@ -8,9 +8,9 @@ import matplotlib.pyplot as plt
 import pytest
 from matplotlib.colors import to_hex
 
-from econ_viz import Canvas, Label, Stroke
-from econ_viz.models.optimization import decompose_price_effect
-from econ_viz.models.utility import CobbDouglas
+from utility_viz import Canvas, Label, Stroke
+from utility_viz.models.optimization import decompose_price_effect
+from utility_viz.models.utility import CobbDouglas
 
 MODEL = CobbDouglas(alpha=0.5, beta=0.5)
 
@@ -108,7 +108,7 @@ def test_range_arrows_point_from_start_to_end():
 def test_zero_effect_draws_no_range_arrow():
     import numpy as np
 
-    from econ_viz.models.utility import QuasiLinear
+    from utility_viz.models.utility import QuasiLinear
 
     # Quasi-linear in y: demand for x does not depend on income, so the income effect is zero.
     dec = decompose_price_effect(
@@ -122,7 +122,7 @@ def test_zero_effect_draws_no_range_arrow():
 
 
 def test_negative_utility_levels_are_solid():
-    from econ_viz.models.utility import Satiation
+    from utility_viz.models.utility import Satiation
 
     cvs = Canvas(x_max=12, y_max=10).add_utility(Satiation(bliss_x=6, bliss_y=4), levels=[-8, -2])
     for cs in _role(cvs.ax, "curve"):

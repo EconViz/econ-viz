@@ -1,10 +1,10 @@
-"""Tests for econ_viz.models.utility.parser — LaTeX string → model instance."""
+"""Tests for utility_viz.models.utility.parser — LaTeX string → model instance."""
 
 import pytest
 
-from econ_viz.core.errors.exceptions import ParseError
-from econ_viz.models.utility import CES, CobbDouglas, Leontief, PerfectSubstitutes
-from econ_viz.models.utility.parser import parse_latex
+from utility_viz.core.errors.exceptions import ParseError
+from utility_viz.models.utility import CES, CobbDouglas, Leontief, PerfectSubstitutes
+from utility_viz.models.utility.parser import parse_latex
 
 
 class TestParseCobbDouglas:

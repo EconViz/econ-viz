@@ -8,10 +8,10 @@ import matplotlib.pyplot as plt
 import pytest
 from matplotlib.colors import to_hex
 
-from econ_viz import Canvas, Effect, LabelPosition
-from econ_viz.core.errors.exceptions import InvalidParameterError
-from econ_viz.models.optimization import decompose_price_effect
-from econ_viz.models.utility import CobbDouglas
+from utility_viz import Canvas, Effect, LabelPosition
+from utility_viz.core.errors.exceptions import InvalidParameterError
+from utility_viz.models.optimization import decompose_price_effect
+from utility_viz.models.utility import CobbDouglas
 
 DEC = decompose_price_effect(CobbDouglas(alpha=0.5, beta=0.5), px=(2.0, 4.0), py=3.0, income=30.0)
 
@@ -131,7 +131,7 @@ class TestLabels:
 
 
 def test_effect_colour_is_overridden_by_stroke_colour():
-    from econ_viz import Stroke
+    from utility_viz import Stroke
 
     cvs = _canvas(substitution=Effect(color="#123456"), substitution_stroke=Stroke(color="#abcdef"))
     assert to_hex(_role(cvs.ax, "substitution")[0].arrow_patch.get_edgecolor()) == "#abcdef"

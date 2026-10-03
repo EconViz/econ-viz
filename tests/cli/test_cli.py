@@ -6,9 +6,9 @@ import argparse
 
 import pytest
 
-from econ_viz.cli.main import build_parser, main
-from econ_viz.cli.resolve import build_model
-from econ_viz.models.utility import QuasiLinear, StoneGeary, Translog
+from utility_viz.cli.main import build_parser, main
+from utility_viz.cli.resolve import build_model
+from utility_viz.models.utility import QuasiLinear, StoneGeary, Translog
 
 
 class TestSolveTexCLI:
@@ -19,7 +19,7 @@ class TestSolveTexCLI:
     def test_solve_tex_prints_formula(self, monkeypatch, capsys):
         monkeypatch.setattr(
             "sys.argv",
-            ["econ-viz", "solve-tex", "--model", "cobb-douglas", "--alpha", "0.4", "--beta", "0.6"],
+            ["utility-viz", "solve-tex", "--model", "cobb-douglas", "--alpha", "0.4", "--beta", "0.6"],
         )
         main()
         out = capsys.readouterr().out.strip()
@@ -31,7 +31,7 @@ class TestSolveTexCLI:
         monkeypatch.setattr(
             "sys.argv",
             [
-                "econ-viz",
+                "utility-viz",
                 "solve-tex",
                 "--model",
                 "cobb-douglas",
@@ -52,7 +52,7 @@ class TestSolveTexCLI:
         monkeypatch.setattr(
             "sys.argv",
             [
-                "econ-viz",
+                "utility-viz",
                 "solve-tex",
                 "--model",
                 "cobb-douglas",
@@ -67,7 +67,7 @@ class TestSolveTexCLI:
     def test_solve_tex_unsupported_model_exits(self, monkeypatch, capsys):
         monkeypatch.setattr(
             "sys.argv",
-            ["econ-viz", "solve-tex", "--model", "ces"],
+            ["utility-viz", "solve-tex", "--model", "ces"],
         )
         with pytest.raises(SystemExit) as exc:
             main()
@@ -119,7 +119,7 @@ class TestBuildModelCLI:
         assert model.beta_xy == pytest.approx(0.05)
 
     def test_models_command_lists_new_models(self, monkeypatch, capsys):
-        monkeypatch.setattr("sys.argv", ["econ-viz", "models"])
+        monkeypatch.setattr("sys.argv", ["utility-viz", "models"])
         main()
         out = capsys.readouterr().out
         assert "QuasiLinear" in out
@@ -131,8 +131,8 @@ class TestVersionFlag:
     def test_version_prints_installed_version(self, monkeypatch, capsys):
         from importlib.metadata import version
 
-        monkeypatch.setattr("sys.argv", ["econ-viz", "--version"])
+        monkeypatch.setattr("sys.argv", ["utility-viz", "--version"])
         with pytest.raises(SystemExit) as exc:
             main()
         assert exc.value.code == 0
-        assert capsys.readouterr().out.strip() == f"econ-viz {version('econ-viz')}"
+        assert capsys.readouterr().out.strip() == f"utility-viz {version('utility-viz')}"

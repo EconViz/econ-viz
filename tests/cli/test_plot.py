@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import pytest
 
-from econ_viz import Canvas
-from econ_viz.cli.main import main
+from utility_viz import Canvas
+from utility_viz.cli.main import main
 
 
 def _run(monkeypatch, *args: str) -> None:
-    monkeypatch.setattr("sys.argv", ["econ-viz", *args])
+    monkeypatch.setattr("sys.argv", ["utility-viz", *args])
     main()
 
 
@@ -82,7 +82,7 @@ class TestPlotCommand:
         ],
     )
     def test_reports_configuration_errors(self, monkeypatch, capsys, args, message):
-        monkeypatch.setattr("sys.argv", ["econ-viz", *args])
+        monkeypatch.setattr("sys.argv", ["utility-viz", *args])
 
         with pytest.raises(SystemExit) as exc_info:
             main()
@@ -101,7 +101,7 @@ class TestHelpCommand:
         assert "--n-curves" in capsys.readouterr().out
 
     def test_unknown_topic_reports_available_commands(self, monkeypatch, capsys):
-        monkeypatch.setattr("sys.argv", ["econ-viz", "help", "missing"])
+        monkeypatch.setattr("sys.argv", ["utility-viz", "help", "missing"])
 
         with pytest.raises(SystemExit) as exc_info:
             main()

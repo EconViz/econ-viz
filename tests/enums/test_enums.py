@@ -1,9 +1,9 @@
-"""Tests for econ_viz.enums — ExportFormat and UtilityType."""
+"""Tests for utility_viz.enums — ExportFormat and UtilityType."""
 
 import pytest
 
-from econ_viz.core.errors.exceptions import ExportError
-from econ_viz.enums import ArrowStyle, ExportFormat, LabelPosition, Layout, LineStyle, UtilityType
+from utility_viz.core.errors.exceptions import ExportError
+from utility_viz.enums import ArrowStyle, ExportFormat, LabelPosition, Layout, LineStyle, UtilityType
 
 
 class TestExportFormat:

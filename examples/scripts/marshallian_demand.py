@@ -8,8 +8,8 @@ from pathlib import Path
 
 import numpy as np
 
-from econ_viz import DemandDiagram, LinearBudget, PricePath
-from econ_viz.models.utility import CES, CobbDouglas, Leontief, PerfectSubstitutes, QuasiLinear, StoneGeary
+from utility_viz import DemandDiagram, LinearBudget, PricePath
+from utility_viz.models.utility import CES, CobbDouglas, Leontief, PerfectSubstitutes, QuasiLinear, StoneGeary
 
 OUTPUT_DIR = "examples/output/paths"
 Path(OUTPUT_DIR).mkdir(parents=True, exist_ok=True)

@@ -25,7 +25,7 @@ from pathlib import Path
 
 import pytest
 
-PACKAGE = "econ_viz"
+PACKAGE = "utility_viz"
 ROOT = Path(__file__).resolve().parent.parent / PACKAGE
 
 LAYERS: dict[str, int] = {

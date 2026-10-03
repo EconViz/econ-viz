@@ -6,10 +6,10 @@ from matplotlib.colors import to_hex
 from matplotlib.patches import ArrowStyle as MplArrowStyle
 from matplotlib.patches import FancyArrowPatch
 
-from econ_viz import ArrowStyle, Canvas, Figure, Layout, LineStyle, Stroke, solve
-from econ_viz.core.errors.exceptions import InvalidParameterError
-from econ_viz.models.optimization import decompose_price_effect
-from econ_viz.models.utility import CobbDouglas, Leontief
+from utility_viz import ArrowStyle, Canvas, Figure, Layout, LineStyle, Stroke, solve
+from utility_viz.core.errors.exceptions import InvalidParameterError
+from utility_viz.models.optimization import decompose_price_effect
+from utility_viz.models.utility import CobbDouglas, Leontief
 
 MODEL = CobbDouglas(alpha=0.5, beta=0.5)
 EQ = solve(MODEL, px=2.0, py=3.0, income=30.0)
@@ -201,7 +201,7 @@ class TestThemeDefaults:
     def test_custom_theme_changes_axis_default(self):
         from dataclasses import replace
 
-        from econ_viz import themes
+        from utility_viz import themes
 
         theme = replace(themes.default, axis_stroke=Stroke(width=1.4, style="dashed", arrow="->"))
         cvs = Canvas(theme=theme)
@@ -212,7 +212,7 @@ class TestThemeDefaults:
 
 class TestOtherDiagrams:
     def test_demand_diagram_panels(self):
-        from econ_viz import DemandDiagram, LinearBudget, PricePath
+        from utility_viz import DemandDiagram, LinearBudget, PricePath
 
         path = PricePath(
             MODEL, budget=LinearBudget(px=2.0, py=2.0, income=40.0), price="px", price_range=(0.8, 6.0), n=20
@@ -232,7 +232,7 @@ class TestOtherDiagrams:
         assert all(line.get_linewidth() == pytest.approx(2.5) for line in legend_lines)
 
     def test_edgeworth_box(self):
-        from econ_viz.core.diagrams.consumer.edgeworth import EdgeworthBox
+        from utility_viz.core.diagrams.consumer.edgeworth import EdgeworthBox
 
         box = EdgeworthBox(MODEL, MODEL, total_x=10.0, total_y=10.0, box_stroke=Stroke(width=2.0, style="dashed"))
         assert box.ax.spines["top"].get_linewidth() == pytest.approx(2.0)
@@ -245,7 +245,7 @@ class TestOtherDiagrams:
             _assert_stroked(_role(box.ax, role))
 
     def test_edgeworth_frame_follows_theme(self):
-        from econ_viz.core.diagrams.consumer.edgeworth import EdgeworthBox
+        from utility_viz.core.diagrams.consumer.edgeworth import EdgeworthBox
 
         box = EdgeworthBox(MODEL, MODEL, total_x=10.0, total_y=10.0)
         assert box.ax.spines["top"].get_linewidth() == pytest.approx(box.theme.box_stroke.width)

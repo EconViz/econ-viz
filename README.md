@@ -3,8 +3,8 @@
 </p>
 
 <p align="center">
-  <a href="https://pypi.org/project/econ-viz/"><img alt="PyPI" src="https://img.shields.io/pypi/v/econ-viz?style=flat-square&color=181818&labelColor=f3f3f3&cacheSeconds=300"></a>
-  <a href="https://pypi.org/project/econ-viz/"><img alt="Python" src="https://img.shields.io/pypi/pyversions/econ-viz?style=flat-square&color=181818&labelColor=f3f3f3"></a>
+  <a href="https://pypi.org/project/utility-viz/"><img alt="PyPI" src="https://img.shields.io/pypi/v/utility-viz?style=flat-square&color=181818&labelColor=f3f3f3&cacheSeconds=300"></a>
+  <a href="https://pypi.org/project/utility-viz/"><img alt="Python" src="https://img.shields.io/pypi/pyversions/utility-viz?style=flat-square&color=181818&labelColor=f3f3f3"></a>
   <a href="https://opensource.org/licenses/MIT"><img alt="License" src="https://img.shields.io/badge/License-MIT-181818?style=flat-square&color=181818&labelColor=f3f3f3"></a>
   <img alt="Tests" src="https://img.shields.io/badge/tests-557%20passed-181818?style=flat-square&color=181818&labelColor=f3f3f3">
   <img alt="Coverage" src="https://img.shields.io/badge/coverage-92.63%25-181818?style=flat-square&color=181818&labelColor=f3f3f3">
@@ -15,7 +15,7 @@ A Python toolkit for producing publication-quality microeconomics diagrams. Defi
 ## Installation
 
 ```bash
-pip install econ-viz
+pip install utility-viz
 ```
 
 Requires Python 3.10 or later.
@@ -23,8 +23,8 @@ Requires Python 3.10 or later.
 ## Quick Start
 
 ```python
-from econ_viz import Canvas, levels, solve
-from econ_viz.models.utility import CobbDouglas
+from utility_viz import Canvas, levels, solve
+from utility_viz.models.utility import CobbDouglas
 
 model = CobbDouglas(alpha=0.5, beta=0.5)
 eq = solve(model, px=2.0, py=3.0, income=30.0)
@@ -53,7 +53,7 @@ The project ships with an interactive playground notebook:
 
 [`notebook/econ-viz Playground.ipynb`](notebook/econ-viz%20Playground.ipynb)
 
-Download it and open it in Jupyter, VS Code, or Colab. The first code cell upgrades `econ-viz` from PyPI for fresh runtimes.
+Download it and open it in Jupyter, VS Code, or Colab. The first code cell upgrades `utility-viz` from PyPI for fresh runtimes.
 
 ## Highlights
 
@@ -71,7 +71,7 @@ Axis labels can be placed around their arrowheads, and each axis can use its
 own arrowhead style and line style (solid, dashed, dotted, or dashdot):
 
 ```python
-from econ_viz import ArrowStyle, Canvas, LabelPosition, LineStyle
+from utility_viz import ArrowStyle, Canvas, LabelPosition, LineStyle
 
 canvas = Canvas(
     x_label_pos=LabelPosition.TOP,
@@ -87,7 +87,7 @@ arrowhead at its end. Fields you leave out keep the theme default (see the
 `*_stroke` defaults on `Theme`, such as `theme.budget_stroke`):
 
 ```python
-from econ_viz import ArrowStyle, Stroke
+from utility_viz import ArrowStyle, Stroke
 
 canvas = Canvas(axis_stroke=Stroke(width=1.4, arrow=ArrowStyle.SIMPLE))
 canvas.add_budget(2, 3, 30, stroke=Stroke(width=3, style="dashed"))
@@ -105,7 +105,7 @@ Point markers work the same way with `Marker` (colour, size, and shape);
 fields you leave out keep the theme default, such as `theme.eq_marker`:
 
 ```python
-from econ_viz import Marker
+from utility_viz import Marker
 
 canvas.add_equilibrium(eq, marker=Marker(shape="s", size=8))
 canvas.add_point(12, 2, label="A", marker=Marker(color="black", shape="D"))
@@ -117,7 +117,7 @@ visibility) wherever a plain string worked. A label follows its point's
 `Marker` colour unless it sets its own:
 
 ```python
-from econ_viz import Label
+from utility_viz import Label
 
 canvas.add_equilibrium(eq, label=Label(position="bottom-left", offset=8))
 canvas.add_point(12, 2, label=Label(text="A", position="left", fontsize=14))
@@ -141,7 +141,7 @@ Shade the budget set with `fill=True`, or pass a `Fill` for a colour and
 opacity of its own (default `theme.budget_fill`, coloured like the line):
 
 ```python
-from econ_viz import Fill
+from utility_viz import Fill
 
 canvas.add_budget(2, 3, 30, color="black", fill=Fill(color="lightgrey", opacity=0.4))
 ```
@@ -160,7 +160,7 @@ Each axis's label, label position, and stroke fit in one `Axis`, accepted by
 when both are set:
 
 ```python
-from econ_viz import Axis, Stroke
+from utility_viz import Axis, Stroke
 
 canvas = Canvas(
     x_axis=Axis(label="x_1", label_position="bottom", stroke=Stroke(width=1.2)),
@@ -174,7 +174,7 @@ an inside corner (`"upper left"`, …) or a side outside (`"top"`, `"bottom"`,
 `"left"`, `"right"`), or to change its font size, frame, and columns:
 
 ```python
-from econ_viz import Legend
+from utility_viz import Legend
 
 canvas.add_decomposition(dec, legend=Legend(position="bottom"))
 canvas.show_legend(legend=Legend(position="upper left", fontsize=10))
@@ -185,7 +185,7 @@ Matplotlib's global settings. Pass a family name, a generic family such as
 `"serif"`, or a fallback list:
 
 ```python
-from econ_viz import Figure, Layout
+from utility_viz import Figure, Layout
 
 canvas = Canvas(font=["Times New Roman", "serif"], math_font="stix")
 figure = Figure(Layout.SIDE_BY_SIDE, font="serif", math_font="stix")
@@ -201,8 +201,8 @@ generic families are mapped (`serif` → `\rmfamily`, `monospace` → `\ttfamily
 Closed-form Marshallian demand in TeX:
 
 ```python
-from econ_viz import solution_tex
-from econ_viz.models.utility import CobbDouglas
+from utility_viz import solution_tex
+from utility_viz.models.utility import CobbDouglas
 
 tex = solution_tex(CobbDouglas(alpha=0.4, beta=0.6))
 ```
@@ -210,8 +210,8 @@ tex = solution_tex(CobbDouglas(alpha=0.4, beta=0.6))
 Slutsky matrix:
 
 ```python
-from econ_viz import slutsky_matrix
-from econ_viz.models.utility import CobbDouglas
+from utility_viz import slutsky_matrix
+from utility_viz.models.utility import CobbDouglas
 
 S = slutsky_matrix(CobbDouglas(alpha=0.4, beta=0.6), px=2.0, py=3.0, income=60.0)
 # S.s_xx, S.s_xy, S.s_yx, S.s_yy
@@ -219,7 +219,7 @@ S = slutsky_matrix(CobbDouglas(alpha=0.4, beta=0.6), px=2.0, py=3.0, income=60.0
 
 ## Settings file
 
-Keep your style in an `econ-viz.toml` and load it once. Section names match
+Keep your style in an `utility-viz.toml` and load it once. Section names match
 Theme properties (`[stroke.budget]` is `theme.budget_stroke`), fields match the
 style objects, and anything left out keeps the default:
 
@@ -238,28 +238,28 @@ position = "bottom"
 ```
 
 ```python
-from econ_viz import Config
+from utility_viz import Config
 
-Config.load("econ-viz.toml").use()  # diagrams created from now on use it
+Config.load("utility-viz.toml").use()  # diagrams created from now on use it
 ```
 
-`econ-viz init` writes a commented template, and `econ-viz plot --config
-econ-viz.toml ...` uses the same file. Arguments passed to a method still win
+`utility-viz init` writes a commented template, and `utility-viz plot --config
+utility-viz.toml ...` uses the same file. Arguments passed to a method still win
 over the file.
 
 ## CLI
 
 ```bash
-econ-viz --version
-econ-viz help
-econ-viz models
-econ-viz solve-tex --model cobb-douglas --symbolic-params
+utility-viz --version
+utility-viz help
+utility-viz models
+utility-viz solve-tex --model cobb-douglas --symbolic-params
 ```
 
 Plotting example:
 
 ```bash
-econ-viz plot --model cobb-douglas --alpha 0.5 --beta 0.5 \
+utility-viz plot --model cobb-douglas --alpha 0.5 --beta 0.5 \
               --px 2 --py 3 --income 30 \
               --fill --show-ray \
               --output cobb_douglas.png

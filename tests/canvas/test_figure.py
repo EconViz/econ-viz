@@ -3,7 +3,7 @@
 import numpy as np
 import pytest
 
-from econ_viz import (
+from utility_viz import (
     ArrowStyle,
     Canvas,
     DemandDiagram,
@@ -14,7 +14,7 @@ from econ_viz import (
     LinearBudget,
     PricePath,
 )
-from econ_viz.models.utility import CES, CobbDouglas, Leontief, PerfectSubstitutes, QuasiLinear, StoneGeary
+from utility_viz.models.utility import CES, CobbDouglas, Leontief, PerfectSubstitutes, QuasiLinear, StoneGeary
 
 
 class TestFigure:
@@ -321,7 +321,7 @@ class TestDemandDiagram:
 
 
 def test_figure_forwards_axis_line_styles():
-    from econ_viz import LineStyle
+    from utility_viz import LineStyle
 
     fig = Figure(Layout.SIDE_BY_SIDE, x_line_style="dashed", y_line_style=LineStyle.DOTTED)
     for panel in fig.canvases:

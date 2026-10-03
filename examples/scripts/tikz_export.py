@@ -11,9 +11,9 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
-from econ_viz import Canvas, levels, solve
-from econ_viz.core.export.backend_tikz import figure_to_tikz
-from econ_viz.models.utility import (
+from utility_viz import Canvas, levels, solve
+from utility_viz.core.export.backend_tikz import figure_to_tikz
+from utility_viz.models.utility import (
     CES,
     CobbDouglas,
     CustomUtility,
