@@ -23,6 +23,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import utility_viz.core.themes as themes
+from utility_viz.core.errors.deprecation import warn_deprecated
 from utility_viz.core.errors.exceptions import InvalidParameterError
 from utility_viz.core.styles.fill import Fill
 from utility_viz.core.styles.label import Label
@@ -37,6 +38,7 @@ else:  # pragma: no cover - exercised on Python 3.10 only
     import tomli as tomllib
 
 DEFAULT_FILE = "utility-viz.toml"
+LEGACY_FILE = "econ-viz.toml"  # 1.x name; still read throughout 2.x, removed in 3.0
 
 # Section -> (style class, property-name pattern).
 _STYLES = {
@@ -70,9 +72,32 @@ class Config:
     math_font: str | None = None
 
     @classmethod
-    def load(cls, path: str | Path = DEFAULT_FILE) -> Config:
-        """Read a TOML file."""
-        path = Path(path)
+    def load(cls, path: str | Path | None = None) -> Config:
+        """Read a TOML file.
+
+        With an explicit *path* that file is read (and must exist). With no
+        *path*, :func:`find_config_file` decides: ``utility-viz.toml``, then the
+        legacy ``econ-viz.toml`` (with a deprecation warning), then the
+        built-in defaults.
+        """
+        if path is None:
+            found = find_config_file(stacklevel=3)
+            return cls() if found is None else cls._read(found)
+        return cls._read(Path(path))
+
+    @classmethod
+    def discover(cls, path: str | Path | None = None, *, directory: str | Path | None = None) -> Config:
+        """Resolve a Config using the documented lookup order.
+
+        1. the explicit *path*, 2. ``utility-viz.toml``, 3. legacy ``econ-viz.toml``
+        (deprecated), 4. built-in defaults. Files 2 and 3 are looked up in
+        *directory* (default: the current working directory).
+        """
+        found = find_config_file(path, directory=directory, stacklevel=3)
+        return cls() if found is None else cls._read(found)
+
+    @classmethod
+    def _read(cls, path: Path) -> Config:
         try:
             with path.open("rb") as handle:
                 data = tomllib.load(handle)
@@ -143,6 +168,37 @@ class Config:
 
 
 _active: Config | None = None
+
+
+def find_config_file(
+    path: str | Path | None = None, *, directory: str | Path | None = None, stacklevel: int = 2
+) -> Path | None:
+    """Locate the settings file, or ``None`` when the defaults should be used.
+
+    Order: explicit *path*; ``utility-viz.toml``; legacy ``econ-viz.toml`` (warns);
+    otherwise ``None``. When both named files exist the new one wins and the
+    legacy one is ignored with a warning.
+    """
+    if path is not None:
+        return Path(path)
+    base = Path(directory) if directory is not None else Path.cwd()
+    new, legacy = base / DEFAULT_FILE, base / LEGACY_FILE
+    if new.is_file():
+        if legacy.is_file():
+            warn_deprecated(
+                f"legacy config file {LEGACY_FILE!r} (ignored because {DEFAULT_FILE!r} exists)",
+                f"{DEFAULT_FILE!r} only; delete {LEGACY_FILE!r}",
+                stacklevel=stacklevel,
+            )
+        return new
+    if legacy.is_file():
+        warn_deprecated(
+            f"config file {LEGACY_FILE!r}",
+            f"{DEFAULT_FILE!r} (run `utility-viz init --migrate`; section names are unchanged)",
+            stacklevel=stacklevel,
+        )
+        return legacy
+    return None
 
 
 def active_theme() -> Theme:
