@@ -188,3 +188,18 @@ def test_modules_have_no_relative_imports(module):
     for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
         if isinstance(node, ast.ImportFrom):
             assert node.level == 0
+
+
+def test_utility_viz_never_depends_on_the_legacy_package():
+    """Deleting ``econ_viz`` in 3.0 must be a pure removal."""
+    offenders = []
+    for module, path in _modules():
+        for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+            names = []
+            if isinstance(node, ast.ImportFrom) and node.module:
+                names = [node.module]
+            elif isinstance(node, ast.Import):
+                names = [a.name for a in node.names]
+            if any(n == "econ_viz" or n.startswith("econ_viz.") for n in names):
+                offenders.append(module)
+    assert not offenders, offenders
