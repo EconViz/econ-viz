@@ -6,7 +6,7 @@
 
 ### Breaking changes
 
-- Rename the distribution to `utility-viz`, the import package to `utility_viz`, the CLI to `utility-viz`, and the default config file to `utility-viz.toml`; a 2.x `econ_viz` compatibility package, `econ-viz` command, and `econ-viz.toml` lookup remain until 3.0.0 (#132)
+- Rename the distribution to `utility-viz`, the import package to `utility_viz`, the CLI to `utility-viz`, and the default config file to `utility-viz.toml`; a 2.x `econ_viz` compatibility package, `econ-viz` command, and `econ-viz.toml` lookup remain until 3.0.0 (#132). The compatibility package and command are shipped by a separate `econ-viz` distribution (`packages/econ-viz`, released in lockstep and depending on `utility-viz==<same version>`), not by `utility-viz`: `pip install utility-viz` has no `econ_viz`, and `pip install --upgrade econ-viz` on a 1.x installation no longer deletes files shared with `utility-viz` (#154)
 
 - Reorganise internals into `core/` (styles, themes, rendering, canvas, layout, diagrams, export, config, errors, constants, animation, interactive) and `models/` (utility, curves, consumer, optimization, analysis); deep `core` imports are advanced/internal APIs (#131)
 
@@ -41,6 +41,8 @@
 - Make the whole repository (library, tests, examples) pass `mypy .`, split `apply_strokes` into helpers to satisfy the complexity limit, clear remaining long-line and commented-out-code lint findings, and run `mypy .` in CI (#154)
 
 ### Maintenance
+
+- The repository is now a uv workspace: development uses `uv sync --all-packages`, the release workflow builds and publishes both distributions with `uv build --all-packages` after checking that the tag matches both versions, and `scripts/release.sh` bumps both versions and the `utility-viz==` pin together (#154)
 
 - Split `core/canvas/base.py` into cohesive modules (`style`, `layers`, `decomposition`, `legend`, `output`) and break long methods into private helpers; `Canvas` and its public API are unchanged (#154)
 
