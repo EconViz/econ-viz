@@ -8,7 +8,9 @@ import matplotlib
 
 matplotlib.use("Agg")
 
+from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 
@@ -21,7 +23,7 @@ Path(OUTPUT_DIR).mkdir(parents=True, exist_ok=True)
 # ------------------------------------------------------------------
 # Standard models
 # ------------------------------------------------------------------
-models = [
+models: list[tuple[str, Callable[..., Any]]] = [
     ("cobb_douglas", CobbDouglas(0.5, 0.5)),
     ("leontief", Leontief(2, 3)),
     ("perfect_substitutes", PerfectSubstitutes(1, 2)),
