@@ -1,16 +1,15 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/EconViz/econ-viz-docs/main/docs/assets/banner.svg" alt="utility-viz" width="480">
+  <img src="https://raw.githubusercontent.com/EconViz/utility-viz/main/assets/banner.svg" alt="utility-viz" width="480">
 </p>
 
 <p align="center">
-  <a href="https://pypi.org/project/utility-viz/"><img alt="PyPI" src="https://img.shields.io/pypi/v/utility-viz?style=flat-square&color=181818&labelColor=f3f3f3&cacheSeconds=300"></a>
-  <a href="https://pypi.org/project/utility-viz/"><img alt="Python" src="https://img.shields.io/pypi/pyversions/utility-viz?style=flat-square&color=181818&labelColor=f3f3f3"></a>
+  <a href="https://pypi.org/project/utility-viz/"><img alt="PyPI" src="https://img.shields.io/pypi/v/utility-viz?include_prereleases&style=flat-square&color=181818&labelColor=f3f3f3&cacheSeconds=300"></a>
+  <a href="https://pypi.org/project/utility-viz/"><img alt="Python" src="https://img.shields.io/pypi/pyversions/utility-viz?style=flat-square&color=181818&labelColor=f3f3f3&cacheSeconds=300"></a>
   <a href="https://opensource.org/licenses/MIT"><img alt="License" src="https://img.shields.io/badge/License-MIT-181818?style=flat-square&color=181818&labelColor=f3f3f3"></a>
-  <img alt="Tests" src="https://img.shields.io/badge/tests-557%20passed-181818?style=flat-square&color=181818&labelColor=f3f3f3">
-  <img alt="Coverage" src="https://img.shields.io/badge/coverage-92.63%25-181818?style=flat-square&color=181818&labelColor=f3f3f3">
+  <a href="https://github.com/EconViz/utility-viz/actions/workflows/publish.yml"><img alt="Tests" src="https://img.shields.io/github/actions/workflow/status/EconViz/utility-viz/publish.yml?branch=main&label=tests&style=flat-square&color=181818&labelColor=f3f3f3&cacheSeconds=300"></a>
 </p>
 
-A Python toolkit for producing publication-quality microeconomics diagrams. Define utility functions declaratively, solve for consumer equilibria, and export figures as PNG, PDF, SVG, or pure TikZ — all in a few lines of code.
+A Python toolkit for producing publication-quality microeconomics diagrams. Define utility functions declaratively, solve for consumer equilibria, and export figures as PNG, PDF, SVG, or pure TikZ, all in a few lines of code.
 
 ## Installation
 
@@ -18,24 +17,39 @@ A Python toolkit for producing publication-quality microeconomics diagrams. Defi
 pip install utility-viz
 ```
 
-Requires Python 3.10 or later.
+Requires Python 3.10 or later. The current release is a pre-release (2.0.0b1); while no stable 2.x
+exists, `pip install utility-viz` picks it up. Once a stable release is published alongside it, use
+`pip install --pre utility-viz` to opt in to pre-releases.
+
+Upgrading from `econ-viz` 1.x? See [Migrating from econ-viz](#migrating-from-econ-viz).
 
 ## Quick Start
 
 ```python
-from utility_viz import Canvas, levels, solve
+from utility_viz import Canvas, Fill, Marker, levels, solve, themes
 from utility_viz.models import CobbDouglas
 
 model = CobbDouglas(alpha=0.5, beta=0.5)
 eq = solve(model, px=2.0, py=3.0, income=30.0)
 lvls = levels.around(eq.utility, n=5)
 
-cvs = Canvas(x_max=20, y_max=15, x_label="x", y_label="y", title="Cobb-Douglas  $x^{0.5} y^{0.5}$")
+cvs = Canvas(
+    x_max=20, y_max=15, x_label="x", y_label="y",
+    title="Cobb-Douglas  $x^{0.5} y^{0.5}$",
+    theme=themes.monochrome,  # black/grey only, lines told apart by style
+    dpi=120,
+)
 cvs.add_utility(model, levels=lvls)
-cvs.add_budget(2.0, 3.0, 30.0, fill=True)
-cvs.add_equilibrium(eq, show_ray=True)
-cvs.save("cobb_douglas.png")
+cvs.add_budget(2.0, 3.0, 30.0, fill=Fill(color="lightgrey", opacity=0.5))
+cvs.add_equilibrium(eq, show_ray=True, marker=Marker(size=8))
+cvs.save("cobb_douglas_eq.png")
 ```
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/EconViz/utility-viz/main/assets/cobb_douglas_eq.png" alt="Grayscale Cobb-Douglas indifference map with budget line and equilibrium point" width="420">
+</p>
+
+Without `theme=` the default colour-blind-friendly palette is used.
 
 TikZ export writes a standalone LaTeX document with only TikZ drawing commands:
 
@@ -43,9 +57,8 @@ TikZ export writes a standalone LaTeX document with only TikZ drawing commands:
 cvs.save("cobb_douglas.tex", tikz_scale=0.0125)
 ```
 
-The default TikZ scale maps a 6 inch wide Matplotlib figure to about 7.5 cm.
-
-![Cobb-Douglas indifference map with budget line and equilibrium point](https://raw.githubusercontent.com/EconViz/utility-viz/a8423043789ee7dba19b2d71fa6cc5071601181a/cobb_douglas_eq.png)
+`tikz_scale` is centimetres per Matplotlib pixel (at 100 dpi); the default, `0.0125`, maps a 6 inch
+wide Matplotlib figure to 7.5 cm.
 
 ## Notebook
 
@@ -53,11 +66,12 @@ The project ships with an interactive playground notebook:
 
 [`notebook/econ-viz Playground.ipynb`](notebook/econ-viz%20Playground.ipynb)
 
-Download it and open it in Jupyter, VS Code, or Colab. The first code cell upgrades `utility-viz` from PyPI for fresh runtimes.
+The file keeps its historical name. Download it and open it in Jupyter, VS Code, or Colab. The first code cell installs `utility-viz[all]` (pinned to 2.0.0b1) from PyPI for fresh runtimes.
 
 ## Highlights
 
-- Built-in models: Cobb-Douglas, Leontief, Perfect Substitutes, CES, Satiation, Quasi-Linear, Stone-Geary, and Translog
+- Built-in models (also listed by `utility-viz models`): Cobb-Douglas, Leontief, Perfect Substitutes, CES, Satiation, Quasi-Linear, Stone-Geary, and Translog
+- Built-in themes, including a black-and-white `themes.monochrome` for print
 - Solver support for interior, kink, boundary, and corner solutions
 - Closed-form demand helpers with `solution_tex(...)`
 - Comparative tools including `comparative_statics(...)` and `slutsky_matrix(...)`
@@ -129,6 +143,8 @@ The same `Label` styles every other piece of text: axis labels, the origin
 `0`, titles, effect labels, and the Edgeworth box's good names and origins:
 
 ```python
+from utility_viz import Axis, Canvas, Effect, Label
+
 canvas = Canvas(
     title=Label(text="Hicks decomposition", fontsize=13),
     x_axis=Axis(label=Label(text="x_1", fontsize=16)),
@@ -150,6 +166,8 @@ Every style object takes an `opacity` from 0 to 1, for example to show the
 original budget line faintly:
 
 ```python
+from utility_viz import Effect, Legend, Stroke
+
 canvas.add_budget(2, 3, 30, stroke=Stroke(opacity=0.35))
 canvas.add_decomposition(dec, income=Effect(opacity=0.5), legend=Legend(opacity=0.8))
 ```
@@ -219,7 +237,7 @@ S = slutsky_matrix(CobbDouglas(alpha=0.4, beta=0.6), px=2.0, py=3.0, income=60.0
 
 ## Settings file
 
-Keep your style in an `utility-viz.toml` and load it once. Section names match
+Keep your style in a `utility-viz.toml` and load it once. Section names match
 Theme properties (`[stroke.budget]` is `theme.budget_stroke`), fields match the
 style objects, and anything left out keeps the default:
 
@@ -309,9 +327,18 @@ removed in 3.0.0, not 2.0.0. Only the documented 1.x public API is covered; undo
 (for example `econ_viz.canvas.renderers.*`) resolve on a best-effort basis and may disappear at any time.
 Internal `utility_viz.core.*` modules are advanced APIs and not part of the compatibility contract.
 
+## Ecosystem
+
+utility-viz is part of the [EconViz](https://github.com/EconViz) family of packages:
+
+- [mosaickit](https://github.com/EconViz/mosaickit) ([PyPI](https://pypi.org/project/mosaickit/)): domain-neutral scenes and rendering, which utility-viz renders through.
+- [bezierkit](https://github.com/EconViz/bezierkit) ([PyPI](https://pypi.org/project/bezierkit/)): Bezier curves, used by utility-viz for curves and TikZ output.
+- [principle-viz](https://github.com/EconViz/principle-viz) ([PyPI](https://pypi.org/project/principle-viz/)): the sibling package for principles-of-economics diagrams.
+
 ## Documentation
 
-Full documentation lives at [econ-viz.org](https://econ-viz.org).
+Full documentation lives at [econ-viz.org](https://econ-viz.org). Source and issues:
+[github.com/EconViz/utility-viz](https://github.com/EconViz/utility-viz).
 
 ## License
 
