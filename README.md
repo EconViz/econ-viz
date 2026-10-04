@@ -34,7 +34,10 @@ eq = solve(model, px=2.0, py=3.0, income=30.0)
 lvls = levels.around(eq.utility, n=5)
 
 cvs = Canvas(
-    x_max=20, y_max=15, x_label="x", y_label="y",
+    x_max=20,
+    y_max=15,
+    x_label="x",
+    y_label="y",
     title="Cobb-Douglas  $x^{0.5} y^{0.5}$",
     theme=themes.monochrome,  # black/grey only, lines told apart by style
     dpi=120,
