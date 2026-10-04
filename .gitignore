@@ -36,6 +36,8 @@ Thumbs.db
 *.tex
 *.pdf
 *.svg
+!assets/*.png
+!assets/*.svg
 examples/output/**
 !examples/output/.gitkeep
 notebook/

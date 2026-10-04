@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 160" width="640" height="160" role="img" aria-label="utility-viz">
+  <title>utility-viz</title>
+
+  <!-- Utility level curves and improvement arrow, redrawn from icon concept 04. -->
+  <g transform="translate(21.42 -18.62) scale(1.4)" fill="none" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke">
+    <path d="M41.68 66.82 L42.56 69.73 L43.44 72.38 L44.33 74.79 L45.21 77 L46.09 79.04 L46.97 80.92 L47.86 82.66 L48.74 84.28 L49.62 85.79 L50.5 87.19 L51.39 88.51 L52.27 89.74 L53.15 90.9 L54.03 91.99 L54.92 93.02 L55.8 93.99 L56.68 94.9 L57.56 95.77 L58.45 96.6 L59.33 97.38 L60.21 98.13 L61.09 98.84 L61.98 99.52 L62.86 100.17 L63.74 100.78 L64.62 101.37 L65.51 101.94 L66.39 102.48 L67.27 103 L68.15 103.5 L69.04 103.98 L69.92 104.44 L70.8 104.89" stroke="#c9c9c9" stroke-width="4.5"/>
+    <path d="M53.12 61.14 L54.51 64.18 L55.89 66.96 L57.28 69.5 L58.67 71.84 L60.05 74 L61.44 76 L62.83 77.86 L64.21 79.59 L65.6 81.2 L66.99 82.71 L68.37 84.12 L69.76 85.45 L71.15 86.71 L72.53 87.89 L73.92 89 L75.31 90.05 L76.69 91.05 L78.08 92 L79.47 92.9 L80.85 93.76 L82.24 94.57 L83.63 95.35 L85.01 96.09 L86.4 96.8 L87.79 97.48 L89.17 98.13 L90.56 98.75 L91.95 99.35 L93.33 99.92 L94.72 100.47 L96.11 101 L97.49 101.51 L98.88 102" stroke="#8a8a8a" stroke-width="5"/>
+    <path d="M68.72 60.28 L70.23 62.49 L71.75 64.57 L73.26 66.52 L74.77 68.35 L76.28 70.08 L77.8 71.7 L79.31 73.24 L80.82 74.7 L82.33 76.08 L83.85 77.4 L85.36 78.64 L86.87 79.83 L88.39 80.96 L89.9 82.04 L91.41 83.07 L92.92 84.06 L94.44 85 L95.95 85.91 L97.46 86.77 L98.97 87.61 L100.49 88.41 L102 89.17 L103.51 89.91 L105.03 90.62 L106.54 91.31 L108.05 91.97 L109.56 92.61 L111.08 93.22 L112.59 93.81 L114.1 94.39 L115.61 94.94 L117.13 95.48 L118.64 96" stroke="#181818" stroke-width="6"/>
+    <path d="M102 58 L124 36 M124 36 L122 56 M124 36 L104 38" stroke="#181818" stroke-width="6" />
+  </g>
+
+  <!-- Wordmark follows the BezierKit family treatment, centered with the mark as one lockup. -->
+  <text x="227.03" y="98" font-family="'JetBrains Mono','SFMono-Regular',Consolas,monospace" font-size="52" font-weight="700" letter-spacing="-1" fill="#181818">utility-<tspan fill="#8a8a8a">viz</tspan></text>
+</svg>
