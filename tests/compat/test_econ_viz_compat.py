@@ -92,12 +92,10 @@ def test_documented_legacy_module_paths_resolve(legacy, attr):
 
 
 def test_from_import_of_legacy_modules_and_models():
-    # isort: off -- local imports deliberately exercise compatibility import order.
-    from econ_viz import levels, themes  # noqa: F401
+    from econ_viz import levels, themes  # noqa: F401, I001
     from econ_viz.models import CES, CobbDouglas
     from utility_viz.models import CES as NEW_CES
     from utility_viz.models import CobbDouglas as NEW_CD
-    # isort: on
 
     assert CobbDouglas is NEW_CD and CES is NEW_CES
 
@@ -146,10 +144,8 @@ def test_legacy_canvas_warns_once_per_construction_with_details():
 
 
 def test_legacy_canvas_still_renders(tmp_path):
-    # isort: off -- import order is part of the legacy-package smoke test.
-    import econ_viz
+    import econ_viz  # noqa: I001
     from econ_viz.models import CobbDouglas
-    # isort: on
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", UtilityVizDeprecationWarning)
