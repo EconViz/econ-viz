@@ -92,9 +92,8 @@ def test_documented_legacy_module_paths_resolve(legacy, attr):
 
 
 def test_from_import_of_legacy_modules_and_models():
+    from econ_viz import levels, themes  # noqa: F401, I001
     from econ_viz.models import CES, CobbDouglas
-
-    from econ_viz import levels, themes  # noqa: F401
     from utility_viz.models import CES as NEW_CES
     from utility_viz.models import CobbDouglas as NEW_CD
 
@@ -145,9 +144,8 @@ def test_legacy_canvas_warns_once_per_construction_with_details():
 
 
 def test_legacy_canvas_still_renders(tmp_path):
+    import econ_viz  # noqa: I001
     from econ_viz.models import CobbDouglas
-
-    import econ_viz
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", UtilityVizDeprecationWarning)

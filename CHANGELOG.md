@@ -2,6 +2,19 @@
 
 <!-- version list -->
 
+## v2.0.0b2 (2026-10-10)
+
+### Bug fixes
+
+- Require the stable `bezierkit>=1.0.1,<2.0.0` release instead of the obsolete
+  `0.5.0rc1` release-candidate range, so a normal `uv add utility-viz` no longer
+  installs a pre-release BezierKit.
+
+### Maintenance
+
+- Verify the stable BezierKit 1.x API against level-set tracing, sampled scene
+  paths, native TikZ export, and the complete UtilityViz test suite.
+
 ## v2.0.0b1 (2026-10-03)
 
 ### Breaking changes
